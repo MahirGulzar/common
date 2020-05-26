@@ -63,10 +63,12 @@ void DecisionMaker::Init(const ControllerParams& ctrlParams, const PlannerHNS::P
  		m_ControlParams = ctrlParams;
  		m_params = params;
 
- 		m_pidVelocity.Init(0.01, 0.004, 0.01);
+        m_pidVelocity.Init(0.01, 0.004, 0.01);
+ 		// m_pidVelocity.Init(1, 1, 0);
 		m_pidVelocity.Setlimit(m_params.maxSpeed, 0);
 
-		m_pidStopping.Init(0.05, 0.05, 0.1);
+        //m_pidStopping.Init(0.05, 0.05, 0.1);
+		m_pidStopping.Init(2.1, 0, 0);
 		m_pidStopping.Setlimit(m_params.horizonDistance, 0);
 
 		m_pidFollowing.Init(0.05, 0.05, 0.01);
@@ -122,6 +124,8 @@ void DecisionMaker::InitBehaviorStates()
 	m_pInitState->decisionMakingCount = 0;//m_params.nReliableCount;
 
 	m_pCurrentBehaviorState = m_pInitState;
+
+    m_bWindowReached = false;
 }
 
  bool DecisionMaker::GetNextTrafficLight(const int& prevTrafficLightId, const std::vector<PlannerHNS::TrafficLight>& trafficLights, PlannerHNS::TrafficLight& trafficL)
@@ -204,9 +208,19 @@ void DecisionMaker::InitBehaviorStates()
 
   	distanceToClosestStopLine = PlanningHelpers::GetDistanceToClosestStopLineAndCheck(m_TotalPath.at(pValues->iCurrSafeLane), state, m_params.giveUpDistance, stopLineID, stopSignID, trafficLightID) - critical_long_front_distance;
 
-  	//std::cout << "StopLineID" << stopLineID << ", StopSignID: " << stopSignID << ", TrafficLightID: " << trafficLightID << ", Distance: " << distanceToClosestStopLine << ", MinStopDistance: " << pValues->minStoppingDistance << std::endl;
+  	// std::cout << "S StopLineID: " << stopLineID << ", StopSignID: " << stopSignID << ", TrafficLightID: " << trafficLightID << ", Distance: " << distanceToClosestStopLine << ", MinStopDistance: " << pValues->minStoppingDistance << std::endl;
+  	// distanceToClosestStopLine << ", " << m_params.giveUpDistance << ", " << pValues->minStoppingDistance + 1.0 << ", " << m_CarInfo.max_deceleration << std::endl;
+  	// changed 1.0 to 5.0
+  	// std::cout <<  distanceToClosestStopLine << ", " << (pValues->minStoppingDistance + 1.0) << std::endl;
 
- 	if(distanceToClosestStopLine > m_params.giveUpDistance && distanceToClosestStopLine < (pValues->minStoppingDistance + 1.0))
+    if(distanceToClosestStopLine > m_params.giveUpDistance && distanceToClosestStopLine < (pValues->minStoppingDistance + 1.0))
+        m_bWindowReached = true;
+
+    if(distanceToClosestStopLine <= m_params.giveUpDistance) {
+        m_bWindowReached = false;
+    }
+
+ 	if(m_bWindowReached)
  	{
  		if(m_pCurrentBehaviorState->m_pParams->enableTrafficLightBehavior)
  		{

@@ -46,6 +46,8 @@ public:
 
 	void InitBehaviorStates();
 
+    bool m_bWindowReached;
+
 	//For Simulation
 	UtilityHNS::PIDController 	m_pidVelocity;
 	UtilityHNS::PIDController 	m_pidStopping;
