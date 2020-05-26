@@ -62,14 +62,15 @@ void DecisionMaker::Init(const ControllerParams& ctrlParams, const PlannerHNS::P
  		m_CarInfo = carInfo;
  		m_ControlParams = ctrlParams;
  		m_params = params;
+        m_dSpeedDistanceRatio = 2.1;
 
         m_pidVelocity.Init(0.01, 0.004, 0.01);
  		// m_pidVelocity.Init(1, 1, 0);
 		m_pidVelocity.Setlimit(m_params.maxSpeed, 0);
 
         //m_pidStopping.Init(0.05, 0.05, 0.1);
-		m_pidStopping.Init(2.1, 0, 0);
-		m_pidStopping.Setlimit(m_params.horizonDistance, 0);
+		m_pidStopping.Init(m_dSpeedDistanceRatio, 0, 0);
+		// m_pidStopping.Setlimit(m_params.horizonDistance, 0);
 
 		m_pidFollowing.Init(0.05, 0.05, 0.01);
 		m_pidFollowing.Setlimit(m_params.minFollowingDistance, 0);
@@ -205,15 +206,16 @@ void DecisionMaker::InitBehaviorStates()
  	double distanceToClosestStopLine = 0;
  	bool bGreenTrafficLight = true;
 
-
   	distanceToClosestStopLine = PlanningHelpers::GetDistanceToClosestStopLineAndCheck(m_TotalPath.at(pValues->iCurrSafeLane), state, m_params.giveUpDistance, stopLineID, stopSignID, trafficLightID) - critical_long_front_distance;
 
   	// std::cout << "S StopLineID: " << stopLineID << ", StopSignID: " << stopSignID << ", TrafficLightID: " << trafficLightID << ", Distance: " << distanceToClosestStopLine << ", MinStopDistance: " << pValues->minStoppingDistance << std::endl;
   	// distanceToClosestStopLine << ", " << m_params.giveUpDistance << ", " << pValues->minStoppingDistance + 1.0 << ", " << m_CarInfo.max_deceleration << std::endl;
   	// changed 1.0 to 5.0
   	// std::cout <<  distanceToClosestStopLine << ", " << (pValues->minStoppingDistance + 1.0) << std::endl;
+    double distanceWindow = pValues->currentVelocity / m_dSpeedDistanceRatio;
+    double bufferLength = 0.0;
 
-    if(distanceToClosestStopLine > m_params.giveUpDistance && distanceToClosestStopLine < (pValues->minStoppingDistance + 1.0))
+    if(distanceToClosestStopLine > m_params.giveUpDistance && distanceToClosestStopLine <= distanceWindow + bufferLength)
         m_bWindowReached = true;
 
     if(distanceToClosestStopLine <= m_params.giveUpDistance) {

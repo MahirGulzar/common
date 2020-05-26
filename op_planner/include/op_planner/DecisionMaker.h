@@ -46,6 +46,7 @@ public:
 
 	void InitBehaviorStates();
 
+    double m_dSpeedDistanceRatio;
     bool m_bWindowReached;
 
 	//For Simulation
