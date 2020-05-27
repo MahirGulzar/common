@@ -1917,12 +1917,12 @@ void PlanningHelpers::SmoothGlobalPathSpeed(vector<WayPoint>& path)
 void PlanningHelpers::GenerateRecommendedSpeed(vector<WayPoint>& path, const double& max_speed, const double& speedProfileFactor)
 {
 	CalcAngleAndCostAndCurvatureAnd2D(path);
-	SmoothCurvatureProfiles(path, 0.4, 0.3, 0.01);
+	SmoothCurvatureProfiles(path, 0.3, 0.4, 0.01);
 	double v = 0;
 
 	for(unsigned int i = 0 ; i < path.size(); i++)
 	{
-		double k_ratio = path.at(i).cost*10.0;
+		double k_ratio = path.at(i).cost*9.2;
 		double local_max = (path.at(i).v >= 0 && max_speed > path.at(i).v) ? path.at(i).v : max_speed;
 
 		if(k_ratio >= 9.5)
@@ -1943,7 +1943,7 @@ void PlanningHelpers::GenerateRecommendedSpeed(vector<WayPoint>& path, const dou
 
 	}
 
-	SmoothSpeedProfiles(path, 0.4,0.3, 0.01);
+	SmoothSpeedProfiles(path, 0.1,0.45, 1.0);
 }
 
 WayPoint* PlanningHelpers::BuildPlanningSearchTreeV2(WayPoint* pStart,
