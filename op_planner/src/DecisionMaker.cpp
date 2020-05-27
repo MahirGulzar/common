@@ -361,7 +361,7 @@ void DecisionMaker::InitBehaviorStates()
 	{
 		PlanningHelpers::GetFollowPointOnTrajectory(m_Path, info, beh.stopDistance - critical_long_front_distance, point_index);
 
-		double e = -beh.stopDistance;
+		double e = beh.stopDistance;
 		double desiredVelocity = m_pidStopping.getPID(e);
 
 //		std::cout << "Stopping : e=" << e << ", desiredPID=" << desiredVelocity << ", PID: " << m_pidStopping.ToString() << std::endl;
