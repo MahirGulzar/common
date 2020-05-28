@@ -62,7 +62,7 @@ void DecisionMaker::Init(const ControllerParams& ctrlParams, const PlannerHNS::P
  		m_CarInfo = carInfo;
  		m_ControlParams = ctrlParams;
  		m_params = params;
-        m_dSpeedDistanceRatio = 0.5;
+        m_dSpeedDistanceRatio = 0.4;
 
         m_pidVelocity.Init(0.01, 0.004, 0.01);
  		// m_pidVelocity.Init(1, 1, 0);
