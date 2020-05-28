@@ -1914,37 +1914,41 @@ void PlanningHelpers::SmoothGlobalPathSpeed(vector<WayPoint>& path)
 	SmoothSpeedProfiles(path, 0.45,0.25, 0.01);
 }
 
-    void PlanningHelpers::ExtendMinCostAlongPath(vector<WayPoint>& path_in)
-    {
-        // extend min values of the cost in the path
-        // step is 0,5m - should use Path density
 
-        vector<WayPoint> newpath = path_in;
+void PlanningHelpers::ExtendMinCostAlongPath(vector<WayPoint>& path_in)
+{
+    // extend min values of the cost in the path
+    // step is 0,5m - should use Path density
 
-        int backward = 20;
-        int forward = 20;
+    vector<WayPoint> newpath = path_in;
 
-        for(int i = backward ; i < path_in.size()-forward; i++){
+    // params for tuning
+    int backward = 20;
+    int forward = 20;
+    double min_cost_importance = 0.5
 
-            double min_cost = 1000;
-            double avg_cost = 0.0;
 
-            // std::cout << "--start min_cost: " << min_cost << ", avg_cost: " << avg_cost << ", i: " << i << std::endl;
+    for(int i = backward ; i < path_in.size()-forward; i++){
 
-            for(int j = -backward; j < forward; j++){
-                if(path_in.at(i+j).cost < min_cost)
-                    min_cost = path_in.at(i+j).cost;
-                // std::cout << "-- path_in.at(i+j).cost: " << path_in.at(i+j).cost << ", 1/40: " << 0.025 << ", all: " << 1/(backward+forward) * path_in.at(i+j).cost << std::endl;
-                avg_cost += 0.025 * path_in.at(i+j).cost;
-            }
+        double min_cost = 1000;
+        double avg_cost = 0.0;
 
-            // std::cout << "--end  min_cost: " << min_cost << ", avg_cost: " << avg_cost << ", " << 1/2 * min_cost + 1/2 * avg_cost << ", i: " << i << std::endl;
-            newpath.at(i).cost = 0.6 * min_cost + 0.4 * avg_cost;
+        // std::cout << "--start min_cost: " << min_cost << ", avg_cost: " << avg_cost << ", i: " << i << std::endl;
+
+        for(int j = -backward; j < forward; j++){
+            if(path_in.at(i+j).cost < min_cost)
+                min_cost = path_in.at(i+j).cost;
+            // std::cout << "-- path_in.at(i+j).cost: " << path_in.at(i+j).cost << ", 1/40: " << 0.025 << ", all: " << 1/(backward+forward) * path_in.at(i+j).cost << std::endl;
+            avg_cost += 1/(backward + forward) * path_in.at(i+j).cost;
         }
 
-        path_in = newpath;
-
+        // std::cout << "--end  min_cost: " << min_cost << ", avg_cost: " << avg_cost << ", " << 1/2 * min_cost + 1/2 * avg_cost << ", i: " << i << std::endl;
+        newpath.at(i).cost = min_cost_importance * min_cost + (1-min_cost_importance) * avg_cost;
     }
+
+    path_in = newpath;
+
+}
 
 
 void PlanningHelpers::GenerateRecommendedSpeed(vector<WayPoint>& path, const double& max_speed, const double& speedProfileFactor)
