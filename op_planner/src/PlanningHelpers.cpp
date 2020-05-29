@@ -1922,9 +1922,9 @@ void PlanningHelpers::ExtendMinCostAlongPath(vector<WayPoint>& path_in)
     vector<WayPoint> newpath = path_in;
 
     // params for tuning
-    int backward = 20;
-    int forward = 20;
-    double min_cost_importance = 0.5
+    double backward = 50.0;
+    double forward = 20.0;
+    double min_cost_importance = 0.8;
 
 
     for(int i = backward ; i < path_in.size()-forward; i++){
@@ -1938,7 +1938,7 @@ void PlanningHelpers::ExtendMinCostAlongPath(vector<WayPoint>& path_in)
             if(path_in.at(i+j).cost < min_cost)
                 min_cost = path_in.at(i+j).cost;
             // std::cout << "-- path_in.at(i+j).cost: " << path_in.at(i+j).cost << ", 1/40: " << 0.025 << ", all: " << 1/(backward+forward) * path_in.at(i+j).cost << std::endl;
-            avg_cost += 1/(backward + forward) * path_in.at(i+j).cost;
+            avg_cost += 1.0/(backward + forward) * path_in.at(i+j).cost;
         }
 
         // std::cout << "--end  min_cost: " << min_cost << ", avg_cost: " << avg_cost << ", " << 1/2 * min_cost + 1/2 * avg_cost << ", i: " << i << std::endl;
@@ -1962,7 +1962,7 @@ void PlanningHelpers::GenerateRecommendedSpeed(vector<WayPoint>& path, const dou
 	for(unsigned int i = 0 ; i < path.size(); i++)
 	{
 
-		double k_ratio = path.at(i).cost*9.2;
+		double k_ratio = path.at(i).cost*9.1;
 
 		double local_max = (path.at(i).v >= 0 && max_speed > path.at(i).v) ? path.at(i).v : max_speed;
 
