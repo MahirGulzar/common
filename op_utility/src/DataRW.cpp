@@ -948,7 +948,10 @@ void AisanLanesFileReader::ParseNextLine(const vector_map_msgs::Lane& _rec, Aisa
 	data.JCT = _rec.jct;
 	data.LCnt = _rec.lcnt;
 	data.LaneChgFG = _rec.lanecfgfg;
-	//data.LaneDir = _rec.;
+    char dir = 'F';
+    if(_rec.lanetype == 1) dir = 'L'; 
+    if(_rec.lanetype == 2) dir = 'R'; 
+	data.LaneDir = dir;
 	data.LaneType = _rec.lanetype;
 	//data.LeftLaneId = _rec.;
 	data.LimitVel = _rec.limitvel;
