@@ -1371,22 +1371,23 @@ void ROSHelpers::ConvertFromAutowareLaneToLocalLane(const autoware_msgs::Lane& t
 		wp.RightPointId = trajectory.waypoints.at(i).right_lane_id;
 		wp.timeCost = trajectory.waypoints.at(i).time_cost;
 
-		if(trajectory.waypoints.at(i).direction == 0)
-			wp.bDir = PlannerHNS::FORWARD_DIR;
-		else if(trajectory.waypoints.at(i).direction == 1)
-			wp.bDir = PlannerHNS::FORWARD_LEFT_DIR;
-		else if(trajectory.waypoints.at(i).direction == 2)
-			wp.bDir = PlannerHNS::FORWARD_RIGHT_DIR;
-		else if(trajectory.waypoints.at(i).direction == 3)
-			wp.bDir = PlannerHNS::BACKWARD_DIR;
-		else if(trajectory.waypoints.at(i).direction == 4)
-			wp.bDir = PlannerHNS::BACKWARD_LEFT_DIR;
-		else if(trajectory.waypoints.at(i).direction == 5)
-			wp.bDir = PlannerHNS::BACKWARD_RIGHT_DIR;
-		else if(trajectory.waypoints.at(i).direction == 6)
-			wp.bDir = PlannerHNS::STANDSTILL_DIR;
+	//	if(trajectory.waypoints.at(i).direction == 0)
+	//		wp.bDir = PlannerHNS::FORWARD_DIR;
+	//	else if(trajectory.waypoints.at(i).direction == 1)
+	//		wp.bDir = PlannerHNS::FORWARD_LEFT_DIR;
+	//	else if(trajectory.waypoints.at(i).direction == 2)
+	//		wp.bDir = PlannerHNS::FORWARD_RIGHT_DIR;
+	//	else if(trajectory.waypoints.at(i).direction == 3)
+	//		wp.bDir = PlannerHNS::BACKWARD_DIR;
+	//	else if(trajectory.waypoints.at(i).direction == 4)
+	//		wp.bDir = PlannerHNS::BACKWARD_LEFT_DIR;
+	//	else if(trajectory.waypoints.at(i).direction == 5)
+	//		wp.bDir = PlannerHNS::BACKWARD_RIGHT_DIR;
+	//	else if(trajectory.waypoints.at(i).direction == 6)
+	//		wp.bDir = PlannerHNS::STANDSTILL_DIR;
 
 		wp.cost = trajectory.waypoints.at(i).cost;
+        wp.actionCost.push_back(make_pair((PlannerHNS::ACTION_TYPE)trajectory.waypoints.at(i).direction, wp.cost));
 
 		path.push_back(wp);
 	}
