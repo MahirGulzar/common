@@ -333,6 +333,11 @@ void DecisionMaker::InitBehaviorStates()
  {
 	PlannerHNS::PreCalculatedConditions *preCalcPrams = m_pCurrentBehaviorState->GetCalcParams();
 
+    if(m_pCurrentBehaviorState != m_pCurrentBehaviorState->GetNextState()){
+        m_pidVelocity.ResetI();
+        m_pidVelocity.ResetD();
+    }
+
 	m_pCurrentBehaviorState = m_pCurrentBehaviorState->GetNextState();
 	if(m_pCurrentBehaviorState==0)
 		m_pCurrentBehaviorState = m_pInitState;
