@@ -416,19 +416,20 @@ void DecisionMaker::InitBehaviorStates()
         }
         else {
             // approaching the car or object
-            if(CurrStatus.speed >= beh.followVelocity) {
-                deceleration_critical = -deceleration_critical;
-                desiredVelocity = deceleration_critical * dt + CurrStatus.speed;
-            }
+      //      if(CurrStatus.speed >= beh.followVelocity) {
+      //          deceleration_critical = -deceleration_critical;
+      //          desiredVelocity = deceleration_critical * dt + CurrStatus.speed;
+      //      }
 
             // object in front is faster than me - match speed with little extra
-            else {
-                double maxExtraVelocity = 3;
+      //      else {
+		// TODO add min vel to extra velocity
+                double maxExtraVelocity = 7;
                 double extraVelocity = 0.3 * (beh.followDistance - keep_distance);
                 extraVelocity = (extraVelocity < maxExtraVelocity) ? extraVelocity : maxExtraVelocity;
 
                 desiredVelocity = beh.followVelocity + extraVelocity;
-            }
+        //    }
         }
 
         // check against the limits
