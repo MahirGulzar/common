@@ -415,7 +415,7 @@ void DecisionMaker::InitBehaviorStates()
             double maxExtraVelocity = 7;
             double extraVelocity = 0.3 * (beh.followDistance - keep_distance);
             extraVelocity = (extraVelocity < maxExtraVelocity) ? extraVelocity : maxExtraVelocity;
-            extraVelocity = (extraVelocity > 0.1) ? extraVelocity : 0.0;
+            extraVelocity = (extraVelocity >= 0 && extraVelocity < 0.1) ? 0 : extraVelocity;
 
             desiredVelocity = beh.followVelocity + extraVelocity;
         }
