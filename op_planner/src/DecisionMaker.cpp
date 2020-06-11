@@ -65,7 +65,7 @@ void DecisionMaker::Init(const ControllerParams& ctrlParams, const PlannerHNS::P
         m_dSpeedDistanceRatio = 0.4;
 
         // m_pidVelocity.Init(0.01, 0.004, 0.01);
- 		m_pidVelocity.Init(0.1, 0.009, 0.02);
+ 		m_pidVelocity.Init(0.1, 0.007, 0.02);
 		m_pidVelocity.Setlimit(m_params.maxSpeed, 0);
 
         //m_pidStopping.Init(0.05, 0.05, 0.1);
