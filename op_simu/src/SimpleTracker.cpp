@@ -184,7 +184,7 @@ void SimpleTracker::MatchClosest()
 
 		if(iCloseset_obj != -1 && iCloseset_track != -1 && (dCloseset <= m_MAX_ASSOCIATION_DISTANCE || bFoundMatch == true))
 		{
-			std::cout << "MatchObj: " << m_TrackSimply.at(iCloseset_track).obj.id << ", MinD: " << dCloseset << ", SizeDiff: (" << size_diff <<  ")" << ", ObjI" << iCloseset_obj <<", TrackI: " << iCloseset_track << ", CMatch: " << bFoundMatch << std::endl;
+			// std::cout << "MatchObj: " << m_TrackSimply.at(iCloseset_track).obj.id << ", MinD: " << dCloseset << ", SizeDiff: (" << size_diff <<  ")" << ", ObjI" << iCloseset_obj <<", TrackI: " << iCloseset_track << ", CMatch: " << bFoundMatch << std::endl;
 
 			m_DetectedObjects.at(iCloseset_obj).id = m_TrackSimply.at(iCloseset_track).obj.id;
 			MergeObjectAndTrack(m_TrackSimply.at(iCloseset_track), m_DetectedObjects.at(iCloseset_obj));

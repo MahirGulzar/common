@@ -400,27 +400,45 @@ void DecisionMaker::InitBehaviorStates()
 	else if(beh.state == FOLLOW_STATE)
 	{
 
-		double deceleration_critical = 0;
-		double inv_time = 2.0*((beh.followDistance- (critical_long_front_distance+m_params.additionalBrakingDistance))-CurrStatus.speed);
-		if(inv_time <= 0)
-			deceleration_critical = m_CarInfo.max_deceleration;
-		else
-			deceleration_critical = CurrStatus.speed*CurrStatus.speed/inv_time;
+		double deceleration_critical = 0.0;
+        double desiredVelocity = 0.0;
 
-		if(deceleration_critical > 0) deceleration_critical = -deceleration_critical;
-		if(deceleration_critical < - m_CarInfo.max_acceleration) deceleration_critical = - m_CarInfo.max_acceleration;
+        double dist_to_stop = pow(CurrStatus.speed,2)/-(m_CarInfo.max_deceleration * 2.0);
+        double keep_distance = critical_long_front_distance + m_params.additionalBrakingDistance + dist_to_stop;
 
-		double desiredVelocity = (deceleration_critical * dt) + CurrStatus.speed;
+        deceleration_critical = pow((CurrStatus.speed - beh.followVelocity), 2) / ((beh.followDistance - keep_distance) * 2);
+        // if keep_distance will become bigger than beh.followDistance deceleration will go negative
+        deceleration_critical = abs(deceleration_critical);
 
-		if(desiredVelocity > m_params.maxSpeed)
-			desiredVelocity = m_params.maxSpeed;
+        if(keep_distance >= beh.followDistance){
+            // extreme braking, maybe should leave to calculated deceleartion
+            desiredVelocity = 0;
+        }
+        else {
+            // approaching the car or object
+            if(CurrStatus.speed >= beh.followVelocity) {
+                deceleration_critical = -deceleration_critical;
+                desiredVelocity = deceleration_critical * dt + CurrStatus.speed;
+            }
 
-		if((desiredVelocity < 0.1 && desiredVelocity > -0.1) || beh.followDistance <= 0) //use only effective velocities
-			desiredVelocity = 0;
+            // object in front is faster than me - match speed with little extra
+            else {
+                double maxExtraVelocity = 3;
+                double extraVelocity = 0.3 * (beh.followDistance - keep_distance);
+                extraVelocity = (extraVelocity < maxExtraVelocity) ? extraVelocity : maxExtraVelocity;
 
-		//std::cout << "Acc: V: " << desiredVelocity << ", Accel: " << deceleration_critical<< std::endl;
+                desiredVelocity = beh.followVelocity + extraVelocity;
+            }
+        }
 
-		for(unsigned int i = 0; i < m_Path.size(); i++)
+        // check against the limits
+        if(desiredVelocity >= max_velocity) desiredVelocity = max_velocity;
+
+        // for debugging
+        std::cout << "beh_Follow_d: " << beh.followDistance << ", beh.followVel: " << beh.followVelocity << ", Curr_spd: " << CurrStatus.speed << ", dst_to_stp: " << dist_to_stop  << ", keep_dist: " << keep_distance << ", decel_critic: " << deceleration_critical << ", des_vel: " << desiredVelocity << std::endl;
+
+
+        for(unsigned int i = 0; i < m_Path.size(); i++)
 			m_Path.at(i).v = desiredVelocity;
 
 		return desiredVelocity;
