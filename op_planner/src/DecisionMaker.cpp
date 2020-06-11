@@ -64,8 +64,8 @@ void DecisionMaker::Init(const ControllerParams& ctrlParams, const PlannerHNS::P
  		m_params = params;
         m_dSpeedDistanceRatio = 0.4;
 
-        m_pidVelocity.Init(0.01, 0.004, 0.01);
- 		// m_pidVelocity.Init(0.08, 0.005, 0.02);
+        // m_pidVelocity.Init(0.01, 0.004, 0.01);
+ 		m_pidVelocity.Init(0.1, 0.009, 0.02);
 		m_pidVelocity.Setlimit(m_params.maxSpeed, 0);
 
         //m_pidStopping.Init(0.05, 0.05, 0.1);
@@ -446,6 +446,10 @@ void DecisionMaker::InitBehaviorStates()
 
 		for(unsigned int i = 0; i < m_Path.size(); i++)
 			m_Path.at(i).v = desiredVelocity;
+
+		// for debugging or tuning
+        //std::cout << "Forward: " << m_pidVelocity.ToString();
+        //std::cout << ", cur_spd: " << CurrStatus.speed << std::endl;
 
 		//std::cout << "Target Velocity: " << desiredVelocity << ", Change Slowdown: " << bSlowBecauseChange  << std::endl;
 
