@@ -399,7 +399,6 @@ void DecisionMaker::InitBehaviorStates()
 	}
 	else if(beh.state == FOLLOW_STATE)
 	{
-
 		double deceleration_critical = 0.0;
         double desiredVelocity = 0.0;
 
@@ -424,7 +423,7 @@ void DecisionMaker::InitBehaviorStates()
         desiredVelocity = (desiredVelocity <= max_velocity) ? desiredVelocity : max_velocity;
 
         // for debugging
-        std::cout << "beh_Follow_d: " << beh.followDistance << ", beh.followVel: " << beh.followVelocity << ", Curr_spd: " << CurrStatus.speed << ", dst_to_stp: " << dist_to_stop  << ", keep_dist: " << keep_distance << ", decel_critic: " << deceleration_critical << ", des_vel: " << desiredVelocity << std::endl;
+        // std::cout << "beh_Follow_d: " << beh.followDistance << ", beh.followVel: " << beh.followVelocity << ", Curr_spd: " << CurrStatus.speed << ", dst_to_stp: " << dist_to_stop  << ", keep_dist: " << keep_distance << ", decel_critic: " << deceleration_critical << ", des_vel: " << desiredVelocity << std::endl;
 
 
         for(unsigned int i = 0; i < m_Path.size(); i++)
