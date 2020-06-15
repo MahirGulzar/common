@@ -423,7 +423,7 @@ void DecisionMaker::InitBehaviorStates()
         desiredVelocity = (desiredVelocity <= max_velocity) ? desiredVelocity : max_velocity;
 
         // for debugging
-        // std::cout << "FOLLOW - beh_Follow_d: " << beh.followDistance << ", beh.followVel: " << beh.followVelocity << ", Curr_spd: " << CurrStatus.speed << ", dst_to_stp: " << dist_to_stop  << ", keep_dist: " << keep_distance << ", decel_critic: " << deceleration_critical << ", des_vel: " << desiredVelocity << std::endl;
+        // std::cout << "beh_Follow_d: " << beh.followDistance << ", beh.followVel: " << beh.followVelocity << ", Curr_spd: " << CurrStatus.speed << ", dst_to_stp: " << dist_to_stop  << ", keep_dist: " << keep_distance << ", decel_critic: " << deceleration_critical << ", des_vel: " << desiredVelocity << std::endl;
 
 
         for(unsigned int i = 0; i < m_Path.size(); i++)
@@ -443,7 +443,7 @@ void DecisionMaker::InitBehaviorStates()
 		}
 
 		double e = target_velocity - CurrStatus.speed;
-		double desiredVelocity = m_pidVelocity.getPID(e) + CurrStatus.speed;
+		double desiredVelocity = m_pidVelocity.getPID(e);
 
 		if(desiredVelocity>max_velocity)
 			desiredVelocity = max_velocity;
@@ -454,7 +454,7 @@ void DecisionMaker::InitBehaviorStates()
 			m_Path.at(i).v = desiredVelocity;
 
 		// for debugging or tuning
-        //std::cout << "FORWARD - " << m_pidVelocity.ToString();
+        //std::cout << "Forward: " << m_pidVelocity.ToString();
         //std::cout << ", cur_spd: " << CurrStatus.speed << std::endl;
 
 		//std::cout << "Target Velocity: " << desiredVelocity << ", Change Slowdown: " << bSlowBecauseChange  << std::endl;
