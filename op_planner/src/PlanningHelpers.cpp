@@ -1985,7 +1985,7 @@ void PlanningHelpers::GenerateRecommendedSpeed(vector<WayPoint>& path, const dou
 	}
 
 	//SmoothSpeedProfiles(path, 0.4,0.3, 0.01);
-    SmoothSpeedProfiles(path, 0.1, 0.45, 1.0);
+    SmoothSpeedProfiles(path, 0.3, 0.35, 0.5);
 
 }
 
