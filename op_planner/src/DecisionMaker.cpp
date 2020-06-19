@@ -434,32 +434,32 @@ void DecisionMaker::InitBehaviorStates()
 	}
 	else if(beh.state == FORWARD_STATE || beh.state == OBSTACLE_AVOIDANCE_STATE )
 	{
-		double target_velocity = max_velocity;
-		bool bSlowBecauseChange=false;
-		if(m_pCurrentBehaviorState->GetCalcParams()->iCurrSafeTrajectory != m_pCurrentBehaviorState->GetCalcParams()->iCentralTrajectory)
-		{
-			target_velocity*=0.5;
-			bSlowBecauseChange = true;
-		}
+//        double maxExtraVelocity = 2;
+//        double extraVelocity = 0.15 * (max_velocity - CurrStatus.speed);
+//        extraVelocity = (extraVelocity < maxExtraVelocity) ? extraVelocity : maxExtraVelocity;
+//        std::cout << "extraVel: " << extraVelocity;
 
-		double e = target_velocity - CurrStatus.speed;
-		double desiredVelocity = m_pidVelocity.getPID(e) + CurrStatus.speed;
+//        double desiredVelocity =  CurrStatus.speed + extraVelocity;
 
-		if(desiredVelocity>max_velocity)
-			desiredVelocity = max_velocity;
-		else if(desiredVelocity < m_params.minSpeed)
-			desiredVelocity = 0;
 
-		for(unsigned int i = 0; i < m_Path.size(); i++)
-			m_Path.at(i).v = desiredVelocity;
+        double desiredVelocity = max_velocity;
 
-		// for debugging or tuning
-        std::cout << "Forward: " << m_pidVelocity.ToString();
-        std::cout << ", " << CurrStatus.speed << std::endl;
+//        if(desiredVelocity>max_velocity)
+//            desiredVelocity = max_velocity;
+        if(desiredVelocity < m_params.minSpeed)
+            desiredVelocity = 0;
 
-		//std::cout << "Target Velocity: " << desiredVelocity << ", Change Slowdown: " << bSlowBecauseChange  << std::endl;
+        for(unsigned int i = 0; i < m_Path.size(); i++)
+            m_Path.at(i).v = desiredVelocity;
 
-		return desiredVelocity;
+        // for debugging or tuning
+        //std::cout << "Forward: " << m_pidVelocity.ToString();
+//        std::cout << ", cur_spd: " << CurrStatus.speed << std::endl;
+
+        //std::cout << "Target Velocity: " << desiredVelocity << ", Change Slowdown: " << bSlowBecauseChange  << std::endl;
+
+        return desiredVelocity;
+
 	}
 	else if(beh.state == STOP_SIGN_WAIT_STATE || beh.state == TRAFFIC_LIGHT_WAIT_STATE)
 	{
