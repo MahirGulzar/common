@@ -500,7 +500,7 @@ void DecisionMaker::InitBehaviorStates()
 		m_TotalPath.push_back(t_centerTrajectorySmoothed);
 	}
 
-	if(m_TotalPath.size()==0) {cout << "NOT USING DECISION MAKER\n"; return beh;}
+	if(m_TotalPath.size()==0) {std::cout << "NOT USING DECISION MAKER\n"; return beh;}
 
 	UpdateCurrentLane(m_MaxLaneSearchDistance);
 
