@@ -361,6 +361,7 @@ void DecisionMaker::InitBehaviorStates()
 		average_braking_distance = m_params.minIndicationDistance;
 
 	currentBehavior.indicator = PlanningHelpers::GetIndicatorsFromPath(m_Path, state, average_braking_distance );
+    printf("Indicator: %d\n", currentBehavior.indicator);
 
 	return currentBehavior;
  }
@@ -454,8 +455,8 @@ void DecisionMaker::InitBehaviorStates()
 			m_Path.at(i).v = desiredVelocity;
 
 		// for debugging or tuning
-        std::cout << "Forward: " << m_pidVelocity.ToString();
-        std::cout << ", " << CurrStatus.speed << std::endl;
+        //std::cout << "Forward: " << m_pidVelocity.ToString();
+        //std::cout << ", " << CurrStatus.speed << std::endl;
 
 		//std::cout << "Target Velocity: " << desiredVelocity << ", Change Slowdown: " << bSlowBecauseChange  << std::endl;
 
