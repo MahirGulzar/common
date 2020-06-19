@@ -454,8 +454,8 @@ void DecisionMaker::InitBehaviorStates()
 			m_Path.at(i).v = desiredVelocity;
 
 		// for debugging or tuning
-        std::cout << "Forward: " << m_pidVelocity.ToString();
-        std::cout << ", " << CurrStatus.speed << std::endl;
+        //std::cout << "Forward: " << m_pidVelocity.ToString();
+        //std::cout << ", " << CurrStatus.speed << std::endl;
 
 		//std::cout << "Target Velocity: " << desiredVelocity << ", Change Slowdown: " << bSlowBecauseChange  << std::endl;
 
