@@ -221,10 +221,11 @@ void DecisionMaker::InitBehaviorStates()
     double distanceWindow = -pow(car_state.speed, 2)/(m_CarInfo.max_deceleration * 2);
     double bufferLength = 0.0;
 
-    // std::cout << car_state.speed << ", " << m_CarInfo.max_deceleration << ", dW: " << distanceWindow << ", " << (distanceToClosestStopLine <= distanceWindow + bufferLength) << std::endl;
+    std::cout << car_state.speed << ", " << m_CarInfo.max_deceleration << ", dW: " << distanceWindow << ", " << (distanceToClosestStopLine <= distanceWindow + bufferLength) << std::endl;
     if(distanceToClosestStopLine > m_params.giveUpDistance && distanceToClosestStopLine <= distanceWindow + bufferLength)
     {
         m_bWindowReached = true;
+	std::cout << "in window" << std::endl;
     }
 
     if(distanceToClosestStopLine <= m_params.giveUpDistance) {
@@ -396,7 +397,7 @@ void DecisionMaker::InitBehaviorStates()
 
         double desiredVelocity = 0;
 
-        double extraVelocity = 0.2 * beh.stopDistance - critical_long_front_distance;
+        double extraVelocity = 0.2 * (beh.stopDistance - critical_long_front_distance);
         desiredVelocity = desiredVelocity + extraVelocity;
 
 		for(unsigned int i =  0; i < m_Path.size(); i++)
@@ -410,7 +411,7 @@ void DecisionMaker::InitBehaviorStates()
 	{
         double desiredVelocity = 0.0;
         double extraVelocity = 0.0;
-        double normal_deceleration = 0.2;
+        double normal_deceleration = 3.0;
 
         setAcceleration(0.3);
 
@@ -424,7 +425,7 @@ void DecisionMaker::InitBehaviorStates()
         }
         else if (dist_to_stop < beh.followDistance && beh.followDistance <= keep_distance){
             desiredVelocity = beh.followVelocity;
-            setDeceleration(5.0 * normal_deceleration);
+            setDeceleration(3.0 * normal_deceleration);
         }
         else {
             // match car or object speed with buffer of extraVelocity
@@ -456,7 +457,7 @@ void DecisionMaker::InitBehaviorStates()
 	else if(beh.state == FORWARD_STATE || beh.state == OBSTACLE_AVOIDANCE_STATE )
 	{
         setAcceleration(0.3);
-        setDeceleration(1.0);
+        setDeceleration(0.3);
 
         double desiredVelocity = max_velocity;
 
