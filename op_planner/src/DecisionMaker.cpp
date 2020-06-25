@@ -64,6 +64,9 @@ void DecisionMaker::Init(const ControllerParams& ctrlParams, const PlannerHNS::P
  		m_params = params;
         m_dSpeedDistanceRatio = 0.4;
 
+        nh.getParam("/ssc_interface/acceleration_limit", m_acceleration_limit);
+        nh.getParam("/ssc_interface/deceleration_limit", m_deceleration_limit);
+
         // m_pidVelocity.Init(0.01, 0.004, 0.01);
  		m_pidVelocity.Init(0.4, 0.0002, 0.02);
 		m_pidVelocity.Setlimit(m_params.maxSpeed, 0);
@@ -395,6 +398,7 @@ void DecisionMaker::InitBehaviorStates()
 		for(unsigned int i =  0; i < m_Path.size(); i++)
 			m_Path.at(i).v = desiredVelocity;
 
+        setDeceleration(3.0);
 		return desiredVelocity;
 	}
 	else if(beh.state == FOLLOW_STATE)
@@ -408,14 +412,20 @@ void DecisionMaker::InitBehaviorStates()
         if(keep_distance >= beh.followDistance){
             // extreme braking
             desiredVelocity = 0;
+            setDeceleration(10.0);
         }
         else {
             // match car or object speed with buffer of extraVelocity
             double maxExtraVelocity = 7;
             extraVelocity = 0.3 * (beh.followDistance - keep_distance);
+            // check limits for extraVelocity
             extraVelocity = (extraVelocity < maxExtraVelocity) ? extraVelocity : maxExtraVelocity;
             extraVelocity = (extraVelocity >= 0 && extraVelocity < 0.1) ? 0 : extraVelocity;
+
             desiredVelocity = beh.followVelocity + extraVelocity;
+
+            setAcceleration(0.5);
+            setDeceleration(0.5);
         }
 
         // check against the limits
@@ -457,6 +467,9 @@ void DecisionMaker::InitBehaviorStates()
 //        std::cout << ", cur_spd: " << CurrStatus.speed << std::endl;
 
         //std::cout << "Target Velocity: " << desiredVelocity << ", Change Slowdown: " << bSlowBecauseChange  << std::endl;
+
+        setAcceleration(0.3);
+        setDeceleration(3.0);
 
         return desiredVelocity;
 
@@ -515,6 +528,20 @@ void DecisionMaker::InitBehaviorStates()
 	//std::cout << "Eval_i: " << tc.index << ", Curr_i: " <<  m_pCurrentBehaviorState->GetCalcParams()->iCurrSafeTrajectory << ", Prev_i: " << m_pCurrentBehaviorState->GetCalcParams()->iPrevSafeTrajectory << std::endl;
 
 	return beh;
+ }
+
+ void DecisionMaker::setAcceleration(double acceleration_limit) {
+     if (acceleration_limit != m_acceleration_limit) {
+         m_acceleration_limit = acceleration_limit;
+         nh.setParam("/ssc_interface/acceleration_limit", acceleration_limit);
+     }
+ }
+
+ void DecisionMaker::setDeceleration(double deceleration_limit) {
+     if (deceleration_limit != m_deceleration_limit) {
+         m_deceleration_limit = deceleration_limit;
+         nh.setParam("/ssc_interface/deceleration_limit", deceleration_limit);
+     }
  }
 
 } /* namespace PlannerHNS */
