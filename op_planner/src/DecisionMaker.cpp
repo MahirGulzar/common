@@ -221,16 +221,14 @@ void DecisionMaker::InitBehaviorStates()
     double distanceWindow = -pow(car_state.speed, 2)/(m_CarInfo.max_deceleration * 2);
     double bufferLength = 0.0;
 
-    std::cout << car_state.speed << ", " << m_CarInfo.max_deceleration << ", dW: " << distanceWindow << ", " << (distanceToClosestStopLine <= distanceWindow + bufferLength) << std::endl;
+    // std::cout << car_state.speed << ", " << m_CarInfo.max_deceleration << ", dW: " << distanceWindow << ", " << (distanceToClosestStopLine <= distanceWindow + bufferLength) << std::endl;
     if(distanceToClosestStopLine > m_params.giveUpDistance && distanceToClosestStopLine <= distanceWindow + bufferLength)
     {
         m_bWindowReached = true;
-        std::cout << " true " << std::endl;
     }
 
     if(distanceToClosestStopLine <= m_params.giveUpDistance) {
         m_bWindowReached = false;
-        std::cout << " false " << std::endl;
     }
 
  	if(m_bWindowReached)
@@ -397,9 +395,14 @@ void DecisionMaker::InitBehaviorStates()
 	    PlanningHelpers::GetFollowPointOnTrajectory(m_Path, info, beh.stopDistance - critical_long_front_distance, point_index);
 
         double desiredVelocity = 0;
+
+        double extraVelocity = 0.2 * beh.stopDistance - critical_long_front_distance;
+        desiredVelocity = desiredVelocity + extraVelocity;
+
 		for(unsigned int i =  0; i < m_Path.size(); i++)
 			m_Path.at(i).v = desiredVelocity;
 
+        std::cout << "STOPPING - stpDist: " << beh.stopDistance << ", " << critical_long_front_distance << ", spd: " << CurrStatus.speed << ", dV: " << desiredVelocity  << ", eV: " << extraVelocity << std::endl;
 		return desiredVelocity;
 
 	}
@@ -442,7 +445,7 @@ void DecisionMaker::InitBehaviorStates()
         // for debugging
         //std::cout << "beh_Follow_d: " << beh.followDistance << ", beh.followVel: " << beh.followVelocity << ", Curr_spd: " << CurrStatus.speed << ", dst_to_stp: " << dist_to_stop  << ", keep_dist: " << keep_distance << ", extraVel: " << extraVelocity << ", des_vel: " << desiredVelocity << std::endl;
         // beh_Follow_d, beh.followVel, Curr_spd, dst_to_stp, keep_dist, extraVel, des_vel
-        std::cout << beh.followDistance << ", " << beh.followVelocity << ", " << CurrStatus.speed << ", " << dist_to_stop  << ", " << keep_distance << ", " << extraVelocity << ", " << desiredVelocity << std::endl;
+        std::cout << "FOLLOW - fD: " << beh.followDistance << ", fV: " << beh.followVelocity << ", spd: " << CurrStatus.speed << ", " << dist_to_stop  << ", " << keep_distance << ", " << extraVelocity << ", " << desiredVelocity << std::endl;
 
         for(unsigned int i = 0; i < m_Path.size(); i++)
 			m_Path.at(i).v = desiredVelocity;
@@ -465,6 +468,7 @@ void DecisionMaker::InitBehaviorStates()
 
         // for debugging or tuning
         //std::cout << "Target Velocity: " << desiredVelocity << ", Change Slowdown: " << bSlowBecauseChange  << std::endl;
+        std::cout << "FORWARD - spd: " << CurrStatus.speed << ", dV: " << desiredVelocity << std::endl;
 
         return desiredVelocity;
 
