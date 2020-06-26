@@ -219,7 +219,7 @@ void DecisionMaker::InitBehaviorStates()
   	// returned to calc distance using max_deceleration
     // double distanceWindow = pValues->currentVelocity / m_dSpeedDistanceRatio;
     double distanceWindow = -pow(car_state.speed, 2)/(m_CarInfo.max_deceleration * 2);
-    double bufferLength = 0.0;
+    double bufferLength = 1.0;
 
     std::cout << car_state.speed << ", " << m_CarInfo.max_deceleration << ", dW: " << distanceWindow << ", " << (distanceToClosestStopLine <= distanceWindow + bufferLength) << std::endl;
     if(distanceToClosestStopLine > m_params.giveUpDistance && distanceToClosestStopLine <= distanceWindow + bufferLength)
