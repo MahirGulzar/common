@@ -420,13 +420,13 @@ void DecisionMaker::InitBehaviorStates()
 
         if(dist_to_stop >= beh.followDistance){
             // extreme braking - 0 or beh.followVelocity ??
-            desiredVelocity = 0;
+            desiredVelocity = beh.followVelocity;
             setDeceleration(10.0);
         }
-        else if (dist_to_stop < beh.followDistance && beh.followDistance <= keep_distance){
-            desiredVelocity = beh.followVelocity;
-            setDeceleration(3.0 * normal_deceleration);
-        }
+ //       else if (dist_to_stop < beh.followDistance && beh.followDistance <= keep_distance){
+ //           desiredVelocity = beh.followVelocity;
+ //           setDeceleration(3.0 * normal_deceleration);
+ //       }
         else {
             // match car or object speed with buffer of extraVelocity
             double maxExtraVelocity = 7;
