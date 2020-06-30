@@ -64,6 +64,9 @@ void DecisionMaker::Init(const ControllerParams& ctrlParams, const PlannerHNS::P
  		m_params = params;
         m_dSpeedDistanceRatio = 0.4;
 
+        nh.getParam("/ssc_interface/acceleration_limit", m_acceleration_limit);
+        nh.getParam("/ssc_interface/deceleration_limit", m_deceleration_limit);
+
         // m_pidVelocity.Init(0.01, 0.004, 0.01);
  		m_pidVelocity.Init(0.4, 0.0002, 0.02);
 		m_pidVelocity.Setlimit(m_params.maxSpeed, 0);
@@ -212,11 +215,18 @@ void DecisionMaker::InitBehaviorStates()
   	// distanceToClosestStopLine << ", " << m_params.giveUpDistance << ", " << pValues->minStoppingDistance + 1.0 << ", " << m_CarInfo.max_deceleration << std::endl;
   	// changed 1.0 to 5.0
   	// std::cout <<  distanceToClosestStopLine << ", " << (pValues->minStoppingDistance + 1.0) << std::endl;
-    double distanceWindow = pValues->currentVelocity / m_dSpeedDistanceRatio;
-    double bufferLength = 0.0;
 
+  	// returned to calc distance using max_deceleration
+    // double distanceWindow = pValues->currentVelocity / m_dSpeedDistanceRatio;
+    double distanceWindow = -pow(car_state.speed, 2)/(m_CarInfo.max_deceleration * 2);
+    double bufferLength = 1.0;
+
+    // std::cout << car_state.speed << ", " << m_CarInfo.max_deceleration << ", dW: " << distanceWindow << ", " << (distanceToClosestStopLine <= distanceWindow + bufferLength) << std::endl;
     if(distanceToClosestStopLine > m_params.giveUpDistance && distanceToClosestStopLine <= distanceWindow + bufferLength)
+    {
         m_bWindowReached = true;
+	// std::cout << "in window" << std::endl;
+    }
 
     if(distanceToClosestStopLine <= m_params.giveUpDistance) {
         m_bWindowReached = false;
@@ -381,42 +391,56 @@ void DecisionMaker::InitBehaviorStates()
 
 	if(beh.state == TRAFFIC_LIGHT_STOP_STATE || beh.state == STOP_SIGN_STOP_STATE)
 	{
-		PlanningHelpers::GetFollowPointOnTrajectory(m_Path, info, beh.stopDistance - critical_long_front_distance, point_index);
+        setAcceleration(0.3);
+        setDeceleration(1.5);
 
-		double e = beh.stopDistance;
-		double desiredVelocity = m_pidStopping.getPID(e);
+	    PlanningHelpers::GetFollowPointOnTrajectory(m_Path, info, beh.stopDistance - critical_long_front_distance, point_index);
 
-//		std::cout << "Stopping : e=" << e << ", desiredPID=" << desiredVelocity << ", PID: " << m_pidStopping.ToString() << std::endl;
+        double desiredVelocity = 0;
 
-		if(desiredVelocity > max_velocity)
-			desiredVelocity = max_velocity;
-		else if(desiredVelocity < m_params.minSpeed)
-			desiredVelocity = 0;
+        double extraVelocity = 0.2 * (beh.stopDistance - critical_long_front_distance);
+        desiredVelocity = desiredVelocity + extraVelocity;
 
 		for(unsigned int i =  0; i < m_Path.size(); i++)
 			m_Path.at(i).v = desiredVelocity;
 
+        std::cout << "STOPPING - stpDist: " << beh.stopDistance << ", " << critical_long_front_distance << ", spd: " << CurrStatus.speed << ", dV: " << desiredVelocity  << ", eV: " << extraVelocity << std::endl;
 		return desiredVelocity;
+
 	}
 	else if(beh.state == FOLLOW_STATE)
 	{
         double desiredVelocity = 0.0;
         double extraVelocity = 0.0;
+        double normal_deceleration = 3.0;
 
-        double dist_to_stop = pow(CurrStatus.speed,2)/-(m_CarInfo.max_deceleration * 2.0);
+        setAcceleration(0.3);
+
+        double dist_to_stop = pow(CurrStatus.speed,2)/(normal_deceleration * 2.0);
         double keep_distance = critical_long_front_distance + m_params.additionalBrakingDistance + dist_to_stop;
 
-        if(keep_distance >= beh.followDistance){
-            // extreme braking
-            desiredVelocity = 0;
+        if(dist_to_stop >= beh.followDistance){
+            // extreme braking - 0 or beh.followVelocity ??
+            desiredVelocity = beh.followVelocity;
+            std::cout << "FOLLOW extr - ";
+            setDeceleration(20.0);
         }
+ //       else if (dist_to_stop < beh.followDistance && beh.followDistance <= keep_distance){
+ //           desiredVelocity = beh.followVelocity;
+ //           setDeceleration(3.0 * normal_deceleration);
+ //       }
         else {
             // match car or object speed with buffer of extraVelocity
             double maxExtraVelocity = 7;
             extraVelocity = 0.3 * (beh.followDistance - keep_distance);
+            // check limits for extraVelocity
             extraVelocity = (extraVelocity < maxExtraVelocity) ? extraVelocity : maxExtraVelocity;
             extraVelocity = (extraVelocity >= 0 && extraVelocity < 0.1) ? 0 : extraVelocity;
+
             desiredVelocity = beh.followVelocity + extraVelocity;
+
+            std::cout << "FOLLOW norm - ";
+            setDeceleration(normal_deceleration);
         }
 
         // check against the limits
@@ -425,7 +449,7 @@ void DecisionMaker::InitBehaviorStates()
         // for debugging
         //std::cout << "beh_Follow_d: " << beh.followDistance << ", beh.followVel: " << beh.followVelocity << ", Curr_spd: " << CurrStatus.speed << ", dst_to_stp: " << dist_to_stop  << ", keep_dist: " << keep_distance << ", extraVel: " << extraVelocity << ", des_vel: " << desiredVelocity << std::endl;
         // beh_Follow_d, beh.followVel, Curr_spd, dst_to_stp, keep_dist, extraVel, des_vel
-        std::cout << beh.followDistance << ", " << beh.followVelocity << ", " << CurrStatus.speed << ", " << dist_to_stop  << ", " << keep_distance << ", " << extraVelocity << ", " << desiredVelocity << std::endl;
+        std::cout << "fD: " << beh.followDistance << ", fV: " << beh.followVelocity << ", spd: " << CurrStatus.speed << ", " << dist_to_stop  << ", " << keep_distance << ", " << extraVelocity << ", " << desiredVelocity << std::endl;
 
         for(unsigned int i = 0; i < m_Path.size(); i++)
 			m_Path.at(i).v = desiredVelocity;
@@ -435,32 +459,24 @@ void DecisionMaker::InitBehaviorStates()
 	}
 	else if(beh.state == FORWARD_STATE || beh.state == OBSTACLE_AVOIDANCE_STATE )
 	{
-		double target_velocity = max_velocity;
-		bool bSlowBecauseChange=false;
-		if(m_pCurrentBehaviorState->GetCalcParams()->iCurrSafeTrajectory != m_pCurrentBehaviorState->GetCalcParams()->iCentralTrajectory)
-		{
-			target_velocity*=0.5;
-			bSlowBecauseChange = true;
-		}
+        setAcceleration(0.3);
+        setDeceleration(0.3);
 
-		double e = target_velocity - CurrStatus.speed;
-		double desiredVelocity = m_pidVelocity.getPID(e) + CurrStatus.speed;
+        double desiredVelocity = max_velocity;
 
-		if(desiredVelocity>max_velocity)
-			desiredVelocity = max_velocity;
-		else if(desiredVelocity < m_params.minSpeed)
-			desiredVelocity = 0;
 
-		for(unsigned int i = 0; i < m_Path.size(); i++)
-			m_Path.at(i).v = desiredVelocity;
+        if(desiredVelocity < m_params.minSpeed)
+            desiredVelocity = 0;
 
-		// for debugging or tuning
-        //std::cout << "Forward: " << m_pidVelocity.ToString();
-        //std::cout << ", " << CurrStatus.speed << std::endl;
+        for(unsigned int i = 0; i < m_Path.size(); i++)
+            m_Path.at(i).v = desiredVelocity;
 
-		//std::cout << "Target Velocity: " << desiredVelocity << ", Change Slowdown: " << bSlowBecauseChange  << std::endl;
+        // for debugging or tuning
+        //std::cout << "Target Velocity: " << desiredVelocity << ", Change Slowdown: " << bSlowBecauseChange  << std::endl;
+        std::cout << "FORWARD - spd: " << CurrStatus.speed << ", dV: " << desiredVelocity << std::endl;
 
-		return desiredVelocity;
+        return desiredVelocity;
+
 	}
 	else if(beh.state == STOP_SIGN_WAIT_STATE || beh.state == TRAFFIC_LIGHT_WAIT_STATE)
 	{
@@ -516,6 +532,20 @@ void DecisionMaker::InitBehaviorStates()
 	//std::cout << "Eval_i: " << tc.index << ", Curr_i: " <<  m_pCurrentBehaviorState->GetCalcParams()->iCurrSafeTrajectory << ", Prev_i: " << m_pCurrentBehaviorState->GetCalcParams()->iPrevSafeTrajectory << std::endl;
 
 	return beh;
+ }
+
+ void DecisionMaker::setAcceleration(double acceleration_limit) {
+     if (acceleration_limit != m_acceleration_limit) {
+         m_acceleration_limit = acceleration_limit;
+         nh.setParam("/ssc_interface/acceleration_limit", acceleration_limit);
+     }
+ }
+
+ void DecisionMaker::setDeceleration(double deceleration_limit) {
+     if (deceleration_limit != m_deceleration_limit) {
+         m_deceleration_limit = deceleration_limit;
+         nh.setParam("/ssc_interface/deceleration_limit", deceleration_limit);
+     }
  }
 
 } /* namespace PlannerHNS */

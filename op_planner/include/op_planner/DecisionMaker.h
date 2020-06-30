@@ -8,6 +8,7 @@
 #ifndef BEHAVIOR_DECISION_MAKER
 #define BEHAVIOR_DECISION_MAKER
 
+#include <ros/ros.h>
 #include "op_planner/BehaviorStateMachine.h"
 #include "op_planner/PlannerCommonDef.h"
 #include "op_planner/RoadNetwork.h"
@@ -88,6 +89,11 @@ protected:
 	std::vector<std::vector<WayPoint> > m_TotalPath;
 	PlannerHNS::PlanningParams m_params;
 
+    ros::NodeHandle nh;
+    double m_acceleration_limit;
+    double m_deceleration_limit;
+    void setAcceleration(double acceleration_limit);
+    void setDeceleration(double deceleration_limit);
 };
 
 } /* namespace PlannerHNS */

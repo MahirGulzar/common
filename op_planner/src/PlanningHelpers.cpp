@@ -1953,7 +1953,7 @@ void PlanningHelpers::GenerateRecommendedSpeed(vector<WayPoint>& path, const dou
 {
 	CalcAngleAndCostAndCurvatureAnd2D(path);
 
-	SmoothCurvatureProfiles(path, 0.4, 0.3, 0.01);
+    SmoothCurvatureProfiles(path, 0.4, 0.3, 0.01);
 
 	ExtendMinCostAlongPath(path);
 
