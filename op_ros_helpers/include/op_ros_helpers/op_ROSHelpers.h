@@ -219,6 +219,8 @@ public:
 
 	static void TrajectoriesToMarkers(const std::vector<std::vector<std::vector<PlannerHNS::WayPoint> > >& paths, visualization_msgs::MarkerArray& markerArray);
 
+    static void TrajectoriesToIndicatorMarkers(const std::vector<std::vector<std::vector<PlannerHNS::WayPoint> > >&, visualization_msgs::MarkerArray&);
+
 	static void TrajectoriesToColoredMarkers(const std::vector<std::vector<PlannerHNS::WayPoint> >& paths,const std::vector<PlannerHNS::TrajectoryCost>& traj_costs, const int& iClosest, visualization_msgs::MarkerArray& markerArray);
 
 	static void InitCollisionPointsMarkers(const int& nMarkers, visualization_msgs::MarkerArray& col_points);

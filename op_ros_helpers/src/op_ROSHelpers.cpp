@@ -654,6 +654,53 @@ void ROSHelpers::TrajectoriesToMarkers(const std::vector<std::vector<std::vector
 	}
 }
 
+void ROSHelpers::TrajectoriesToIndicatorMarkers(const std::vector<std::vector<std::vector<PlannerHNS::WayPoint> > >& paths, visualization_msgs::MarkerArray& markerArray)
+{
+	visualization_msgs::Marker lane_waypoint_marker;
+	lane_waypoint_marker.header.frame_id = "map";
+	lane_waypoint_marker.header.stamp = ros::Time();
+	lane_waypoint_marker.ns = "global_lane_array_marker";
+	lane_waypoint_marker.type = visualization_msgs::Marker::POINTS;
+	lane_waypoint_marker.action = visualization_msgs::Marker::ADD;
+	lane_waypoint_marker.scale.x = 0.5;
+	lane_waypoint_marker.scale.y = 0.5;
+	//lane_waypoint_marker.scale.z = 0.1;
+	lane_waypoint_marker.frame_locked = false;
+	std_msgs::ColorRGBA  total_color, curr_color;
+
+	int count = 0;
+	for (unsigned int il = 0; il < paths.size(); il++)
+	{
+		for (unsigned int i = 0; i < paths.at(il).size(); i++)
+		{
+			lane_waypoint_marker.points.clear();
+			lane_waypoint_marker.id = count;
+
+			for (unsigned int j=0; j < paths.at(il).at(i).size(); j++)
+			{
+              if (paths.at(il).at(i).at(j).actionCost.at(0).first != 0){
+                  geometry_msgs::Point point;
+
+                  point.x = paths.at(il).at(i).at(j).pos.x;
+                  point.y = paths.at(il).at(i).at(j).pos.y;
+                  point.z = paths.at(il).at(i).at(j).pos.z;
+
+                  lane_waypoint_marker.points.push_back(point);
+              }
+			}
+
+			lane_waypoint_marker.color.a = 0.9;
+
+			lane_waypoint_marker.color.r = 1.0;
+			lane_waypoint_marker.color.g = 1.0;
+			lane_waypoint_marker.color.b = 0.0;
+
+			markerArray.markers.push_back(lane_waypoint_marker);
+			count++;
+		}
+	}
+}
+
 void ROSHelpers::TrajectoriesToColoredMarkers(const std::vector<std::vector<PlannerHNS::WayPoint> >& paths, const std::vector<PlannerHNS::TrajectoryCost>& traj_costs,const int& iClosest, visualization_msgs::MarkerArray& markerArray)
 {
 	visualization_msgs::Marker lane_waypoint_marker;

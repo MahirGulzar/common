@@ -361,8 +361,6 @@ void DecisionMaker::InitBehaviorStates()
 		average_braking_distance = m_params.minIndicationDistance;
 
 	currentBehavior.indicator = PlanningHelpers::GetIndicatorsFromPath(m_Path, state, average_braking_distance );
-    printf("Indicator: %d\n", currentBehavior.indicator);
-
 	return currentBehavior;
  }
 
