@@ -419,9 +419,9 @@ void DecisionMaker::InitBehaviorStates()
 
         if(dist_to_stop >= beh.followDistance){
             // extreme braking - 0 or beh.followVelocity ??
-            desiredVelocity = beh.followVelocity;
+            desiredVelocity = 0.0;
             std::cout << "FOLLOW extr - ";
-            setDeceleration(20.0);
+            setDeceleration(0.0);
         }
  //       else if (dist_to_stop < beh.followDistance && beh.followDistance <= keep_distance){
  //           desiredVelocity = beh.followVelocity;
