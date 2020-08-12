@@ -1347,6 +1347,7 @@ visualization_msgs::Marker createMarker(const std::string& ns, int id, int type)
   marker.type = type;
   marker.lifetime = ros::Duration();
   marker.frame_locked = true;
+  marker.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, 0);
   disableMarker(marker);
   return marker;
 }
