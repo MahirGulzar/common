@@ -113,6 +113,8 @@ public:
 
 	static void SmoothGlobalPathSpeed(std::vector<WayPoint>& path);
 
+    static void ExtendMinCostAlongPath(std::vector<WayPoint>& path_in);
+
 	static void GenerateRecommendedSpeed(std::vector<WayPoint>& path, const double& max_speed, const double& speedProfileFactor);
 
 //	static WayPoint* BuildPlanningSearchTree(Lane* l, const WayPoint& prevWayPointIndex,
