@@ -1141,6 +1141,7 @@ void PlanningHelpers::CreateManualBranch(std::vector<WayPoint>& path, const int&
 
 void PlanningHelpers::FixPathDensity(vector<WayPoint>& path, const double& distanceDensity)
 {
+    return;
 	if(path.size() == 0 || distanceDensity==0) return;
 
 	double d = 0, a = 0;
