@@ -395,11 +395,12 @@ void DecisionMaker::InitBehaviorStates()
 
 	    PlanningHelpers::GetFollowPointOnTrajectory(m_Path, info, beh.stopDistance - critical_long_front_distance, point_index);
 
-        double desiredVelocity = 0;
+        setDeceleration(-m_CarInfo.max_deceleration);
+	    double desiredVelocity = 0;
 
         double extraVelocity = 0.3 * (beh.stopDistance - critical_long_front_distance);
         desiredVelocity = desiredVelocity + extraVelocity;
-        desiredVelocity = std::max(0, std::min(desiredVelocity, max_velocity));
+        desiredVelocity = std::max(0.0, std::min(desiredVelocity, max_velocity));
 
 	for(unsigned int i =  0; i < m_Path.size(); i++)
 		m_Path.at(i).v = desiredVelocity;
@@ -410,6 +411,8 @@ void DecisionMaker::InitBehaviorStates()
 	}
 	else if(beh.state == FOLLOW_STATE)
 	{
+        setDeceleration(-m_CarInfo.max_deceleration);
+
         double desiredVelocity = 0.0;
         double extraVelocity = 0.0;
         double normal_deceleration = -m_CarInfo.max_deceleration;
@@ -442,7 +445,7 @@ void DecisionMaker::InitBehaviorStates()
         }
 
         // check against the limits
-        desiredVelocity = std::max(0, std::min(desiredVelocity, max_velocity));
+        desiredVelocity = std::max(0.0, std::min(desiredVelocity, max_velocity));
 
         // for debugging
         //std::cout << "beh_Follow_d: " << beh.followDistance << ", beh.followVel: " << beh.followVelocity << ", Curr_spd: " << CurrStatus.speed << ", dst_to_stp: " << dist_to_stop  << ", keep_dist: " << keep_distance << ", extraVel: " << extraVelocity << ", des_vel: " << desiredVelocity << std::endl;
@@ -457,7 +460,7 @@ void DecisionMaker::InitBehaviorStates()
 	}
 	else if(beh.state == FORWARD_STATE || beh.state == OBSTACLE_AVOIDANCE_STATE )
 	{
-
+        setDeceleration(-m_CarInfo.max_deceleration);
         double desiredVelocity = max_velocity;
 
 
