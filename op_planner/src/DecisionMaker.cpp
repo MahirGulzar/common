@@ -392,67 +392,62 @@ void DecisionMaker::InitBehaviorStates()
 
 	if(beh.state == TRAFFIC_LIGHT_STOP_STATE || beh.state == STOP_SIGN_STOP_STATE)
 	{
+		double desiredVelocity = 0.0;
+		double min_dist = pow(CurrStatus.speed, 2)/(4.0 * 2);
+		std::cout << "STOPPING ";
+		if (beh.stopDistance <= min_dist)
+		{
+			setAcceleration(3.0);
+			setDeceleration(0.0);
+			desiredVelocity = 0.0;
+			std::cout << "EXTREME BRAKING ";
+		}
+		else 
+		{
+			setAcceleration(3.0);
+			setDeceleration(5.0);
 
-	    PlanningHelpers::GetFollowPointOnTrajectory(m_Path, info, beh.stopDistance - critical_long_front_distance, point_index);
+			double k = 0.2;
+			desiredVelocity = beh.stopDistance * k;	
+			desiredVelocity = std::min(std::max(desiredVelocity, 0.0), max_velocity);
+			std::cout << "NORMAL BRAKING ";
+		}
 
-        setDeceleration(-m_CarInfo.max_deceleration);
-	    double desiredVelocity = 0;
 
-        double extraVelocity = 0.3 * (beh.stopDistance - critical_long_front_distance);
-        desiredVelocity = desiredVelocity + extraVelocity;
-        desiredVelocity = std::max(0.0, std::min(desiredVelocity, max_velocity));
+		for(unsigned int i =  0; i < m_Path.size(); i++)
+			m_Path.at(i).v = desiredVelocity;
 
-	for(unsigned int i =  0; i < m_Path.size(); i++)
-		m_Path.at(i).v = desiredVelocity;
-
-        std::cout << "STOPPING - stpDist: " << beh.stopDistance << ", " << critical_long_front_distance << ", spd: " << CurrStatus.speed << ", dV: " << desiredVelocity  << ", eV: " << extraVelocity << std::endl;
-	return desiredVelocity;
+		std::cout << "- stpDist: " << beh.stopDistance << ", spd: " << CurrStatus.speed << ", dV: " << desiredVelocity  << std::endl;
+		return desiredVelocity;
 
 	}
 	else if(beh.state == FOLLOW_STATE)
 	{
-        setDeceleration(-m_CarInfo.max_deceleration);
+		double desiredVelocity = 0.0;
+		double min_dist = pow(CurrStatus.speed - beh.followVelocity, 2)/(4.0 * 2);
+		std::cout << "FOLLOWING ";
+		if (beh.followDistance <= min_dist)
+		{
+			setAcceleration(2.0);
+			setDeceleration(0.0);
+			desiredVelocity = 0.0;
+			std::cout << "EXTREME BRAKING ";
+		}
+		else 
+		{
+			setAcceleration(2.0);
+			setDeceleration(5.0);
 
-        double desiredVelocity = 0.0;
-        double extraVelocity = 0.0;
-        double normal_deceleration = -m_CarInfo.max_deceleration;
+			double k = 0.2;
+			double normal_dist = beh.followDistance - 2 *beh.followVelocity; 
+			desiredVelocity = normal_dist * k + beh.followVelocity;	
+			desiredVelocity = std::min(std::max(desiredVelocity, 0.0), max_velocity);
+			std::cout << "NORMAL BRAKING ";
+		}
 
-        double dist_to_stop = pow(CurrStatus.speed,2)/(normal_deceleration * 2.0);
-        double keep_distance = critical_long_front_distance + m_params.additionalBrakingDistance + dist_to_stop;
+		std::cout << "fD: " << beh.followDistance << ", fV: " << beh.followVelocity << ", spd: " << CurrStatus.speed << ", dV: " << desiredVelocity << ", " << min_dist <<  std::endl;
 
-        if(dist_to_stop >= beh.followDistance){
-            // extreme braking - 0 or beh.followVelocity ??
-            desiredVelocity = 0.0;
-            std::cout << "FOLLOW extr - ";
-            setDeceleration(0.0);
-        }
- //       else if (dist_to_stop < beh.followDistance && beh.followDistance <= keep_distance){
- //           desiredVelocity = beh.followVelocity;
- //           setDeceleration(3.0 * normal_deceleration);
- //       }
-        else {
-            // match car or object speed with buffer of extraVelocity
-            double maxExtraVelocity = 7;
-            extraVelocity = 0.3 * (beh.followDistance - keep_distance);
-            // check limits for extraVelocity
-            extraVelocity = (extraVelocity < maxExtraVelocity) ? extraVelocity : maxExtraVelocity;
-            extraVelocity = (extraVelocity >= 0 && extraVelocity < 0.1) ? 0 : extraVelocity;
-
-            desiredVelocity = beh.followVelocity + extraVelocity;
-
-            std::cout << "FOLLOW norm - ";
-            setDeceleration(normal_deceleration);
-        }
-
-        // check against the limits
-        desiredVelocity = std::max(0.0, std::min(desiredVelocity, max_velocity));
-
-        // for debugging
-        //std::cout << "beh_Follow_d: " << beh.followDistance << ", beh.followVel: " << beh.followVelocity << ", Curr_spd: " << CurrStatus.speed << ", dst_to_stp: " << dist_to_stop  << ", keep_dist: " << keep_distance << ", extraVel: " << extraVelocity << ", des_vel: " << desiredVelocity << std::endl;
-        // beh_Follow_d, beh.followVel, Curr_spd, dst_to_stp, keep_dist, extraVel, des_vel
-        std::cout << "fD: " << beh.followDistance << ", fV: " << beh.followVelocity << ", spd: " << CurrStatus.speed << ", " << dist_to_stop  << ", " << keep_distance << ", " << extraVelocity << ", " << desiredVelocity << std::endl;
-
-        for(unsigned int i = 0; i < m_Path.size(); i++)
+		for(unsigned int i = 0; i < m_Path.size(); i++)
 			m_Path.at(i).v = desiredVelocity;
 
 		return desiredVelocity;
@@ -460,21 +455,22 @@ void DecisionMaker::InitBehaviorStates()
 	}
 	else if(beh.state == FORWARD_STATE || beh.state == OBSTACLE_AVOIDANCE_STATE )
 	{
-        setDeceleration(-m_CarInfo.max_deceleration);
-        double desiredVelocity = max_velocity;
+		setAcceleration(1.5);
+		setDeceleration(1.5);
+		double desiredVelocity = max_velocity;
 
 
-        if(desiredVelocity < m_params.minSpeed)
-            desiredVelocity = 0;
+		if(desiredVelocity < m_params.minSpeed)
+		    desiredVelocity = 0;
 
-        for(unsigned int i = 0; i < m_Path.size(); i++)
-            m_Path.at(i).v = desiredVelocity;
+		for(unsigned int i = 0; i < m_Path.size(); i++)
+		    m_Path.at(i).v = desiredVelocity;
 
-        // for debugging or tuning
-        //std::cout << "Target Velocity: " << desiredVelocity << ", Change Slowdown: " << bSlowBecauseChange  << std::endl;
-        std::cout << "FORWARD - spd: " << CurrStatus.speed << ", dV: " << desiredVelocity << std::endl;
+		// for debugging or tuning
+		//std::cout << "Target Velocity: " << desiredVelocity << ", Change Slowdown: " << bSlowBecauseChange  << std::endl;
+		std::cout << "FORWARD - spd: " << CurrStatus.speed << ", dV: " << desiredVelocity << std::endl;
 
-        return desiredVelocity;
+		return desiredVelocity;
 
 	}
 	else if(beh.state == STOP_SIGN_WAIT_STATE || beh.state == TRAFFIC_LIGHT_WAIT_STATE)
