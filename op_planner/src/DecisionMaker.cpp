@@ -390,24 +390,23 @@ void DecisionMaker::InitBehaviorStates()
 	unsigned int point_index = 0;
 	double critical_long_front_distance = m_CarInfo.length/2.0;
 
+	double k = 0.2;
+
 	if(beh.state == TRAFFIC_LIGHT_STOP_STATE || beh.state == STOP_SIGN_STOP_STATE)
 	{
 		double desiredVelocity = 0.0;
 		double min_dist = pow(CurrStatus.speed, 2)/(4.0 * 2);
 		std::cout << "STOPPING ";
-		if (beh.stopDistance <= min_dist)
+		if (beh.stopDistance <= min_dist && m_params.enableQuickStop)
 		{
-			setAcceleration(3.0);
 			setDeceleration(0.0);
 			desiredVelocity = 0.0;
 			std::cout << "EXTREME BRAKING ";
 		}
 		else 
 		{
-			setAcceleration(3.0);
 			setDeceleration(5.0);
 
-			double k = 0.2;
 			desiredVelocity = beh.stopDistance * k;	
 			desiredVelocity = std::min(std::max(desiredVelocity, 0.0), max_velocity);
 			std::cout << "NORMAL BRAKING ";
@@ -426,20 +425,18 @@ void DecisionMaker::InitBehaviorStates()
 		double desiredVelocity = 0.0;
 		double min_dist = pow(CurrStatus.speed - beh.followVelocity, 2)/(4.0 * 2);
 		std::cout << "FOLLOWING ";
-		if (beh.followDistance <= min_dist)
+		if (beh.followDistance <= min_dist && m_params.enableQuickStop)
 		{
-			setAcceleration(2.0);
 			setDeceleration(0.0);
 			desiredVelocity = 0.0;
 			std::cout << "EXTREME BRAKING ";
 		}
 		else 
 		{
-			setAcceleration(2.0);
 			setDeceleration(5.0);
 
-			double k = 0.2;
-			double normal_dist = beh.followDistance - 2 *beh.followVelocity; 
+			double c = 2.0;
+			double normal_dist = beh.followDistance - c * CurrStatus.speed;
 			desiredVelocity = normal_dist * k + beh.followVelocity;	
 			desiredVelocity = std::min(std::max(desiredVelocity, 0.0), max_velocity);
 			std::cout << "NORMAL BRAKING ";
@@ -455,10 +452,8 @@ void DecisionMaker::InitBehaviorStates()
 	}
 	else if(beh.state == FORWARD_STATE || beh.state == OBSTACLE_AVOIDANCE_STATE )
 	{
-		setAcceleration(1.5);
 		setDeceleration(1.5);
 		double desiredVelocity = max_velocity;
-
 
 		if(desiredVelocity < m_params.minSpeed)
 		    desiredVelocity = 0;

@@ -907,6 +907,7 @@ public:
 	bool 	enableHeadingSmoothing;
 	bool 	enableTrafficLightBehavior;
 	bool 	enableStopSignBehavior;
+	bool    enableQuickStop;
 
 	bool 	enabTrajectoryVelocities;
 	double minIndicationDistance;
@@ -947,6 +948,7 @@ public:
 		enableTrafficLightBehavior		= false;
 		enableLaneChange 				= false;
 		enableStopSignBehavior			= false;
+        enableQuickStop                 = false;
 		enabTrajectoryVelocities 		= false;
 		minIndicationDistance			= 15;
 	}
