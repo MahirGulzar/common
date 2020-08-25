@@ -391,6 +391,8 @@ void DecisionMaker::InitBehaviorStates()
 	double critical_long_front_distance = m_CarInfo.length/2.0;
 
 	double k = 0.2;
+    double upper_lim = 1.0;
+    double lower_lim = 0.5;
 
 	if(beh.state == TRAFFIC_LIGHT_STOP_STATE || beh.state == STOP_SIGN_STOP_STATE)
 	{
@@ -407,8 +409,14 @@ void DecisionMaker::InitBehaviorStates()
 		{
 			setDeceleration(5.0);
 
-			desiredVelocity = beh.stopDistance * k;	
-			desiredVelocity = std::min(std::max(desiredVelocity, 0.0), max_velocity);
+			desiredVelocity = beh.stopDistance * k;
+
+            if(desiredVelocity <= lower_lim)
+                desiredVelocity = 0;
+            else if(lower_lim < desiredVelocity && desiredVelocity < upper_lim)
+                desiredVelocity = upper_lim;
+
+            desiredVelocity = std::min(std::max(desiredVelocity, 0.0), max_velocity);
 			std::cout << "NORMAL BRAKING ";
 		}
 
@@ -435,9 +443,15 @@ void DecisionMaker::InitBehaviorStates()
 		{
 			setDeceleration(5.0);
 
-			double c = 2.0;
+			static double c = 2.0;
 			double normal_dist = beh.followDistance - c * CurrStatus.speed;
-			desiredVelocity = normal_dist * k + beh.followVelocity;	
+			desiredVelocity = normal_dist * k + beh.followVelocity;
+
+			if(desiredVelocity <= lower_lim)
+			    desiredVelocity = 0;
+			else if(lower_lim < desiredVelocity && desiredVelocity < upper_lim)
+			    desiredVelocity = upper_lim;
+
 			desiredVelocity = std::min(std::max(desiredVelocity, 0.0), max_velocity);
 			std::cout << "NORMAL BRAKING ";
 		}
