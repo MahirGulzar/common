@@ -318,7 +318,8 @@ void TrajectoryDynamicCosts::CalculateLateralAndLongitudinalCostsStatic(vector<T
 		const WayPoint& currState, const vector<WayPoint>& contourPoints, const PlanningParams& params,
 		const CAR_BASIC_INFO& carInfo, const VehicleState& vehicleState)
 {
-	double critical_lateral_distance =  carInfo.width/2.0 + params.horizontalSafetyDistancel;
+	// safety box and followDist are calculated here
+    double critical_lateral_distance =  carInfo.width/2.0 + params.horizontalSafetyDistancel;
 	double critical_long_front_distance =  carInfo.wheel_base/2.0 + carInfo.length/2.0 + params.verticalSafetyDistance;
 	double critical_long_back_distance =  carInfo.length/2.0 + params.verticalSafetyDistance - carInfo.wheel_base/2.0;
 
@@ -433,7 +434,6 @@ void TrajectoryDynamicCosts::CalculateLateralAndLongitudinalCostsStatic(vector<T
 					trajectoryCosts.at(iCostIndex).closest_obj_velocity = contourPoints.at(icon).v;
 				}
 			}
-
 			iCostIndex++;
 		}
 	}
