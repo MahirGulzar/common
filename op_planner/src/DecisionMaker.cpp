@@ -447,7 +447,15 @@ void DecisionMaker::InitBehaviorStates()
 			desiredVelocity = 0.0;
 			std::cout << "EXT - ";
 		}
-		else 
+		// HACK
+		// First cycles (4-7) when object is detected its velocity is 0.0. It means a standing obstacle and will result
+		// in quite hard braking. Actual standing obstacle has very small speeds, so will not fall here.
+		// So this else if is to bypass sudden braking when entering follow mode.
+		else if (beh.followVelocity == 0.0)
+        {
+		    desiredVelocity = CurrStatus.speed;
+        }
+		else
 		{
 			setDeceleration(5.0);
 
