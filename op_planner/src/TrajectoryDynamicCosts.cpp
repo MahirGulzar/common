@@ -20,7 +20,8 @@ TrajectoryDynamicCosts::TrajectoryDynamicCosts()
 	m_WeightLong = 1.0;
 	m_WeightLat = 1.2;
 	m_WeightLaneChange = 0.0;
-	m_LateralSkipDistance = 50;
+	// HACK or not: changed from 50 to 1.65 - to filter out objects further away from our trajectory!
+	m_LateralSkipDistance = 1.65;
 
 
 	m_CollisionTimeDiff = 6.0; //seconds
