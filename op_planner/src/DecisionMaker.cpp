@@ -454,6 +454,7 @@ void DecisionMaker::InitBehaviorStates()
 		else if (beh.followVelocity == 0.0)
         {
 		    desiredVelocity = CurrStatus.speed;
+            std::cout << "HCK - ";
         }
 		else
 		{

@@ -1923,9 +1923,9 @@ void PlanningHelpers::ExtendMinCostAlongPath(vector<WayPoint>& path_in)
     vector<WayPoint> newpath = path_in;
 
     // params for tuning
-    double backward = 30.0;
-    double forward = 10.0;
-    double min_cost_importance = 0.8;
+    double backward = 15.0;
+    double forward = 15.0;
+    double min_cost_importance = 0.85;
 
 
     for(int i = backward ; i < path_in.size()-forward; i++){
