@@ -220,12 +220,12 @@ void DecisionMaker::InitBehaviorStates()
   	// std::cout <<  distanceToClosestStopLine << ", " << (pValues->minStoppingDistance + 1.0) << std::endl;
 
   	// returned to calc distance using max_deceleration
-    // double distanceWindow = pValues->currentVelocity / m_dSpeedDistanceRatio;
-    double distanceWindow = -pow(car_state.speed, 2)/(m_CarInfo.max_deceleration * 2);
-    double bufferLength = 0.5 * distanceWindow;
+    // double distanceWindow = -pow(car_state.speed, 2)/(m_CarInfo.max_deceleration * 2);
+    // double bufferLength = 0.5 * distanceWindow;
+    double distanceWindow = pValues->currentVelocity / 0.25;
 
     // std::cout << car_state.speed << ", " << m_CarInfo.max_deceleration << ", dW: " << distanceWindow << ", " << (distanceToClosestStopLine <= distanceWindow + bufferLength) << std::endl;
-    if(distanceToClosestStopLine > m_params.giveUpDistance && distanceToClosestStopLine <= distanceWindow + bufferLength)
+    if(distanceToClosestStopLine > m_params.giveUpDistance && distanceToClosestStopLine <= distanceWindow)
     {
         m_bWindowReached = true;
 	// std::cout << "in window" << std::endl;
@@ -388,9 +388,9 @@ void DecisionMaker::InitBehaviorStates()
 	// constants used in desiredVelocity calculation and clipping
     double k_forward = 0.3;
     double k_follow = 0.2;
-    double k_stop = 0.2;
-    double upper_lim = 1.0;
-    double lower_lim = 0.5;
+    double k_stop = 0.32;
+    double upper_lim = 2.0;
+    double lower_lim = 1.0;
 
 	// double average_braking_distance = -pow(CurrStatus.speed, 2)/(m_CarInfo.max_deceleration) + m_params.additionalBrakingDistance;
 	// double max_velocity	= PlannerHNS::PlanningHelpers::GetVelocityAhead(m_TotalOriginalPath.at(m_iCurrentTotalPathId), total_info, total_info.iBack, average_braking_distance);
