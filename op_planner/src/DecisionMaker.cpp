@@ -219,10 +219,8 @@ void DecisionMaker::InitBehaviorStates()
   	// changed 1.0 to 5.0
   	// std::cout <<  distanceToClosestStopLine << ", " << (pValues->minStoppingDistance + 1.0) << std::endl;
 
-  	// returned to calc distance using max_deceleration
-    // double distanceWindow = -pow(car_state.speed, 2)/(m_CarInfo.max_deceleration * 2);
-    // double bufferLength = 0.5 * distanceWindow;
-    double distanceWindow = pValues->currentVelocity / 0.25;
+    // calculate distanceWindow to enter stopping state
+    double distanceWindow = pValues->currentVelocity * m_params.d_stop;
 
     // std::cout << car_state.speed << ", " << m_CarInfo.max_deceleration << ", dW: " << distanceWindow << ", " << (distanceToClosestStopLine <= distanceWindow + bufferLength) << std::endl;
     if(distanceToClosestStopLine > m_params.giveUpDistance && distanceToClosestStopLine <= distanceWindow)
@@ -385,18 +383,9 @@ void DecisionMaker::InitBehaviorStates()
 	PlanningHelpers::GetRelativeInfo(m_TotalOriginalPath.at(m_iCurrentTotalPathId), state, total_info);
 	PlanningHelpers::GetRelativeInfo(m_Path, state, info);
 
-	// constants used in desiredVelocity calculation and clipping
-    double k_forward = 0.3;
-    double k_follow = 0.2;
-    double k_stop = 0.32;
-    double upper_lim = 2.0;
-    double lower_lim = 1.0;
-
-	// double average_braking_distance = -pow(CurrStatus.speed, 2)/(m_CarInfo.max_deceleration) + m_params.additionalBrakingDistance;
-	// double max_velocity	= PlannerHNS::PlanningHelpers::GetVelocityAhead(m_TotalOriginalPath.at(m_iCurrentTotalPathId), total_info, total_info.iBack, average_braking_distance);
 
 	// changed distance calculation for the speed change
-    double speed_change_distance = CurrStatus.speed / k_forward;
+    double speed_change_distance = CurrStatus.speed * m_params.d_forward;
     double max_velocity	= PlannerHNS::PlanningHelpers::GetVelocityAhead(m_TotalOriginalPath.at(m_iCurrentTotalPathId), total_info, total_info.iBack, speed_change_distance);
 
     unsigned int point_index = 0;
@@ -417,12 +406,12 @@ void DecisionMaker::InitBehaviorStates()
 		{
 			setDeceleration(5.0);
 
-			desiredVelocity = beh.stopDistance * k_stop;
+			desiredVelocity = beh.stopDistance * m_params.k_stop;
 
-            if(desiredVelocity <= lower_lim)
+            if(desiredVelocity <= m_params.low_speed_lower_lim)
                 desiredVelocity = 0;
-            else if(lower_lim < desiredVelocity && desiredVelocity < upper_lim)
-                desiredVelocity = upper_lim;
+            else if(m_params.low_speed_lower_lim < desiredVelocity && desiredVelocity < m_params.low_speed_upper_lim)
+                desiredVelocity = m_params.low_speed_upper_lim;
 
             desiredVelocity = std::min(std::max(desiredVelocity, 0.0), max_velocity);
 			std::cout << "NRM - ";
@@ -460,20 +449,25 @@ void DecisionMaker::InitBehaviorStates()
 		{
 			setDeceleration(5.0);
 
-			static double c = 2.0;
-			double normal_dist = beh.followDistance - c * CurrStatus.speed;
-			desiredVelocity = normal_dist * k_follow + beh.followVelocity;
+			// prev code
+			double normal_dist = beh.followDistance - m_params.d_follow * CurrStatus.speed;
+			desiredVelocity = normal_dist * m_params.k_follow + beh.followVelocity;
 
-			if(desiredVelocity <= lower_lim)
-			    desiredVelocity = 0;
-			else if(lower_lim < desiredVelocity && desiredVelocity < upper_lim)
-			    desiredVelocity = upper_lim;
+			// try new
+            //double normal_dist = beh.followDistance - m_params.d_follow * CurrStatus.speed;
+            //normal_dist = (normal_dist < 0) ? 0 : normal_dist;
+            //desiredVelocity = 2 * log2(1 + normal_dist) + beh.followVelocity;
+
+            if(desiredVelocity <= m_params.low_speed_lower_lim)
+                desiredVelocity = 0;
+            else if(m_params.low_speed_lower_lim < desiredVelocity && desiredVelocity < m_params.low_speed_upper_lim)
+                desiredVelocity = m_params.low_speed_upper_lim;
 
 			desiredVelocity = std::min(std::max(desiredVelocity, 0.0), max_velocity);
-			std::cout << "NRM - ";
+			std::cout << "NRM - " << "norm_d: " << normal_dist;
 		}
 
-		std::cout << "fD: " << beh.followDistance << ", fV: " << beh.followVelocity << ", spd: " << CurrStatus.speed << ", dV: " << desiredVelocity << ", " << min_dist <<  std::endl;
+		std::cout << ", fD: " << beh.followDistance << ", fV: " << beh.followVelocity << ", spd: " << CurrStatus.speed << ", dV: " << desiredVelocity << ", min_d: " << min_dist <<  std::endl;
 
 		for(unsigned int i = 0; i < m_Path.size(); i++)
 			m_Path.at(i).v = desiredVelocity;

@@ -909,6 +909,14 @@ public:
 	bool 	enableStopSignBehavior;
 	bool    enableQuickStop;
 
+	double  k_stop;
+    double  d_stop;
+    double  d_forward;
+    double  k_follow;
+    double  d_follow;
+    double  low_speed_upper_lim;
+    double  low_speed_lower_lim;
+
 	bool 	enabTrajectoryVelocities;
 	double minIndicationDistance;
 
@@ -941,6 +949,14 @@ public:
 
 		giveUpDistance					= -4;
 		nReliableCount					= 2;
+
+        k_stop                          = 0.32;
+        d_stop                          = 4.0;
+        d_forward                       = 3.0;
+        k_follow                        = 0.3;
+        d_follow                        = 2.0;
+        low_speed_upper_lim             = 2.0;
+        low_speed_lower_lim             = 1.0;
 
 		enableHeadingSmoothing			= false;
 		enableSwerving 					= false;
