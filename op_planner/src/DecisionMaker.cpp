@@ -449,14 +449,8 @@ void DecisionMaker::InitBehaviorStates()
 		{
 			setDeceleration(5.0);
 
-			// prev code
 			double normal_dist = beh.followDistance - m_params.d_follow * CurrStatus.speed;
 			desiredVelocity = normal_dist * m_params.k_follow + beh.followVelocity;
-
-			// try new
-            //double normal_dist = beh.followDistance - m_params.d_follow * CurrStatus.speed;
-            //normal_dist = (normal_dist < 0) ? 0 : normal_dist;
-            //desiredVelocity = 2 * log2(1 + normal_dist) + beh.followVelocity;
 
             if(desiredVelocity <= m_params.low_speed_lower_lim)
                 desiredVelocity = 0;
