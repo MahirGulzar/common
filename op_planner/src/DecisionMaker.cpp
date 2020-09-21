@@ -462,6 +462,10 @@ void DecisionMaker::InitBehaviorStates()
             else if(m_params.low_speed_lower_lim < desiredVelocity && desiredVelocity < m_params.low_speed_upper_lim)
                 desiredVelocity = m_params.low_speed_upper_lim;
 
+            // if we are closer than 1m always send desiredVelocity 0.0
+            if(beh.followDistance < 1.0)
+                desiredVelocity = 0.0;
+            
 			desiredVelocity = std::min(std::max(desiredVelocity, 0.0), max_velocity);
 			std::cout << "NRM - " << "norm_d: " << normal_dist;
 		}
