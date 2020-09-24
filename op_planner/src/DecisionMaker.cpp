@@ -454,16 +454,17 @@ void DecisionMaker::InitBehaviorStates()
             if(beh.followVelocity >= m_params.low_speed_upper_lim)
                 objectVelocity = beh.followVelocity;
 
-            double normal_dist = beh.followDistance - m_params.d_follow * CurrStatus.speed;
-            desiredVelocity = normal_dist * m_params.k_follow + objectVelocity;
+            double normalDistance = beh.followDistance - m_params.d_follow * objectVelocity - m_params.additionalBrakingDistance;
+            desiredVelocity = normalDistance * m_params.k_follow + objectVelocity;
 
             if(desiredVelocity <= m_params.low_speed_lower_lim)
                 desiredVelocity = 0;
             else if(m_params.low_speed_lower_lim < desiredVelocity && desiredVelocity < m_params.low_speed_upper_lim)
                 desiredVelocity = m_params.low_speed_upper_lim;
 
-            // if we are closer than 1m always send desiredVelocity 0.0
-            if(beh.followDistance < 1.0)
+            // if we are closer than 2m always send desiredVelocity 0.0
+            // TODO - lower limit? car behind in safety box example?
+            if(-2.0 < beh.followDistance && beh.followDistance < 2.0)
                 desiredVelocity = 0.0;
             
 			desiredVelocity = std::min(std::max(desiredVelocity, 0.0), max_velocity);
