@@ -468,7 +468,7 @@ void DecisionMaker::InitBehaviorStates()
                 desiredVelocity = 0.0;
             
 			desiredVelocity = std::min(std::max(desiredVelocity, 0.0), max_velocity);
-			std::cout << "NRM - " << "norm_d: " << normal_dist;
+			std::cout << "NRM - ";
 		}
 
 		std::cout << ", fD: " << beh.followDistance << ", fV: " << beh.followVelocity << ", spd: " << CurrStatus.speed << ", dV: " << desiredVelocity << ", min_d: " << min_dist <<  std::endl;
