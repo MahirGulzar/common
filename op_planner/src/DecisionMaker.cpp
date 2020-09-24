@@ -165,7 +165,7 @@ void DecisionMaker::InitBehaviorStates()
  	PreCalculatedConditions* pValues = m_pCurrentBehaviorState->GetCalcParams();
 
  	if(m_CarInfo.max_deceleration != 0)
- 		pValues->minStoppingDistance = -pow(car_state.speed, 2)/(m_CarInfo.max_deceleration);
+ 		pValues->minStoppingDistance = -pow(car_state.speed, 2)/(m_CarInfo.max_deceleration * 2.0);
 
  	pValues->iCentralTrajectory		= m_pCurrentBehaviorState->m_pParams->rollOutNumber/2;
 
