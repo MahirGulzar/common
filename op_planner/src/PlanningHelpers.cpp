@@ -1986,7 +1986,8 @@ void PlanningHelpers::GenerateRecommendedSpeed(vector<WayPoint>& path, const dou
 	}
 
 	//SmoothSpeedProfiles(path, 0.4,0.3, 0.01);
-    SmoothSpeedProfiles(path, 0.3, 0.35, 0.5);
+    // my:
+	//SmoothSpeedProfiles(path, 0.3, 0.35, 0.5);
 
 }
 
@@ -2734,6 +2735,48 @@ double PlanningHelpers::GetVelocityAhead(const std::vector<WayPoint>& path, cons
 		prev_index = local_i;
 
 	return min_v;
+}
+
+double PlanningHelpers::GetVelocityAheadLinear(const std::vector<WayPoint>& path, const RelativeInfo& info, int& prev_index, const double& reasonable_brake_distance, const double& currentSpeed)
+{
+    if(path.size()==0) return 0;
+
+
+    double min_v = path.at(info.iBack).v;
+    double min_d = info.to_front_distance;
+    double d = info.to_front_distance;
+    double dV = 0;
+
+
+    int local_i = info.iFront;
+    // std::cout << "**** getVelAhd bef - min_v: " << min_v << ", min_d:" << min_d << ", local_i: " << local_i << std::endl;
+    while(local_i < path.size()-1 && d < reasonable_brake_distance)
+    {
+        local_i++;
+        d += hypot(path.at(local_i).pos.y - path.at(local_i-1).pos.y, path.at(local_i).pos.x - path.at(local_i-1).pos.x);
+        if(path.at(local_i).v < min_v)
+        {
+            min_v = path.at(local_i).v;
+            min_d = d;
+        }
+
+    }
+    // std::cout << "**** getVelAhd aft - currentSpeed: " << currentSpeed <<", min_v: " << min_v << ", min_d:" << min_d << std::endl;
+    if(local_i < prev_index && prev_index < path.size())
+    {
+        min_v = path.at(prev_index).v;
+    }
+    else
+    {
+        prev_index = local_i;
+    }
+
+    // calc dV
+    dV = min_d * 0.2;
+    std::cout << "**** getVelAhd end - currentSpeed: " << currentSpeed <<", min_v: " << min_v << ", min_d: " << min_d << ", dV: " << dV << ", localV: " << path.at(local_i).v << std::endl;
+
+    // TODO clip dV upper using current location v at map
+    return min_v;
 }
 
 void PlanningHelpers::WritePathToFile(const string& fileName, const vector<WayPoint>& path)

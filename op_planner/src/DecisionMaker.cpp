@@ -386,7 +386,8 @@ void DecisionMaker::InitBehaviorStates()
 
 	// changed distance calculation for the speed change
     double speed_change_distance = CurrStatus.speed * m_params.d_forward;
-    double max_velocity	= PlannerHNS::PlanningHelpers::GetVelocityAhead(m_TotalOriginalPath.at(m_iCurrentTotalPathId), total_info, total_info.iBack, speed_change_distance);
+    double max_velocity	= PlannerHNS::PlanningHelpers::GetVelocityAheadLinear(m_TotalOriginalPath.at(m_iCurrentTotalPathId), total_info, total_info.iBack, speed_change_distance, CurrStatus.speed);
+    // double max_velocity	= PlannerHNS::PlanningHelpers::GetVelocityAhead(m_TotalOriginalPath.at(m_iCurrentTotalPathId), total_info, total_info.iBack, speed_change_distance);
 
     unsigned int point_index = 0;
 	double critical_long_front_distance = m_CarInfo.length/2.0;
@@ -493,7 +494,7 @@ void DecisionMaker::InitBehaviorStates()
 
 		// for debugging or tuning
 		//std::cout << "Target Velocity: " << desiredVelocity << ", Change Slowdown: " << bSlowBecauseChange  << std::endl;
-		std::cout << "FORWARD - spd: " << CurrStatus.speed << ", dV: " << desiredVelocity << ", spd_ch_d: " << speed_change_distance << std::endl;
+		//std::cout << "FORWARD - spd: " << CurrStatus.speed << ", dV: " << desiredVelocity << ", spd_ch_d: " << speed_change_distance << std::endl;
 
 		return desiredVelocity;
 
