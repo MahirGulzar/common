@@ -910,7 +910,6 @@ public:
 	bool    enableQuickStop;
 
 	double  k_stop;
-    double  d_stop;
     double  d_forward;
     double  k_follow;
     double  d_follow;
@@ -951,7 +950,6 @@ public:
 		nReliableCount					= 2;
 
         k_stop                          = 0.32;
-        d_stop                          = 4.0;
         d_forward                       = 3.0;
         k_follow                        = 0.3;
         d_follow                        = 2.0;
