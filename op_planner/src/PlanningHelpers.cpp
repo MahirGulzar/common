@@ -2745,7 +2745,7 @@ double PlanningHelpers::GetVelocityAheadLinear(const std::vector<WayPoint>& path
     double min_v = path.at(info.iBack).v;
     double min_d = info.to_front_distance;
     double d = info.to_front_distance;
-    double dV = 0;
+    double desired_speed = 0;
 
 
     int local_i = info.iFront;
@@ -2771,11 +2771,15 @@ double PlanningHelpers::GetVelocityAheadLinear(const std::vector<WayPoint>& path
         prev_index = local_i;
     }
 
-    // calc dV
-    dV = min_d * 0.2;
-    std::cout << "**** getVelAhd end - currentSpeed: " << currentSpeed <<", min_v: " << min_v << ", min_d: " << min_d << ", dV: " << dV << ", localV: " << path.at(local_i).v << std::endl;
 
-    // TODO clip dV upper using current location v at map
+    // calc dV
+    desired_speed = ((currentSpeed - min_v > 0 ) ? 1 : -1) * min_d * 0.2 + min_v;
+    std::cout << "********** desSpeed: " << desired_speed << std::endl;
+
+    // clip between local v on map and min_v
+    desired_speed = std::min(std::max(desired_speed, min_v), path.at(local_i).v);
+
+    std::cout << "**** getVelAhd end - currentSpeed: " << currentSpeed <<", min_v: " << min_v << ", min_d: " << min_d << ", dV: " << desired_speed << ", localV: " << path.at(local_i).v << std::endl;
     return min_v;
 }
 
