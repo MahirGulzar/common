@@ -2737,19 +2737,17 @@ double PlanningHelpers::GetVelocityAhead(const std::vector<WayPoint>& path, cons
 	return min_v;
 }
 
-double PlanningHelpers::GetVelocityAheadLinear(const std::vector<WayPoint>& path, const RelativeInfo& info, int& prev_index, const double& reasonable_brake_distance, const double& currentSpeed)
+double PlanningHelpers::GetVelocityAheadLinear(const std::vector<WayPoint>& path, const RelativeInfo& info, int& prev_index, const double& reasonable_brake_distance, const double& current_speed)
 {
     if(path.size()==0) return 0;
-
 
     double min_v = path.at(info.iBack).v;
     double min_d = info.to_front_distance;
     double d = info.to_front_distance;
     double desired_speed = 0;
 
-
     int local_i = info.iFront;
-    // std::cout << "**** getVelAhd bef - min_v: " << min_v << ", min_d:" << min_d << ", local_i: " << local_i << std::endl;
+
     while(local_i < path.size()-1 && d < reasonable_brake_distance)
     {
         local_i++;
@@ -2759,9 +2757,8 @@ double PlanningHelpers::GetVelocityAheadLinear(const std::vector<WayPoint>& path
             min_v = path.at(local_i).v;
             min_d = d;
         }
-
     }
-    // std::cout << "**** getVelAhd aft - currentSpeed: " << currentSpeed <<", min_v: " << min_v << ", min_d:" << min_d << std::endl;
+
     if(local_i < prev_index && prev_index < path.size())
     {
         min_v = path.at(prev_index).v;
@@ -2771,16 +2768,17 @@ double PlanningHelpers::GetVelocityAheadLinear(const std::vector<WayPoint>& path
         prev_index = local_i;
     }
 
-
     // calc dV
-    desired_speed = ((currentSpeed - min_v > 0 ) ? 1 : -1) * min_d * 0.2 + min_v;
-    std::cout << "********** desSpeed: " << desired_speed << std::endl;
+    desired_speed = ((current_speed - min_v > 0 ) ? 1 : -1) * min_d * 0.1 + min_v;
+    // std::cout << "********** desSpeed: " << desired_speed << std::endl;
 
     // clip between local v on map and min_v
-    desired_speed = std::min(std::max(desired_speed, min_v), path.at(local_i).v);
+    // desired_speed = std::min(std::max(desired_speed, min_v), path.at(info.iFront).v);
+    // clipping
+    desired_speed = std::max(std::min(desired_speed, std::max(current_speed, min_v)), std::min(current_speed, min_v));
 
-    std::cout << "**** getVelAhd end - currentSpeed: " << currentSpeed <<", min_v: " << min_v << ", min_d: " << min_d << ", dV: " << desired_speed << ", localV: " << path.at(local_i).v << std::endl;
-    return min_v;
+    std::cout << "**** getVelAhd end - current_speed: " << current_speed <<", min_v: " << min_v << ", min_d: " << min_d << ", dV: " << desired_speed << ", localV: " << path.at(info.iFront).v << std::endl;
+    return desired_speed;
 }
 
 void PlanningHelpers::WritePathToFile(const string& fileName, const vector<WayPoint>& path)

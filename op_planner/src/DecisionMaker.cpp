@@ -494,7 +494,7 @@ void DecisionMaker::InitBehaviorStates()
 
 		// for debugging or tuning
 		//std::cout << "Target Velocity: " << desiredVelocity << ", Change Slowdown: " << bSlowBecauseChange  << std::endl;
-		//std::cout << "FORWARD - spd: " << CurrStatus.speed << ", dV: " << desiredVelocity << ", spd_ch_d: " << speed_change_distance << std::endl;
+		std::cout << "FORWARD - spd: " << CurrStatus.speed << ", dV: " << desiredVelocity << ", spd_ch_d: " << speed_change_distance << std::endl;
 
 		return desiredVelocity;
 
