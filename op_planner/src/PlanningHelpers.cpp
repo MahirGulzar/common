@@ -1987,7 +1987,7 @@ void PlanningHelpers::GenerateRecommendedSpeed(vector<WayPoint>& path, const dou
 
 	//SmoothSpeedProfiles(path, 0.4,0.3, 0.01);
     // my:
-	//SmoothSpeedProfiles(path, 0.3, 0.35, 0.5);
+	SmoothSpeedProfiles(path, 0.3, 0.35, 0.5);
 
 }
 
@@ -2737,14 +2737,18 @@ double PlanningHelpers::GetVelocityAhead(const std::vector<WayPoint>& path, cons
 	return min_v;
 }
 
-double PlanningHelpers::GetVelocityAheadLinear(const std::vector<WayPoint>& path, const RelativeInfo& info, int& prev_index, const double& reasonable_brake_distance, const double& current_speed)
+double PlanningHelpers::GetVelocityAheadLinear(const std::vector<WayPoint>& path, const RelativeInfo& info, int& prev_index, const double& reasonable_brake_distance, const double& current_v)
 {
     if(path.size()==0) return 0;
 
-    double min_v = path.at(info.iBack).v;
-    double min_d = info.to_front_distance;
+
+    double local_v = path.at(info.iBack).v;
+    double temp_v = current_v;
+    double slope = 0.0;
+    double target_v = path.at(info.iFront).v;
+    double target_d = info.to_front_distance;
     double d = info.to_front_distance;
-    double desired_speed = 0;
+    double desired_v = 0.0;
 
     int local_i = info.iFront;
 
@@ -2752,16 +2756,24 @@ double PlanningHelpers::GetVelocityAheadLinear(const std::vector<WayPoint>& path
     {
         local_i++;
         d += hypot(path.at(local_i).pos.y - path.at(local_i-1).pos.y, path.at(local_i).pos.x - path.at(local_i-1).pos.x);
-        if(path.at(local_i).v < min_v)
+        // check for relevant speed change
+        if((temp_v - path.at(local_i).v) > 0.2)
         {
-            min_v = path.at(local_i).v;
-            min_d = d;
+            temp_v = path.at(local_i).v;
+            // check the slope - remember the one with higher slope
+            if(((local_v - temp_v) / d) > slope)
+            {
+                slope = (local_v - temp_v) / d;
+                target_v = path.at(local_i).v;
+                target_d = d;
+                //std::cout << " ---- slope: " << slope << ", target_v: " << target_v << ", target_d: " << target_d << std::endl;
+            }
         }
     }
 
     if(local_i < prev_index && prev_index < path.size())
     {
-        min_v = path.at(prev_index).v;
+        target_v = path.at(prev_index).v;
     }
     else
     {
@@ -2769,16 +2781,16 @@ double PlanningHelpers::GetVelocityAheadLinear(const std::vector<WayPoint>& path
     }
 
     // calc dV
-    desired_speed = ((current_speed - min_v > 0 ) ? 1 : -1) * min_d * 0.1 + min_v;
+    desired_v = ((current_v - target_v > 0 ) ? 1 : -1) * target_d * 0.08 + target_v;
     // std::cout << "********** desSpeed: " << desired_speed << std::endl;
 
     // clip between local v on map and min_v
-    // desired_speed = std::min(std::max(desired_speed, min_v), path.at(info.iFront).v);
+    // desired_v = std::min(std::max(desired_v, target_v), local_v);
     // clipping
-    desired_speed = std::max(std::min(desired_speed, std::max(current_speed, min_v)), std::min(current_speed, min_v));
+    desired_v = std::max(std::min(desired_v, std::max(current_v, target_v)), std::min(current_v, target_v));
 
-    std::cout << "**** getVelAhd end - current_speed: " << current_speed <<", min_v: " << min_v << ", min_d: " << min_d << ", dV: " << desired_speed << ", localV: " << path.at(info.iFront).v << std::endl;
-    return desired_speed;
+    std::cout << "**** getVelAhd end - current_v: " << current_v <<", target_v: " << target_v << ", target_d: " << target_d << ", dist_wind: " << reasonable_brake_distance << ", dV: " << desired_v << ", local_v: " << local_v << std::endl;
+    return desired_v;
 }
 
 void PlanningHelpers::WritePathToFile(const string& fileName, const vector<WayPoint>& path)
