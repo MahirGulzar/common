@@ -220,7 +220,7 @@ void DecisionMaker::InitBehaviorStates()
   	// std::cout <<  distanceToClosestStopLine << ", " << (pValues->minStoppingDistance + 1.0) << std::endl;
 
     // calculate distanceWindow to enter stopping state
-    double distanceWindow = pValues->currentVelocity * m_params.d_stop;
+    double distanceWindow = pValues->currentVelocity / m_params.k_stop;
 
     // std::cout << car_state.speed << ", " << m_CarInfo.max_deceleration << ", dW: " << distanceWindow << ", " << (distanceToClosestStopLine <= distanceWindow + bufferLength) << std::endl;
     if(distanceToClosestStopLine > m_params.giveUpDistance && distanceToClosestStopLine <= distanceWindow)
