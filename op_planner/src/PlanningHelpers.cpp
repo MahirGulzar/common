@@ -2757,7 +2757,7 @@ double PlanningHelpers::GetVelocityAheadLinear(const std::vector<WayPoint>& path
         local_i++;
         d += hypot(path.at(local_i).pos.y - path.at(local_i-1).pos.y, path.at(local_i).pos.x - path.at(local_i-1).pos.x);
         // check for relevant speed change
-        if((temp_v - path.at(local_i).v) > 0.2)
+        if((temp_v - path.at(local_i).v) > 0.3)
         {
             temp_v = path.at(local_i).v;
             // check the slope - remember the one with higher slope
@@ -2781,7 +2781,7 @@ double PlanningHelpers::GetVelocityAheadLinear(const std::vector<WayPoint>& path
     }
 
     // calc dV
-    desired_v = ((current_v - target_v > 0 ) ? 1 : -1) * target_d * 0.08 + target_v;
+    desired_v = ((current_v - target_v > 0 ) ? 1 : -1) * target_d * 0.1 + target_v;
     // std::cout << "********** desSpeed: " << desired_speed << std::endl;
 
     // clip between local v on map and min_v
