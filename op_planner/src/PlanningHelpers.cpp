@@ -2757,7 +2757,7 @@ double PlanningHelpers::GetVelocityAheadLinear(const std::vector<WayPoint>& path
         local_i++;
         d += hypot(path.at(local_i).pos.y - path.at(local_i-1).pos.y, path.at(local_i).pos.x - path.at(local_i-1).pos.x);
         // check for relevant speed change
-        if((temp_v - path.at(local_i).v) > 1.0)
+        if((temp_v - path.at(local_i).v) > 0.2)
         {
             temp_v = path.at(local_i).v;
             // check the slope - remember the one with higher slope
