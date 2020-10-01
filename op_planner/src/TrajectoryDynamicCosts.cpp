@@ -322,7 +322,9 @@ void TrajectoryDynamicCosts::CalculateLateralAndLongitudinalCostsStatic(vector<T
 	// safety box and followDist are calculated here
     double critical_lateral_distance =  carInfo.width/2.0 + params.horizontalSafetyDistancel;
 	double critical_long_front_distance =  carInfo.wheel_base/2.0 + carInfo.length/2.0 + params.verticalSafetyDistance;
-	double critical_long_back_distance =  carInfo.length/2.0 + params.verticalSafetyDistance - carInfo.wheel_base/2.0;
+	// original Safety_box (commented out) and new - removing verticalSafetyDistance from back of the car
+	// double critical_long_back_distance =  carInfo.length/2.0 + params.verticalSafetyDistance - carInfo.wheel_base/2.0;
+	double critical_long_back_distance =  carInfo.length/2.0 - carInfo.wheel_base/2.0;
 
 	PlannerHNS::Mat3 invRotationMat(currState.pos.a-M_PI_2);
 	PlannerHNS::Mat3 invTranslationMat(currState.pos.x, currState.pos.y);
