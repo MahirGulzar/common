@@ -216,8 +216,6 @@ void DecisionMaker::InitBehaviorStates()
 
   	// std::cout << "S StopLineID: " << stopLineID << ", StopSignID: " << stopSignID << ", TrafficLightID: " << trafficLightID << ", Distance: " << distanceToClosestStopLine << ", MinStopDistance: " << pValues->minStoppingDistance << std::endl;
   	// distanceToClosestStopLine << ", " << m_params.giveUpDistance << ", " << pValues->minStoppingDistance + 1.0 << ", " << m_CarInfo.max_deceleration << std::endl;
-  	// changed 1.0 to 5.0
-  	// std::cout <<  distanceToClosestStopLine << ", " << (pValues->minStoppingDistance + 1.0) << std::endl;
 
     // calculate distanceWindow to enter stopping state
     double distanceWindow = pValues->currentVelocity / m_params.k_stop;

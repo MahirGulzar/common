@@ -2789,7 +2789,7 @@ double PlanningHelpers::GetVelocityAheadLinear(const std::vector<WayPoint>& path
     // clipping
     desired_v = std::max(std::min(desired_v, std::max(current_v, target_v)), std::min(current_v, target_v));
 
-    std::cout << "**** getVelAhd end - current_v: " << current_v <<", target_v: " << target_v << ", target_d: " << target_d << ", dist_wind: " << reasonable_brake_distance << ", dV: " << desired_v << ", local_v: " << local_v << std::endl;
+    // std::cout << "**** getVelAhd end - current_v: " << current_v <<", target_v: " << target_v << ", target_d: " << target_d << ", dist_wind: " << reasonable_brake_distance << ", dV: " << desired_v << ", local_v: " << local_v << std::endl;
     return desired_v;
 }
 
