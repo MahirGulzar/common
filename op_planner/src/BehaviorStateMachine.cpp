@@ -347,7 +347,11 @@ BehaviorStateMachine* GoalState::GetNextState()
 BehaviorStateMachine* ForwardStateII::GetNextState()
 {
 	PreCalculatedConditions* pCParams = GetCalcParams();
-    std::cout << " -- debug DM - d_toN: " << pCParams->distanceToNext << ", v_ofN: " << pCParams->velocityOfNext << ", d_toS: " << pCParams->distanceToStop() << ", isRed: " << pCParams->bTrafficIsRed << std::endl;
+    std::cout << " -- debug DM - " << "isRed: " << pCParams->bTrafficIsRed
+              << ", stp_id: " << pCParams->currentStopSignID << ", tfl_id: " << pCParams->currentTrafficLightID
+              << ", d_toS: " << pCParams->distanceToStop()
+              << ", calc_obj_d: " << m_pParams->d_follow * pCParams->velocityOfNext + pCParams->distanceToNext
+              << ", d_toN: " << pCParams->distanceToNext << ", v_ofN: " << pCParams->velocityOfNext << std::endl;
 
 	if(pCParams->currentGoalID != pCParams->prevGoalID)
 		return FindBehaviorState(GOAL_STATE);
@@ -357,7 +361,6 @@ BehaviorStateMachine* ForwardStateII::GetNextState()
 				&& pCParams->currentTrafficLightID > 0
 				&& pCParams->bTrafficIsRed)
     {
-        std::cout << "from Forw to light Stop" << std::endl;
 	    return FindBehaviorState(TRAFFIC_LIGHT_STOP_STATE);
     }
 
@@ -382,20 +385,29 @@ BehaviorStateMachine* ForwardStateII::GetNextState()
 BehaviorStateMachine* FollowStateII::GetNextState()
 {
 	PreCalculatedConditions* pCParams = GetCalcParams();
-    std::cout << " -- debug DM - d_toN: " << pCParams->distanceToNext << ", v_ofN: " << pCParams->velocityOfNext << ", d_toS: " << pCParams->distanceToStop() << ", isRed: " << pCParams->bTrafficIsRed << std::endl;
+    std::cout << " -- debug DM - " << "isRed: " << pCParams->bTrafficIsRed
+            << ", stp_id: " << pCParams->currentStopSignID << ", tfl_id: " << pCParams->currentTrafficLightID
+            << ", d_toS: " << pCParams->distanceToStop()
+            << ", calc_obj_d: " << m_pParams->d_follow * pCParams->velocityOfNext + pCParams->distanceToNext
+            << ", d_toN: " << pCParams->distanceToNext << ", v_ofN: " << pCParams->velocityOfNext << std::endl;
 
 	if(pCParams->currentGoalID != pCParams->prevGoalID)
 		return FindBehaviorState(GOAL_STATE);
 
 	// removed: && pCParams->currentTrafficLightID != pCParams->prevTrafficLightID
+	// go to tflstop (still red): if car in front has crossed stopline or not crossed, but driving faster than we
 	else if(m_pParams->enableTrafficLightBehavior
 				&& pCParams->currentTrafficLightID > 0
-				&& pCParams->bTrafficIsRed)
-			return FindBehaviorState(TRAFFIC_LIGHT_STOP_STATE);
+				&& pCParams->bTrafficIsRed
+                && pCParams->distanceToStop() < m_pParams->d_follow * pCParams->velocityOfNext + pCParams->distanceToNext)
+	    return FindBehaviorState(TRAFFIC_LIGHT_STOP_STATE);
 
-    // removed from here: && pCParams->currentStopSignID != pCParams->prevStopSignID
+
+	// removed from here: && pCParams->currentStopSignID != pCParams->prevStopSignID
+	// if car in front has crossed stopline - we still must stop!
 	else if(m_pParams->enableStopSignBehavior
-			&& pCParams->currentStopSignID > 0)
+			&& pCParams->currentStopSignID > 0
+			&& pCParams->distanceToStop() < m_pParams->d_follow * pCParams->velocityOfNext + pCParams->distanceToNext)
 		return FindBehaviorState(STOP_SIGN_STOP_STATE);
 
 	else if(m_pParams->enableSwerving
@@ -408,7 +420,6 @@ BehaviorStateMachine* FollowStateII::GetNextState()
 		return FindBehaviorState(FORWARD_STATE);
 
 	else
-        std::cout << "This in Follow" << std::endl;
 		return FindBehaviorState(this->m_Behavior); // return and reset
 }
 
@@ -454,14 +465,19 @@ BehaviorStateMachine* MissionAccomplishedStateII::GetNextState()
 BehaviorStateMachine* StopSignStopStateII::GetNextState()
 {
 	PreCalculatedConditions* pCParams = GetCalcParams();
-	std::cout << " -- debug DM - d_toN: " << pCParams->distanceToNext << ", v_ofN: " << pCParams->velocityOfNext << ", d_toS: " << pCParams->distanceToStop() << ", isRed: " << pCParams->bTrafficIsRed << std::endl;
+    std::cout << " -- debug DM - " << "isRed: " << pCParams->bTrafficIsRed
+              << ", stp_id: " << pCParams->currentStopSignID << ", tfl_id: " << pCParams->currentTrafficLightID
+              << ", d_toS: " << pCParams->distanceToStop()
+              << ", calc_obj_d: " << m_pParams->d_follow * pCParams->velocityOfNext + pCParams->distanceToNext
+              << ", d_toN: " << pCParams->distanceToNext << ", v_ofN: " << pCParams->velocityOfNext << std::endl;
 
 	if(pCParams->currentGoalID != pCParams->prevGoalID)
 		return FindBehaviorState(GOAL_STATE);
 
 	// if closest object is closer than stopline and ego car speed is faster than objects speed
-    else if(pCParams->distanceToNext < pCParams->distanceToStop()
-            && pCParams->velocityOfNext < pCParams->currentVelocity)
+    //   pCParams->distanceToNext < pCParams->distanceToStop()
+    //   && pCParams->velocityOfNext < pCParams->currentVelocity
+    else if(pCParams->distanceToStop() > m_pParams->d_follow * pCParams->velocityOfNext + pCParams->distanceToNext)
     {
         return FindBehaviorState(FOLLOW_STATE);
     }
@@ -488,24 +504,30 @@ BehaviorStateMachine* StopSignWaitStateII::GetNextState()
 BehaviorStateMachine* TrafficLightStopStateII::GetNextState()
 {
 	PreCalculatedConditions* pCParams = GetCalcParams();
-    std::cout << " -- debug DM - d_toN: " << pCParams->distanceToNext << ", v_ofN: " << pCParams->velocityOfNext << ", d_toS: " << pCParams->distanceToStop() << ", isRed: " << pCParams->bTrafficIsRed << std::endl;
+
+    std::cout << " -- debug DM - " << "isRed: " << pCParams->bTrafficIsRed
+              << ", stp_id: " << pCParams->currentStopSignID << ", tfl_id: " << pCParams->currentTrafficLightID
+              << ", d_toS: " << pCParams->distanceToStop()
+              << ", calc_obj_d: " << m_pParams->d_follow * pCParams->velocityOfNext + pCParams->distanceToNext
+              << ", d_toN: " << pCParams->distanceToNext << ", v_ofN: " << pCParams->velocityOfNext << std::endl;
+
 	//std::cout << "Stopping for trafficLight "  << std::endl;
 	if(!pCParams->bTrafficIsRed)
 	{
-        std::cout << "go Forward" << std::endl;
 		pCParams->prevTrafficLightID = pCParams->currentTrafficLightID;
 		return FindBehaviorState(FORWARD_STATE);
 	}
 
-    // if closest object is closer than stopline and ego car speed is faster than objects speed
-    else if(pCParams->distanceToNext < pCParams->distanceToStop()
-            && pCParams->velocityOfNext < pCParams->currentVelocity)
+    // if closest object is closer to stopline and ego car speed is faster than objects speed
+    //   pCParams->distanceToNext < pCParams->distanceToStop()
+    //   && pCParams->velocityOfNext < pCParams->currentVelocity
+    else if(pCParams->distanceToStop() > pCParams->distanceToNext + m_pParams->d_follow * pCParams->velocityOfNext)
     {
-        std::cout << "go Follow" << std::endl;
         return FindBehaviorState(FOLLOW_STATE);
     }
 
-    else if(pCParams->bTrafficIsRed && pCParams->currentVelocity <= m_zero_velocity)
+    else if(pCParams->bTrafficIsRed
+            && pCParams->currentVelocity <= m_zero_velocity)
 	{
 		//std::cout << "Velocity Changed Stopping for trafficLight ("  <<pCParams->currentVelocity << ", " << m_zero_velocity << ")" <<  std::endl;
 		return FindBehaviorState(TRAFFIC_LIGHT_WAIT_STATE);
@@ -513,7 +535,6 @@ BehaviorStateMachine* TrafficLightStopStateII::GetNextState()
 
 	else
 	{
-	    std::cout << "Tfl stop - stay here!!" << std::endl;
 		return FindBehaviorState(this->m_Behavior); // return and reset
 	}
 }
