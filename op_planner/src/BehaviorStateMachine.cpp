@@ -364,9 +364,9 @@ BehaviorStateMachine* ForwardStateII::GetNextState()
 	    return FindBehaviorState(TRAFFIC_LIGHT_STOP_STATE);
     }
 
-	// removed: && pCParams->currentStopSignID != pCParams->prevStopSignID
 	else if(m_pParams->enableStopSignBehavior
-			&& pCParams->currentStopSignID > 0)
+			&& pCParams->currentStopSignID > 0
+			&& pCParams->currentStopSignID != pCParams->prevStopSignID)
 		return FindBehaviorState(STOP_SIGN_STOP_STATE);
 
 	else if(m_pParams->enableFollowing && pCParams->bFullyBlock)
@@ -407,6 +407,7 @@ BehaviorStateMachine* FollowStateII::GetNextState()
 	// if car in front has crossed stopline - we still must stop!
 	else if(m_pParams->enableStopSignBehavior
 			&& pCParams->currentStopSignID > 0
+			&& pCParams->currentStopSignID != pCParams->prevStopSignID
 			&& pCParams->distanceToStop() < m_pParams->d_follow * pCParams->velocityOfNext + pCParams->distanceToNext)
 		return FindBehaviorState(STOP_SIGN_STOP_STATE);
 
