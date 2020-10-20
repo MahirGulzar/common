@@ -2741,55 +2741,49 @@ double PlanningHelpers::GetVelocityAheadLinear(const std::vector<WayPoint>& path
 {
     if(path.size()==0) return 0;
 
-
-    double local_v = path.at(info.iBack).v;
-    double temp_v = current_v;
-    double slope = 0.0;
     double target_v = path.at(info.iFront).v;
     double target_d = info.to_front_distance;
-    double d = info.to_front_distance;
+    double local_v = path.at(info.iFront).v;
     double desired_v = 0.0;
+    double deceleration_rate_max = 0.0;
+    bool is_map_speed_decreasing = false;
 
+    double d = info.to_front_distance;
     int local_i = info.iFront;
 
-    while(local_i < path.size()-2 && d < reasonable_brake_distance)
+    // iterate over local path
+    while (local_i < path.size() - 2 && d < reasonable_brake_distance)
     {
         local_i++;
-        d += hypot(path.at(local_i).pos.y - path.at(local_i-1).pos.y, path.at(local_i).pos.x - path.at(local_i-1).pos.x);
-        // check for relevant speed change
-        if((current_v - path.at(local_i).v) > 0.2)
+        d += hypot(path.at(local_i).pos.y - path.at(local_i - 1).pos.y,
+                   path.at(local_i).pos.x - path.at(local_i - 1).pos.x);
+        // check for speed decrease compared to local_v in lookahead window
+        if (target_v > path.at(local_i).v)
         {
-            temp_v = path.at(local_i).v;
-            // check the slope - remember the one with higher slope
-            if(((current_v - temp_v) / d) > slope)
+            double deceleration_rate = 0.0;
+
+            // calc deceleration needed to change speed: decel_rate = (v2 - u2) / 2d
+            deceleration_rate = (pow(current_v, 2) - pow(path.at(local_i).v, 2)) / (2.0 * d);
+
+            // std::cout << " --- tV: " << path.at(local_i).v << ", tD: " << d << ", decel_rate: " << deceleration_rate << std::endl;
+
+            // only memorize max deceleration and if it is above 0.9 (some buffer left for 1.0)
+            if (deceleration_rate > deceleration_rate_max)
             {
-                slope = (current_v - temp_v) / d;
+                deceleration_rate_max = deceleration_rate;
                 target_v = path.at(local_i).v;
                 target_d = d;
-                // std::cout << " ---- slope: " << slope << ", target_v: " << target_v << ", target_d: " << target_d << std::endl;
+                // std::cout << " --- tV: " << path.at(local_i).v << ", tD: " << d << ", decel_rate: " << deceleration_rate << std::endl;
             }
+
         }
     }
 
-    if(local_i < prev_index && prev_index < path.size())
-    {
-        target_v = path.at(prev_index).v;
-    }
-    else
-    {
-        prev_index = local_i;
-    }
+    desired_v = target_d * 0.10 + target_v;
+    desired_v = std::min(std::max(std::min(current_v, desired_v), target_v), local_v);
+    std::cout << "* gVAhd 1 - " << " cV: " << current_v << ", dV: " << desired_v << ", lV: " << local_v
+              << ", tV: " << target_v << ", tD: " << target_d << ", decel_rate: " << deceleration_rate_max << std::endl;
 
-    // calc dV
-    desired_v = target_v + target_d * 0.09;
-    // std::cout << "********** desSpeed: " << desired_v << std::endl;
-
-    // clip between local v on map and min_v
-    // desired_v = std::min(std::max(desired_v, target_v), local_v);
-    // clipping
-    desired_v = std::max(std::min(desired_v, std::max(current_v, target_v)), std::min(current_v, target_v));
-
-    // std::cout << "**** getVelAhd end - current_v: " << current_v <<", target_v: " << target_v << ", target_d: " << target_d << ", dist_wind: " << reasonable_brake_distance << ", dV: " << desired_v << ", local_v: " << local_v << std::endl;
     return desired_v;
 }
 
