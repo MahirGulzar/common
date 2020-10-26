@@ -2728,7 +2728,7 @@ double PlanningHelpers::GetVelocityAhead(const std::vector<WayPoint>& path, cons
 	return min_v;
 }
 
-double PlanningHelpers::GetVelocityAheadLinear(const std::vector<WayPoint>& path, const RelativeInfo& info, int& prev_index, const double& reasonable_brake_distance, const double& current_v)
+double PlanningHelpers::GetVelocityAheadLinear(const std::vector<WayPoint>& path, const RelativeInfo& info, int& prev_index, const double& reasonable_brake_distance, const double& current_v, const double& k_speed_change)
 {
     if(path.size()==0) return 0;
 
@@ -2748,7 +2748,7 @@ double PlanningHelpers::GetVelocityAheadLinear(const std::vector<WayPoint>& path
                    path.at(local_i).pos.x - path.at(local_i - 1).pos.x);
 
         // calculate desired velocity using linear formula
-        double dv = d * 0.10 + path.at(local_i).v;
+        double dv = d * k_speed_change + path.at(local_i).v;
         // std::cout << " --- tV: " << path.at(local_i).v << ", tD: " << d << ", dV: " << dv << ", lv:" << local_v << std::endl;
 
         if (dv < desired_v)

@@ -913,6 +913,7 @@ public:
     double  d_forward;
     double  k_follow;
     double  d_follow;
+    double  k_speed_change;
     double  low_speed_upper_lim;
     double  low_speed_lower_lim;
 
@@ -953,6 +954,7 @@ public:
         d_forward                       = 3.0;
         k_follow                        = 0.3;
         d_follow                        = 2.0;
+        k_speed_change                  = 0.10;
         low_speed_upper_lim             = 2.0;
         low_speed_lower_lim             = 1.0;
 

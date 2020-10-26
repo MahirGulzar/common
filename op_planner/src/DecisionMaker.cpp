@@ -388,7 +388,7 @@ void DecisionMaker::InitBehaviorStates()
 
 	// changed distance calculation for the speed change
     double speed_change_distance = CurrStatus.speed * m_params.d_forward;
-    double max_velocity	= PlannerHNS::PlanningHelpers::GetVelocityAheadLinear(m_TotalOriginalPath.at(m_iCurrentTotalPathId), total_info, total_info.iBack, speed_change_distance, CurrStatus.speed);
+    double max_velocity	= PlannerHNS::PlanningHelpers::GetVelocityAheadLinear(m_TotalOriginalPath.at(m_iCurrentTotalPathId), total_info, total_info.iBack, speed_change_distance, CurrStatus.speed, m_params.k_speed_change);
     // double max_velocity	= PlannerHNS::PlanningHelpers::GetVelocityAhead(m_TotalOriginalPath.at(m_iCurrentTotalPathId), total_info, total_info.iBack, speed_change_distance);
 
     unsigned int point_index = 0;
