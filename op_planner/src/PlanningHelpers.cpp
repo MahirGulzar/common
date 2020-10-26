@@ -1918,32 +1918,23 @@ void PlanningHelpers::SmoothGlobalPathSpeed(vector<WayPoint>& path)
 void PlanningHelpers::ExtendMinCostAlongPath(vector<WayPoint>& path_in)
 {
     // extend min values of the cost in the path
-    // step is 0,5m - should use Path density
 
     vector<WayPoint> newpath = path_in;
 
-    // params for tuning
-    double backward = 15.0;
-    double forward = 15.0;
-    double min_cost_importance = 0.85;
+    // params for tuning - window size
+    double backward = 25.0;
+    double forward = 10.0;
 
+    for(int i = forward ; i < path_in.size()-backward; i++){
 
-    for(int i = backward ; i < path_in.size()-forward; i++){
+        double min_cost = DBL_MAX;
 
-        double min_cost = 1000;
-        double avg_cost = 0.0;
-
-        // std::cout << "--start min_cost: " << min_cost << ", avg_cost: " << avg_cost << ", i: " << i << std::endl;
-
-        for(int j = -backward; j < forward; j++){
+        for(int j = -forward; j < backward; j++){
             if(path_in.at(i+j).cost < min_cost)
                 min_cost = path_in.at(i+j).cost;
-            // std::cout << "-- path_in.at(i+j).cost: " << path_in.at(i+j).cost << ", 1/40: " << 0.025 << ", all: " << 1/(backward+forward) * path_in.at(i+j).cost << std::endl;
-            avg_cost += 1.0/(backward + forward) * path_in.at(i+j).cost;
         }
 
-        // std::cout << "--end  min_cost: " << min_cost << ", avg_cost: " << avg_cost << ", " << 1/2 * min_cost + 1/2 * avg_cost << ", i: " << i << std::endl;
-        newpath.at(i).cost = min_cost_importance * min_cost + (1-min_cost_importance) * avg_cost;
+        newpath.at(i).cost = min_cost;
     }
 
     path_in = newpath;
@@ -1963,7 +1954,7 @@ void PlanningHelpers::GenerateRecommendedSpeed(vector<WayPoint>& path, const dou
 	for(unsigned int i = 0 ; i < path.size(); i++)
 	{
 
-		double k_ratio = path.at(i).cost*9.15;
+		double k_ratio = path.at(i).cost*9.2;
 
 		double local_max = (path.at(i).v >= 0 && max_speed > path.at(i).v) ? path.at(i).v : max_speed;
 
@@ -2744,9 +2735,7 @@ double PlanningHelpers::GetVelocityAheadLinear(const std::vector<WayPoint>& path
     double target_v = path.at(info.iFront).v;
     double target_d = info.to_front_distance;
     double local_v = path.at(info.iFront).v;
-    double desired_v = 0.0;
-    double deceleration_rate_max = 0.0;
-    bool is_map_speed_decreasing = false;
+    double desired_v = DBL_MAX;
 
     double d = info.to_front_distance;
     int local_i = info.iFront;
@@ -2757,32 +2746,22 @@ double PlanningHelpers::GetVelocityAheadLinear(const std::vector<WayPoint>& path
         local_i++;
         d += hypot(path.at(local_i).pos.y - path.at(local_i - 1).pos.y,
                    path.at(local_i).pos.x - path.at(local_i - 1).pos.x);
-        // check for speed decrease compared to local_v in lookahead window
-        if (target_v > path.at(local_i).v)
+
+        // calculate desired velocity using linear formula
+        double dv = d * 0.10 + path.at(local_i).v;
+        // std::cout << " --- tV: " << path.at(local_i).v << ", tD: " << d << ", dV: " << dv << ", lv:" << local_v << std::endl;
+
+        if (dv < desired_v)
         {
-            double deceleration_rate = 0.0;
-
-            // calc deceleration needed to change speed: decel_rate = (v2 - u2) / 2d
-            deceleration_rate = (pow(current_v, 2) - pow(path.at(local_i).v, 2)) / (2.0 * d);
-
-            // std::cout << " --- tV: " << path.at(local_i).v << ", tD: " << d << ", decel_rate: " << deceleration_rate << std::endl;
-
-            // only memorize max deceleration and if it is above 0.9 (some buffer left for 1.0)
-            if (deceleration_rate > deceleration_rate_max)
-            {
-                deceleration_rate_max = deceleration_rate;
-                target_v = path.at(local_i).v;
-                target_d = d;
-                // std::cout << " --- tV: " << path.at(local_i).v << ", tD: " << d << ", decel_rate: " << deceleration_rate << std::endl;
-            }
-
+            desired_v = dv;
+            target_v = path.at(local_i).v;
+            target_d = d;
         }
     }
 
-    desired_v = target_d * 0.10 + target_v;
     desired_v = std::min(std::max(std::min(current_v, desired_v), target_v), local_v);
-    std::cout << "* gVAhd 1 - " << " cV: " << current_v << ", dV: " << desired_v << ", lV: " << local_v
-              << ", tV: " << target_v << ", tD: " << target_d << ", decel_rate: " << deceleration_rate_max << std::endl;
+    //std::cout << "* gVAhd - " << " cV: " << current_v << ", dV: " << desired_v << ", lV: " << local_v
+    //          << ", tV: " << target_v << ", tD: " << target_d << std::endl;
 
     return desired_v;
 }

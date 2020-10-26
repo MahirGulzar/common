@@ -67,7 +67,7 @@ void DecisionMaker::Init(const ControllerParams& ctrlParams, const PlannerHNS::P
         nh.getParam("/ssc_interface/deceleration_limit", m_deceleration_limit);
 
 
-        setAcceleration(1.0);
+        setAcceleration(0.5);
         setDeceleration(1.0);
 
         // m_pidVelocity.Init(0.01, 0.004, 0.01);
