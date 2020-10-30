@@ -391,7 +391,9 @@ BehaviorStateMachine* FollowStateII::GetNextState()
     //         << ", calc_obj_d: " << m_pParams->d_follow * pCParams->velocityOfNext + pCParams->distanceToNext
     //         << ", d_toN: " << pCParams->distanceToNext << ", v_ofN: " << pCParams->velocityOfNext << std::endl;
 
-	if(pCParams->currentGoalID != pCParams->prevGoalID)
+    // go back to goal state if ego velocity based linear distance calc is smaller than follow distance calculation
+	if(pCParams->currentGoalID != pCParams->prevGoalID
+	            && (pCParams->currentVelocity / m_pParams->k_stop) < (m_pParams->d_follow * pCParams->velocityOfNext + pCParams->distanceToNext))
 		return FindBehaviorState(GOAL_STATE);
 
 	// removed: && pCParams->currentTrafficLightID != pCParams->prevTrafficLightID
@@ -460,7 +462,17 @@ BehaviorStateMachine* GoalStateII::GetNextState()
 
 BehaviorStateMachine* MissionAccomplishedStateII::GetNextState()
 {
-	return FindBehaviorState(this->m_Behavior);
+    PreCalculatedConditions* pCParams = GetCalcParams();
+
+    if(m_pParams->enableFollowing && pCParams->bFullyBlock
+            && (pCParams->currentVelocity / m_pParams->k_stop) > (m_pParams->d_follow * pCParams->velocityOfNext + pCParams->distanceToNext))
+        return FindBehaviorState(FOLLOW_STATE);
+
+    else
+    {
+        return FindBehaviorState(this->m_Behavior);
+    }
+
 }
 
 BehaviorStateMachine* StopSignStopStateII::GetNextState()
