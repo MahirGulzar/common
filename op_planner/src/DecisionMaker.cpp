@@ -111,6 +111,9 @@ void DecisionMaker::InitBehaviorStates()
 	m_pGoToGoalState->decisionMakingCount = 0;//m_params.nReliableCount;
 
 	m_pGoalState->InsertNextState(m_pGoToGoalState);
+    m_pGoalState->InsertNextState(m_pMissionCompleteState);
+
+    m_pMissionCompleteState->InsertNextState(m_pFollowState);
 
     m_pStopSignStopState->InsertNextState(m_pStopSignWaitState);
     m_pStopSignStopState->InsertNextState(m_pFollowState);
@@ -118,7 +121,6 @@ void DecisionMaker::InitBehaviorStates()
 	m_pStopSignWaitState->decisionMakingTime = m_params.stopSignStopTime;
 	m_pStopSignWaitState->InsertNextState(m_pStopSignStopState);
 	m_pStopSignWaitState->InsertNextState(m_pGoalState);
-
 
 	m_pTrafficLightStopState->InsertNextState(m_pTrafficLightWaitState);
     m_pTrafficLightStopState->InsertNextState(m_pFollowState);
@@ -203,7 +205,8 @@ void DecisionMaker::InitBehaviorStates()
 
  	double critical_long_front_distance =  m_CarInfo.wheel_base/2.0 + m_CarInfo.length/2.0 + m_params.verticalSafetyDistance;
 
-	if(ReachEndOfGlobalPath(pValues->minStoppingDistance + critical_long_front_distance, pValues->iCurrSafeLane))
+	//if(ReachEndOfGlobalPath(pValues->minStoppingDistance + critical_long_front_distance, pValues->iCurrSafeLane))
+	if(ReachEndOfGlobalPath(pValues->currentVelocity / m_params.k_stop + critical_long_front_distance, pValues->iCurrSafeLane))
 		pValues->currentGoalID = -1;
 	else
 		pValues->currentGoalID = goalID;
@@ -509,11 +512,44 @@ void DecisionMaker::InitBehaviorStates()
 
 		return target_velocity;
 	}
+
+	else if(beh.state == FINISH_STATE)
+	{
+        setDeceleration(5.0);
+
+	    double desiredVelocity = 0.0;
+        double distanceToEnd = 0.0;
+
+        // calculate distance to end of the path
+        for(unsigned int i = info.iFront; i < m_Path.size()-1; i++)
+        {
+            distanceToEnd+= hypot(m_Path.at(i+1).pos.y - m_Path.at(i).pos.y, m_Path.at(i+1).pos.x - m_Path.at(i).pos.x);
+        }
+
+        // remove vert_safety_dist
+	    desiredVelocity = (distanceToEnd - m_params.verticalSafetyDistance) * m_params.k_stop;
+
+        if(desiredVelocity <= m_params.low_speed_lower_lim)
+            desiredVelocity = 0;
+        else if(m_params.low_speed_lower_lim < desiredVelocity && desiredVelocity < m_params.low_speed_upper_lim)
+            desiredVelocity = m_params.low_speed_upper_lim;
+
+        desiredVelocity = std::min(std::max(desiredVelocity, 0.0), max_velocity);
+
+        for(unsigned int i =  0; i < m_Path.size(); i++)
+            m_Path.at(i).v = desiredVelocity;
+
+        std::cout << "FINISH - spd: " << CurrStatus.speed << ", dV: " << desiredVelocity << ", d_End: " << distanceToEnd << std::endl;
+        return desiredVelocity;
+    }
+
 	else
 	{
 		double target_velocity = 0;
 		for(unsigned int i = 0; i < m_Path.size(); i++)
 			m_Path.at(i).v = target_velocity;
+
+        std::cout << "OTHER_states - spd: " << CurrStatus.speed << std::endl;
 
 		return target_velocity;
 	}
