@@ -358,11 +358,9 @@ BehaviorStateMachine* ForwardStateII::GetNextState()
 
 	// removed: && pCParams->currentTrafficLightID != pCParams->prevTrafficLightID
 	else if(m_pParams->enableTrafficLightBehavior
-				&& pCParams->currentTrafficLightID > 0
-				&& pCParams->bTrafficIsRed)
-    {
+	        && pCParams->currentTrafficLightID > 0
+			&& pCParams->bTrafficIsRed)
 	    return FindBehaviorState(TRAFFIC_LIGHT_STOP_STATE);
-    }
 
 	else if(m_pParams->enableStopSignBehavior
 			&& pCParams->currentStopSignID > 0
@@ -391,22 +389,21 @@ BehaviorStateMachine* FollowStateII::GetNextState()
     //         << ", calc_obj_d: " << m_pParams->d_follow * pCParams->velocityOfNext + pCParams->distanceToNext
     //         << ", d_toN: " << pCParams->distanceToNext << ", v_ofN: " << pCParams->velocityOfNext << std::endl;
 
-    // go back to goal state if ego velocity based linear distance calc is smaller than follow distance calculation
+    // compare ego velocity based linear distance with follow state distance calculation
 	if(pCParams->currentGoalID != pCParams->prevGoalID
 	            && (pCParams->currentVelocity / m_pParams->k_stop) < (m_pParams->d_follow * pCParams->velocityOfNext + pCParams->distanceToNext))
 		return FindBehaviorState(GOAL_STATE);
 
 	// removed: && pCParams->currentTrafficLightID != pCParams->prevTrafficLightID
-	// go to tflstop (still red): if car in front has crossed stopline or not crossed, but driving faster than we
+	// added: stopline distance compared to follow distance: car is faster, tfl red and we need to stop
 	else if(m_pParams->enableTrafficLightBehavior
 				&& pCParams->currentTrafficLightID > 0
 				&& pCParams->bTrafficIsRed
                 && pCParams->distanceToStop() < m_pParams->d_follow * pCParams->velocityOfNext + pCParams->distanceToNext)
 	    return FindBehaviorState(TRAFFIC_LIGHT_STOP_STATE);
 
-
-	// removed from here: && pCParams->currentStopSignID != pCParams->prevStopSignID
-	// if car in front has crossed stopline - we still must stop!
+	// removed: && pCParams->currentStopSignID != pCParams->prevStopSignID
+	// added: if car in front has crossed stop line, we must still stop
 	else if(m_pParams->enableStopSignBehavior
 			&& pCParams->currentStopSignID > 0
 			&& pCParams->currentStopSignID != pCParams->prevStopSignID
@@ -464,6 +461,7 @@ BehaviorStateMachine* MissionAccomplishedStateII::GetNextState()
 {
     PreCalculatedConditions* pCParams = GetCalcParams();
 
+    // in case of obstacle go to Follow
     if(m_pParams->enableFollowing && pCParams->bFullyBlock
             && (pCParams->currentVelocity / m_pParams->k_stop) > (m_pParams->d_follow * pCParams->velocityOfNext + pCParams->distanceToNext))
         return FindBehaviorState(FOLLOW_STATE);
@@ -491,9 +489,7 @@ BehaviorStateMachine* StopSignStopStateII::GetNextState()
     //   pCParams->distanceToNext < pCParams->distanceToStop()
     //   && pCParams->velocityOfNext < pCParams->currentVelocity
     else if(pCParams->distanceToStop() > m_pParams->d_follow * pCParams->velocityOfNext + pCParams->distanceToNext)
-    {
         return FindBehaviorState(FOLLOW_STATE);
-    }
 
 	else if(pCParams->currentVelocity < m_zero_velocity)
 		return FindBehaviorState(STOP_SIGN_WAIT_STATE);
@@ -535,21 +531,15 @@ BehaviorStateMachine* TrafficLightStopStateII::GetNextState()
     //   pCParams->distanceToNext < pCParams->distanceToStop()
     //   && pCParams->velocityOfNext < pCParams->currentVelocity
     else if(pCParams->distanceToStop() > pCParams->distanceToNext + m_pParams->d_follow * pCParams->velocityOfNext)
-    {
         return FindBehaviorState(FOLLOW_STATE);
-    }
 
     else if(pCParams->bTrafficIsRed
             && pCParams->currentVelocity <= m_zero_velocity)
-	{
 		//std::cout << "Velocity Changed Stopping for trafficLight ("  <<pCParams->currentVelocity << ", " << m_zero_velocity << ")" <<  std::endl;
 		return FindBehaviorState(TRAFFIC_LIGHT_WAIT_STATE);
-	}
 
 	else
-	{
 		return FindBehaviorState(this->m_Behavior); // return and reset
-	}
 }
 
 BehaviorStateMachine* TrafficLightWaitStateII::GetNextState()

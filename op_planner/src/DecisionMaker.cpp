@@ -61,21 +61,17 @@ void DecisionMaker::Init(const ControllerParams& ctrlParams, const PlannerHNS::P
  		m_CarInfo = carInfo;
  		m_ControlParams = ctrlParams;
  		m_params = params;
-        m_dSpeedDistanceRatio = 0.4;
 
         nh.getParam("/ssc_interface/acceleration_limit", m_acceleration_limit);
         nh.getParam("/ssc_interface/deceleration_limit", m_deceleration_limit);
 
-
         setAcceleration(1.0);
         setDeceleration(1.0);
 
-        // m_pidVelocity.Init(0.01, 0.004, 0.01);
  		m_pidVelocity.Init(0.4, 0.0002, 0.02);
 		m_pidVelocity.Setlimit(m_params.maxSpeed, 0);
 
-        //m_pidStopping.Init(0.05, 0.05, 0.1);
-		m_pidStopping.Init(m_dSpeedDistanceRatio, 0, 0);
+        m_pidStopping.Init(0.05, 0.05, 0.1);
 		// m_pidStopping.Setlimit(m_params.horizonDistance, 0);
 
 		m_pidFollowing.Init(0.05, 0.05, 0.01);
@@ -349,11 +345,6 @@ void DecisionMaker::InitBehaviorStates()
  {
 	PlannerHNS::PreCalculatedConditions *preCalcPrams = m_pCurrentBehaviorState->GetCalcParams();
 
-    if(m_pCurrentBehaviorState != m_pCurrentBehaviorState->GetNextState()){
-        m_pidVelocity.ResetI();
-        m_pidVelocity.ResetD();
-    }
-
 	m_pCurrentBehaviorState = m_pCurrentBehaviorState->GetNextState();
 	if(m_pCurrentBehaviorState==0)
 		m_pCurrentBehaviorState = m_pInitState;
@@ -396,50 +387,40 @@ void DecisionMaker::InitBehaviorStates()
 
     unsigned int point_index = 0;
 	double critical_long_front_distance = m_CarInfo.length/2.0;
+	double target_velocity = 0.0;
 
 	if(beh.state == TRAFFIC_LIGHT_STOP_STATE || beh.state == STOP_SIGN_STOP_STATE)
 	{
-		double desiredVelocity = 0.0;
 		double min_dist = pow(CurrStatus.speed, 2)/(4.0 * 2);
 		std::cout << "STOP_";
+
 		if (beh.stopDistance <= min_dist && m_params.enableQuickStop)
 		{
 			setDeceleration(0.0);
-			desiredVelocity = 0.0;
+			target_velocity = 0.0;
 			std::cout << "EXT - ";
 		}
 		else 
 		{
 			setDeceleration(5.0);
-
-			desiredVelocity = beh.stopDistance * m_params.k_stop;
-
-            if(desiredVelocity <= m_params.low_speed_lower_lim)
-                desiredVelocity = 0;
-            else if(m_params.low_speed_lower_lim < desiredVelocity && desiredVelocity < m_params.low_speed_upper_lim)
-                desiredVelocity = m_params.low_speed_upper_lim;
-
-            desiredVelocity = std::min(std::max(desiredVelocity, 0.0), max_velocity);
+			target_velocity = beh.stopDistance * m_params.k_stop;
 			std::cout << "NRM - ";
 		}
 
+        target_velocity = clipTargetVelocityAndWriteToPath(target_velocity, max_velocity);
+        std::cout << "spd: " << CurrStatus.speed << ", tV: " << target_velocity << ", stpDist: " << beh.stopDistance << std::endl;
 
-		for(unsigned int i =  0; i < m_Path.size(); i++)
-			m_Path.at(i).v = desiredVelocity;
-
-		std::cout << "stpDist: " << beh.stopDistance << ", spd: " << CurrStatus.speed << ", dV: " << desiredVelocity  << std::endl;
-		return desiredVelocity;
-
+        return target_velocity;
 	}
+
 	else if(beh.state == FOLLOW_STATE)
 	{
-		double desiredVelocity = 0.0;
 		double min_dist = pow(CurrStatus.speed - beh.followVelocity, 2)/(4.0 * 2);
 		std::cout << "FOLLOW_";
 		if (beh.followDistance <= min_dist && m_params.enableQuickStop)
 		{
 			setDeceleration(0.0);
-			desiredVelocity = 0.0;
+			target_velocity = 0.0;
 			std::cout << "EXT - ";
 		}
 		// HACK
@@ -448,76 +429,61 @@ void DecisionMaker::InitBehaviorStates()
 		// So this else if is to bypass sudden braking when entering follow mode.
 		else if (beh.followVelocity == 0.0)
         {
-		    desiredVelocity = CurrStatus.speed;
+            setDeceleration(5.0);
+		    target_velocity = CurrStatus.speed;
             std::cout << "HCK - ";
         }
 		else
 		{
 			setDeceleration(5.0);
 
-            // clip small speeds of object in front
-            double objectVelocity = 0.0;
-            if(beh.followVelocity >= m_params.low_speed_upper_lim)
-                objectVelocity = beh.followVelocity;
-
-            double normalDistance = beh.followDistance - m_params.d_follow * objectVelocity - m_params.additionalBrakingDistance;
-            desiredVelocity = normalDistance * m_params.k_follow + objectVelocity;
-
-            if(desiredVelocity <= m_params.low_speed_lower_lim)
-                desiredVelocity = 0;
-            else if(m_params.low_speed_lower_lim < desiredVelocity && desiredVelocity < m_params.low_speed_upper_lim)
-                desiredVelocity = m_params.low_speed_upper_lim;
-
-            // if we are closer than 2m always send desiredVelocity 0.0
-            // TODO - lower limit? car behind in safety box example?
+            // if we are closer than 2m to a object in front always send target_velocity 0.0
             if(-2.0 < beh.followDistance && beh.followDistance < 2.0)
-                desiredVelocity = 0.0;
-            
-			desiredVelocity = std::min(std::max(desiredVelocity, 0.0), max_velocity);
+            {
+                target_velocity = 0.0;
+            }
+            else
+            {
+                // clip small speeds of object in front
+                double objectVelocity = 0.0;
+                if(beh.followVelocity >= m_params.low_speed_upper_lim)
+                    objectVelocity = beh.followVelocity;
+
+                double normalDistance = beh.followDistance - m_params.d_follow * objectVelocity - m_params.additionalBrakingDistance;
+                target_velocity = normalDistance * m_params.k_follow + objectVelocity;
+            }
 			std::cout << "NRM - ";
 		}
 
-		std::cout << ", fD: " << beh.followDistance << ", fV: " << beh.followVelocity << ", spd: " << CurrStatus.speed << ", dV: " << desiredVelocity << ", min_d: " << min_dist <<  std::endl;
+        target_velocity = clipTargetVelocityAndWriteToPath(target_velocity, max_velocity);
+        std::cout << "spd: " << CurrStatus.speed << ", tV: " << target_velocity << ", fD: " << beh.followDistance << ", fV: " << beh.followVelocity << ", min_d: " << min_dist << std::endl;
 
-		for(unsigned int i = 0; i < m_Path.size(); i++)
-			m_Path.at(i).v = desiredVelocity;
-
-		return desiredVelocity;
-
+        return target_velocity;
 	}
+
 	else if(beh.state == FORWARD_STATE || beh.state == OBSTACLE_AVOIDANCE_STATE )
 	{
         setDeceleration(1.0);
+		target_velocity = max_velocity;
 
-		double desiredVelocity = max_velocity;
+		//std::cout << "Target Velocity: " << target_velocity << ", Change Slowdown: " << bSlowBecauseChange  << std::endl;
+        target_velocity = clipTargetVelocityAndWriteToPath(target_velocity, max_velocity);
+        std::cout << "FORWARD - " << "spd: " << CurrStatus.speed << ", tV: " << target_velocity << ", d_forward: " << m_params.d_forward << ", spd_ch_d: " << speed_change_distance << std::endl;
 
-		if(desiredVelocity < m_params.minSpeed)
-		    desiredVelocity = 0;
-
-		for(unsigned int i = 0; i < m_Path.size(); i++)
-		    m_Path.at(i).v = desiredVelocity;
-
-		// for debugging or tuning
-		//std::cout << "Target Velocity: " << desiredVelocity << ", Change Slowdown: " << bSlowBecauseChange  << std::endl;
-		std::cout << "FORWARD - spd: " << CurrStatus.speed << ", dV: " << desiredVelocity << ", d_forward: " << m_params.d_forward << ", spd_ch_d: " << speed_change_distance << std::endl;
-
-		return desiredVelocity;
-
+        return target_velocity;
 	}
+
 	else if(beh.state == STOP_SIGN_WAIT_STATE || beh.state == TRAFFIC_LIGHT_WAIT_STATE)
 	{
-		double target_velocity = 0;
-		for(unsigned int i = 0; i < m_Path.size(); i++)
-			m_Path.at(i).v = target_velocity;
+		target_velocity = 0.0;
+        std::cout << "WAIT - " << "spd: " << CurrStatus.speed << ", tV: " << target_velocity << std::endl;
 
-		return target_velocity;
+        return target_velocity;
 	}
 
 	else if(beh.state == FINISH_STATE)
 	{
         setDeceleration(5.0);
-
-	    double desiredVelocity = 0.0;
         double distanceToEnd = 0.0;
 
         // calculate distance to end of the path
@@ -526,35 +492,34 @@ void DecisionMaker::InitBehaviorStates()
             distanceToEnd+= hypot(m_Path.at(i+1).pos.y - m_Path.at(i).pos.y, m_Path.at(i+1).pos.x - m_Path.at(i).pos.x);
         }
 
-        // remove vert_safety_dist
-	    desiredVelocity = (distanceToEnd - m_params.verticalSafetyDistance) * m_params.k_stop;
+        // subtract vert_safety_dist - end point straight in front of the car not safety box
+	    target_velocity = (distanceToEnd - m_params.verticalSafetyDistance) * m_params.k_stop;
 
-        if(desiredVelocity <= m_params.low_speed_lower_lim)
-            desiredVelocity = 0;
-        else if(m_params.low_speed_lower_lim < desiredVelocity && desiredVelocity < m_params.low_speed_upper_lim)
-            desiredVelocity = m_params.low_speed_upper_lim;
+        target_velocity = clipTargetVelocityAndWriteToPath(target_velocity, max_velocity);
+        std::cout << "FINISH - " << "spd: " << CurrStatus.speed << ", tV: " << target_velocity << ", d_End: " << distanceToEnd << std::endl;
 
-        desiredVelocity = std::min(std::max(desiredVelocity, 0.0), max_velocity);
-
-        for(unsigned int i =  0; i < m_Path.size(); i++)
-            m_Path.at(i).v = desiredVelocity;
-
-        std::cout << "FINISH - spd: " << CurrStatus.speed << ", dV: " << desiredVelocity << ", d_End: " << distanceToEnd << std::endl;
-        return desiredVelocity;
+        return target_velocity;
     }
 
-	else
+	else if(beh.state == GOAL_STATE)
 	{
-		double target_velocity = 0;
-		for(unsigned int i = 0; i < m_Path.size(); i++)
-			m_Path.at(i).v = target_velocity;
+		target_velocity = CurrStatus.speed;
+        target_velocity = clipTargetVelocityAndWriteToPath(target_velocity, max_velocity);
 
-        std::cout << "OTHER_states - spd: " << CurrStatus.speed << std::endl;
-
-		return target_velocity;
+        return target_velocity;
+        std::cout << "GOAL check - " << "spd: " << CurrStatus.speed << ", tV: " << target_velocity << std::endl;
 	}
 
-	return max_velocity;
+	else
+    {
+        target_velocity = 0.0;
+        std::cout << "Other - " << "spd: " << CurrStatus.speed << ", tV: " << target_velocity << std::endl;
+
+        return target_velocity;
+
+    }
+
+    return target_velocity;
  }
 
  PlannerHNS::BehaviorState DecisionMaker::DoOneStep(
@@ -605,6 +570,24 @@ void DecisionMaker::InitBehaviorStates()
          m_deceleration_limit = deceleration_limit;
          nh.setParam("/ssc_interface/deceleration_limit", deceleration_limit);
      }
+ }
+
+ double DecisionMaker::clipTargetVelocityAndWriteToPath(double target_velocity, double max_velocity) {
+
+     // clip target_velocity between 0 and max_velocity
+     target_velocity = std::min(std::max(target_velocity, 0.0), max_velocity);
+
+     // adjust small speeds, don't output smaller than m_params.low_speed_upper_lim=2.0
+     if (target_velocity <= m_params.low_speed_lower_lim)
+         target_velocity = 0;
+     else if (m_params.low_speed_lower_lim < target_velocity && target_velocity < m_params.low_speed_upper_lim)
+         target_velocity = m_params.low_speed_upper_lim;
+
+     // write speeds to path
+     for (unsigned int i = 0; i < m_Path.size(); i++)
+         m_Path.at(i).v = target_velocity;
+
+     return target_velocity;
  }
 
 } /* namespace PlannerHNS */
