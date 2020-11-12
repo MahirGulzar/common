@@ -1975,11 +1975,8 @@ void PlanningHelpers::GenerateRecommendedSpeed(vector<WayPoint>& path, const dou
 			path.at(i).v = v;
 
 	}
-
+	
 	//SmoothSpeedProfiles(path, 0.4,0.3, 0.01);
-    // my:
-	SmoothSpeedProfiles(path, 0.3, 0.35, 0.5);
-
 }
 
 WayPoint* PlanningHelpers::BuildPlanningSearchTreeV2(WayPoint* pStart,
