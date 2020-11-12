@@ -47,7 +47,6 @@ public:
 
 	void InitBehaviorStates();
 
-    double m_dSpeedDistanceRatio;
     bool m_bWindowReached;
 
 	//For Simulation
@@ -92,6 +91,7 @@ protected:
     ros::NodeHandle nh;
     double m_acceleration_limit;
     double m_deceleration_limit;
+    double clipTargetVelocityAndWriteToPath(double target_velocity, double max_velocity);
     void setAcceleration(double acceleration_limit);
     void setDeceleration(double deceleration_limit);
 };
