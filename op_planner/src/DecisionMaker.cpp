@@ -220,14 +220,47 @@ void DecisionMaker::InitBehaviorStates()
   	// std::cout << "S StopLineID: " << stopLineID << ", StopSignID: " << stopSignID << ", TrafficLightID: " << trafficLightID << ", Distance: " << distanceToClosestStopLine << ", MinStopDistance: " << pValues->minStoppingDistance << std::endl;
   	// distanceToClosestStopLine << ", " << m_params.giveUpDistance << ", " << pValues->minStoppingDistance + 1.0 << ", " << m_CarInfo.max_deceleration << std::endl;
 
-    // calculate distanceWindow to enter stopping state
-    double distanceWindow = pValues->currentVelocity / m_params.k_stop;
 
-    // std::cout << car_state.speed << ", " << m_CarInfo.max_deceleration << ", dW: " << distanceWindow << ", " << (distanceToClosestStopLine <= distanceWindow + bufferLength) << std::endl;
-    if(distanceToClosestStopLine > m_params.giveUpDistance && distanceToClosestStopLine <= distanceWindow)
-    {
+  	// Calculate ego car velocity for STOPPING state
+  	// if no stopline closer to horizon distance use maxVelocity else calculate
+  	if(stopLineID == -1)
+        pValues->egoStoppingVelocity = m_params.maxSpeed;
+  	else {
+        if(distanceToClosestStopLine < 1)
+            pValues->egoStoppingVelocity = 0;
+        else
+            pValues->egoStoppingVelocity = sqrt(-2 * m_params.stopping_deceleration * distanceToClosestStopLine);
+  	}
+    // clip ego STOPPING velocity between 0 and maxSpeed
+  	pValues->egoStoppingVelocity = std::min(std::max(pValues->egoStoppingVelocity, 0.0), m_params.maxSpeed);
+
+
+    // Calculate ego car velocity for FOLLOW state
+    if(!pValues->bFullyBlock){
+        pValues->egoFollowingVelocity = m_params.maxSpeed;
+    }
+    else{
+        // clip small speeds of object
+        double objectVelocity = 0.0;
+        if(pValues->velocityOfNext > 2)
+            objectVelocity = pValues->velocityOfNext;
+
+        // object speed dependent - in higher speeds keeps bigger distance
+        double normalDistance = pValues->distanceToNext - m_params.follow_reaction_time * objectVelocity - m_params.additionalBrakingDistance;
+
+        double under_sqrt = objectVelocity * objectVelocity - 2 * m_params.follow_deceleration * normalDistance;
+        if(under_sqrt > 0)
+            pValues->egoFollowingVelocity = sqrt(under_sqrt);
+        else
+            pValues->egoFollowingVelocity = 0.0;
+    }
+    // clip ego FOLLOW velocity between 0 and maxSpeed
+    pValues->egoFollowingVelocity = std::min(std::max(pValues->egoFollowingVelocity, 0.0), m_params.maxSpeed);
+
+
+
+    if(distanceToClosestStopLine > m_params.giveUpDistance && pValues->currentVelocity > pValues->egoStoppingVelocity){
         m_bWindowReached = true;
-	// std::cout << "in window" << std::endl;
     }
 
     if(distanceToClosestStopLine <= m_params.giveUpDistance) {
@@ -254,7 +287,6 @@ void DecisionMaker::InitBehaviorStates()
 		//std::cout << "LP => D: " << pValues->distanceToStop() << ", PrevSignID: " << pValues->prevTrafficLightID << ", CurrSignID: " << pValues->currentTrafficLightID << ", Green: " << bGreenTrafficLight << endl;
  	}
 
-
  	//std::cout << "Distance To Closest: " << distanceToClosestStopLine << ", Stop LineID: " << stopLineID << ", Stop SignID: " << stopSignID << ", TFID: " << trafficLightID << std::endl;
 
  	pValues->bTrafficIsRed = !bGreenTrafficLight;
@@ -265,7 +297,6 @@ void DecisionMaker::InitBehaviorStates()
 		pValues->distanceToNext = 1;
 		pValues->velocityOfNext = 0;
 	}
- 	//cout << "Distances: " << pValues->stoppingDistances.size() << ", Distance To Stop : " << pValues->distanceToStop << endl;
  }
 
  void DecisionMaker::UpdateCurrentLane(const double& search_distance)
@@ -357,6 +388,9 @@ void DecisionMaker::InitBehaviorStates()
 	currentBehavior.minVelocity		= 0;
 	currentBehavior.stopDistance 	= preCalcPrams->distanceToStop();
 	currentBehavior.followVelocity 	= preCalcPrams->velocityOfNext;
+	currentBehavior.egoStoppingVelocity = preCalcPrams->egoStoppingVelocity;
+    currentBehavior.egoFollowingVelocity = preCalcPrams->egoFollowingVelocity;
+
 	if(preCalcPrams->iPrevSafeTrajectory<0 || preCalcPrams->iPrevSafeTrajectory >= m_RollOuts.size())
 		currentBehavior.iTrajectory		= preCalcPrams->iCurrSafeTrajectory;
 	else
@@ -403,19 +437,20 @@ void DecisionMaker::InitBehaviorStates()
 		else 
 		{
 			setDeceleration(5.0);
-			target_velocity = beh.stopDistance * m_params.k_stop;
-			std::cout << "NRM - ";
+			target_velocity = beh.egoStoppingVelocity;
+            std::cout << "NRM - tv_raw: " << target_velocity << " - ";
 		}
 
         target_velocity = clipTargetVelocityAndWriteToPath(target_velocity, max_velocity);
-        std::cout << "spd: " << CurrStatus.speed << ", tV: " << target_velocity << ", stpDist: " << beh.stopDistance << std::endl;
+
+        std::cout << "spd: " << CurrStatus.speed << ", tV: " << target_velocity << ", stpDist: " << beh.stopDistance << ", vs_dist: " << m_params.verticalSafetyDistance << std::endl;
 
         return target_velocity;
 	}
 
 	else if(beh.state == FOLLOW_STATE)
 	{
-		double min_dist = pow(CurrStatus.speed - beh.followVelocity, 2)/(4.0 * 2);
+	    double min_dist = pow(CurrStatus.speed - beh.followVelocity, 2)/(4.0 * 2);
 		std::cout << "FOLLOW_";
 		if (beh.followDistance <= min_dist && m_params.enableQuickStop)
 		{
@@ -444,13 +479,7 @@ void DecisionMaker::InitBehaviorStates()
             }
             else
             {
-                // clip small speeds of object in front
-                double objectVelocity = 0.0;
-                if(beh.followVelocity >= m_params.low_speed_upper_lim)
-                    objectVelocity = beh.followVelocity;
-
-                double normalDistance = beh.followDistance - m_params.d_follow * objectVelocity - m_params.additionalBrakingDistance;
-                target_velocity = normalDistance * m_params.k_follow + objectVelocity;
+                target_velocity = beh.egoFollowingVelocity;
             }
 			std::cout << "NRM - ";
 		}

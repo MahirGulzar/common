@@ -347,11 +347,11 @@ BehaviorStateMachine* GoalState::GetNextState()
 BehaviorStateMachine* ForwardStateII::GetNextState()
 {
 	PreCalculatedConditions* pCParams = GetCalcParams();
-    // std::cout << " -- debug DM - " << "isRed: " << pCParams->bTrafficIsRed
-    //           << ", stp_id: " << pCParams->currentStopSignID << ", tfl_id: " << pCParams->currentTrafficLightID
-    //           << ", d_toS: " << pCParams->distanceToStop()
-    //           << ", calc_obj_d: " << m_pParams->d_follow * pCParams->velocityOfNext + pCParams->distanceToNext
-    //           << ", d_toN: " << pCParams->distanceToNext << ", v_ofN: " << pCParams->velocityOfNext << std::endl;
+    std::cout << " -- debug DM - " << "isRed: " << pCParams->bTrafficIsRed
+              << ", stp_id: " << pCParams->currentStopSignID << ", tfl_id: " << pCParams->currentTrafficLightID
+              << ", d_toS: " << pCParams->distanceToStop()
+              << ", d_toN: " << pCParams->distanceToNext << ", v_ofN: " << pCParams->velocityOfNext
+              << ", egoStpV: " << pCParams->egoStoppingVelocity << ", egoFllV: " << pCParams->egoFollowingVelocity << std::endl;
 
 	if(pCParams->currentGoalID != pCParams->prevGoalID)
 		return FindBehaviorState(GOAL_STATE);
@@ -383,31 +383,32 @@ BehaviorStateMachine* ForwardStateII::GetNextState()
 BehaviorStateMachine* FollowStateII::GetNextState()
 {
 	PreCalculatedConditions* pCParams = GetCalcParams();
-    // std::cout << " -- debug DM - " << "isRed: " << pCParams->bTrafficIsRed
-    //         << ", stp_id: " << pCParams->currentStopSignID << ", tfl_id: " << pCParams->currentTrafficLightID
-    //         << ", d_toS: " << pCParams->distanceToStop()
-    //         << ", calc_obj_d: " << m_pParams->d_follow * pCParams->velocityOfNext + pCParams->distanceToNext
-    //         << ", d_toN: " << pCParams->distanceToNext << ", v_ofN: " << pCParams->velocityOfNext << std::endl;
+    std::cout << " -- debug DM - " << "isRed: " << pCParams->bTrafficIsRed
+              << ", stp_id: " << pCParams->currentStopSignID << ", tfl_id: " << pCParams->currentTrafficLightID
+              << ", d_toS: " << pCParams->distanceToStop()
+              << ", d_toN: " << pCParams->distanceToNext << ", v_ofN: " << pCParams->velocityOfNext
+              << ", egoStpV: " << pCParams->egoStoppingVelocity << ", egoFllV: " << pCParams->egoFollowingVelocity << std::endl;
+
 
     // compare ego velocity based linear distance with follow state distance calculation
 	if(pCParams->currentGoalID != pCParams->prevGoalID
-	            && (pCParams->currentVelocity / m_pParams->k_stop) < (m_pParams->d_follow * pCParams->velocityOfNext + pCParams->distanceToNext))
+	            && pCParams->currentVelocity < pCParams->egoFollowingVelocity)
 		return FindBehaviorState(GOAL_STATE);
 
 	// removed: && pCParams->currentTrafficLightID != pCParams->prevTrafficLightID
-	// added: stopline distance compared to follow distance: car is faster, tfl red and we need to stop
+	// added: if egostoppingVelocity smaller go to TFL stopping
 	else if(m_pParams->enableTrafficLightBehavior
 				&& pCParams->currentTrafficLightID > 0
 				&& pCParams->bTrafficIsRed
-                && pCParams->distanceToStop() < m_pParams->d_follow * pCParams->velocityOfNext + pCParams->distanceToNext)
+                && pCParams->egoStoppingVelocity < pCParams->egoFollowingVelocity)
 	    return FindBehaviorState(TRAFFIC_LIGHT_STOP_STATE);
 
 	// removed: && pCParams->currentStopSignID != pCParams->prevStopSignID
-	// added: if car in front has crossed stop line, we must still stop
+	// added: if egostoppingVelocity smaller go to STOP_SIGN stopping
 	else if(m_pParams->enableStopSignBehavior
 			&& pCParams->currentStopSignID > 0
 			&& pCParams->currentStopSignID != pCParams->prevStopSignID
-			&& pCParams->distanceToStop() < m_pParams->d_follow * pCParams->velocityOfNext + pCParams->distanceToNext)
+			&& pCParams->egoStoppingVelocity < pCParams->egoFollowingVelocity)
 		return FindBehaviorState(STOP_SIGN_STOP_STATE);
 
 	else if(m_pParams->enableSwerving
@@ -463,7 +464,7 @@ BehaviorStateMachine* MissionAccomplishedStateII::GetNextState()
 
     // in case of obstacle go to Follow
     if(m_pParams->enableFollowing && pCParams->bFullyBlock
-            && (pCParams->currentVelocity / m_pParams->k_stop) > (m_pParams->d_follow * pCParams->velocityOfNext + pCParams->distanceToNext))
+            && pCParams->egoFollowingVelocity < pCParams->currentVelocity)
         return FindBehaviorState(FOLLOW_STATE);
 
     else
@@ -476,22 +477,20 @@ BehaviorStateMachine* MissionAccomplishedStateII::GetNextState()
 BehaviorStateMachine* StopSignStopStateII::GetNextState()
 {
 	PreCalculatedConditions* pCParams = GetCalcParams();
-    // std::cout << " -- debug DM - " << "isRed: " << pCParams->bTrafficIsRed
-    //           << ", stp_id: " << pCParams->currentStopSignID << ", tfl_id: " << pCParams->currentTrafficLightID
-    //           << ", d_toS: " << pCParams->distanceToStop()
-    //           << ", calc_obj_d: " << m_pParams->d_follow * pCParams->velocityOfNext + pCParams->distanceToNext
-    //           << ", d_toN: " << pCParams->distanceToNext << ", v_ofN: " << pCParams->velocityOfNext << std::endl;
+    std::cout << " -- debug DM - " << "isRed: " << pCParams->bTrafficIsRed
+              << ", stp_id: " << pCParams->currentStopSignID << ", tfl_id: " << pCParams->currentTrafficLightID
+              << ", d_toS: " << pCParams->distanceToStop()
+              << ", d_toN: " << pCParams->distanceToNext << ", v_ofN: " << pCParams->velocityOfNext
+              << ", egoStpV: " << pCParams->egoStoppingVelocity << ", egoFllV: " << pCParams->egoFollowingVelocity << std::endl;
 
 	if(pCParams->currentGoalID != pCParams->prevGoalID)
 		return FindBehaviorState(GOAL_STATE);
 
-	// if closest object is closer than stopline and ego car speed is faster than objects speed
-    //   pCParams->distanceToNext < pCParams->distanceToStop()
-    //   && pCParams->velocityOfNext < pCParams->currentVelocity
-    else if(pCParams->distanceToStop() > m_pParams->d_follow * pCParams->velocityOfNext + pCParams->distanceToNext)
+    else if(pCParams->egoStoppingVelocity > pCParams->egoFollowingVelocity)
         return FindBehaviorState(FOLLOW_STATE);
 
-	else if(pCParams->currentVelocity < m_zero_velocity)
+	else if(pCParams->currentVelocity < m_zero_velocity &&
+					pCParams->egoStoppingVelocity < m_pParams->low_speed_upper_lim)
 		return FindBehaviorState(STOP_SIGN_WAIT_STATE);
 
 	else
@@ -514,11 +513,11 @@ BehaviorStateMachine* TrafficLightStopStateII::GetNextState()
 {
 	PreCalculatedConditions* pCParams = GetCalcParams();
 
-    // std::cout << " -- debug DM - " << "isRed: " << pCParams->bTrafficIsRed
-    //           << ", stp_id: " << pCParams->currentStopSignID << ", tfl_id: " << pCParams->currentTrafficLightID
-    //           << ", d_toS: " << pCParams->distanceToStop()
-    //           << ", calc_obj_d: " << m_pParams->d_follow * pCParams->velocityOfNext + pCParams->distanceToNext
-    //           << ", d_toN: " << pCParams->distanceToNext << ", v_ofN: " << pCParams->velocityOfNext << std::endl;
+    std::cout << " -- debug DM - " << "isRed: " << pCParams->bTrafficIsRed
+              << ", stp_id: " << pCParams->currentStopSignID << ", tfl_id: " << pCParams->currentTrafficLightID
+              << ", d_toS: " << pCParams->distanceToStop()
+              << ", d_toN: " << pCParams->distanceToNext << ", v_ofN: " << pCParams->velocityOfNext
+              << ", egoStpV: " << pCParams->egoStoppingVelocity << ", egoFllV: " << pCParams->egoFollowingVelocity << std::endl;
 
 	//std::cout << "Stopping for trafficLight "  << std::endl;
 	if(!pCParams->bTrafficIsRed)
@@ -528,9 +527,7 @@ BehaviorStateMachine* TrafficLightStopStateII::GetNextState()
 	}
 
     // if closest object is closer to stopline and ego car speed is faster than objects speed
-    //   pCParams->distanceToNext < pCParams->distanceToStop()
-    //   && pCParams->velocityOfNext < pCParams->currentVelocity
-    else if(pCParams->distanceToStop() > pCParams->distanceToNext + m_pParams->d_follow * pCParams->velocityOfNext)
+    else if(pCParams->egoStoppingVelocity > pCParams->egoFollowingVelocity)
         return FindBehaviorState(FOLLOW_STATE);
 
     else if(pCParams->bTrafficIsRed

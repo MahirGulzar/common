@@ -787,6 +787,8 @@ public:
 	double stopDistance;
 	double followVelocity;
 	double followDistance;
+	double egoStoppingVelocity;
+	double egoFollowingVelocity;
 	LIGHT_INDICATOR indicator;
 	bool bNewPlan;
 	int iTrajectory;
@@ -800,6 +802,8 @@ public:
 		stopDistance = 0;
 		followVelocity = 0;
 		followDistance = 0;
+        egoStoppingVelocity = 0.0;
+        egoFollowingVelocity = 0.0;
 		indicator  = INDICATOR_NONE;
 		bNewPlan = false;
 		iTrajectory = -1;
@@ -909,13 +913,14 @@ public:
 	bool 	enableStopSignBehavior;
 	bool    enableQuickStop;
 
-	double  k_stop;
+	double  follow_reaction_time;
+	double  follow_deceleration;
+	double  stopping_deceleration;
     double  d_forward;
-    double  k_follow;
-    double  d_follow;
     double  k_speed_change;
     double  low_speed_upper_lim;
     double  low_speed_lower_lim;
+    double  k_stop;
 
 	bool 	enabTrajectoryVelocities;
 	double minIndicationDistance;
@@ -950,13 +955,14 @@ public:
 		giveUpDistance					= -4;
 		nReliableCount					= 2;
 
-        k_stop                          = 0.32;
+        follow_reaction_time            = 1.5;
+        follow_deceleration             = -1.0;
+        stopping_deceleration           = -1.0;
         d_forward                       = 3.0;
-        k_follow                        = 0.3;
-        d_follow                        = 2.0;
         k_speed_change                  = 0.10;
         low_speed_upper_lim             = 2.0;
         low_speed_lower_lim             = 1.0;
+        k_stop                          = 0.25;
 
 		enableHeadingSmoothing			= false;
 		enableSwerving 					= false;
@@ -991,6 +997,7 @@ public:
 	//Following
 	double 				distanceToNext;
 	double				velocityOfNext;
+	double              egoFollowingVelocity;
 	//-------------------------------------------//
 	//For Lane Change
 	int 				iPrevSafeLane;
@@ -1008,6 +1015,7 @@ public:
 	bool				bTargetLaneSafe;
 	//-------------------------------------------//
 	//Traffic Lights & Stop Sign
+	double              egoStoppingVelocity;
 	int 				currentStopSignID;
 	int 				prevStopSignID;
 	int 				currentTrafficLightID;
@@ -1055,6 +1063,8 @@ public:
 		//distance to stop
 		distanceToNext			= -1;
 		velocityOfNext			= 0;
+        egoFollowingVelocity    = 0.0;
+        egoStoppingVelocity     = 0.0;
 		currentStopSignID		= -1;
 		prevStopSignID			= -1;
 		currentTrafficLightID	= -1;
