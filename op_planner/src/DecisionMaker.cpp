@@ -443,7 +443,8 @@ void DecisionMaker::InitBehaviorStates()
 
         target_velocity = clipTargetVelocityAndWriteToPath(target_velocity, max_velocity);
 
-        std::cout << "spd: " << CurrStatus.speed << ", tV: " << target_velocity << ", stpDist: " << beh.stopDistance << ", vs_dist: " << m_params.verticalSafetyDistance << std::endl;
+        std::cout << "spd: " << CurrStatus.speed << ", tV: " << target_velocity << ", stpDist: " << beh.stopDistance << ", vs_dist: " << m_params.verticalSafetyDistance
+                  << ", egoStopV: " << beh.egoStoppingVelocity << ", egoFolV: " << beh.egoFollowingVelocity << std::endl;
 
         return target_velocity;
 	}
@@ -485,7 +486,8 @@ void DecisionMaker::InitBehaviorStates()
 		}
 
         target_velocity = clipTargetVelocityAndWriteToPath(target_velocity, max_velocity);
-        std::cout << "spd: " << CurrStatus.speed << ", tV: " << target_velocity << ", fD: " << beh.followDistance << ", fV: " << beh.followVelocity << ", min_d: " << min_dist << std::endl;
+        std::cout << "spd: " << CurrStatus.speed << ", tV: " << target_velocity << ", fD: " << beh.followDistance << ", fV: " << beh.followVelocity << ", min_d: " << min_dist
+                << ", egoStopV: " << beh.egoStoppingVelocity << ", egoFolV: " << beh.egoFollowingVelocity << std::endl;
 
         return target_velocity;
 	}
@@ -497,8 +499,8 @@ void DecisionMaker::InitBehaviorStates()
 
 		//std::cout << "Target Velocity: " << target_velocity << ", Change Slowdown: " << bSlowBecauseChange  << std::endl;
         target_velocity = clipTargetVelocityAndWriteToPath(target_velocity, max_velocity);
-        std::cout << "FORWARD - " << "spd: " << CurrStatus.speed << ", tV: " << target_velocity << ", d_forward: " << m_params.d_forward << ", spd_ch_d: " << speed_change_distance << std::endl;
-
+        std::cout << "FORWARD - " << "spd: " << CurrStatus.speed << ", tV: " << target_velocity 
+                  << ", egoStopV: " << beh.egoStoppingVelocity << ", egoFolV: " << beh.egoFollowingVelocity << std::endl;
         return target_velocity;
 	}
 
