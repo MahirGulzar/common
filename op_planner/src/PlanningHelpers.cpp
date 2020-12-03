@@ -2772,7 +2772,7 @@ void PlanningHelpers::WritePathToFile(const string& fileName, const vector<WayPo
 	 for(unsigned int i=0; i<path.size(); i++)
 	 {
 		 ostringstream strwp;
-		 strwp << path.at(i).laneId << "," << path.at(i).id <<","<<path.at(i).pos.x<<","<< path.at(i).pos.y
+		 strwp << path.at(i).laneId << "," << path.at(i).id <<","<< std::fixed << std::setprecision(2) << path.at(i).pos.x<<","<< std::fixed << std::setprecision(2) << path.at(i).pos.y
 				 <<","<< path.at(i).pos.a << "," << path.at(i).cost << "," << path.at(i).v << ",";
 		 dataList.push_back(strwp.str());
 	 }
