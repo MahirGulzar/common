@@ -233,8 +233,10 @@ PIDController::PIDController()
 	bEnableLimit= false;
 	accumErr = 0;
 	prevErr = 0;
-	bResetD = false;
+	bResetD = true;
 	bResetI = false;
+	m_dt = 0;
+	m_LastValidErrorDiff = 0;
 }
 
 PIDController::PIDController(const double& kp, const double& ki, const double& kd)
@@ -244,9 +246,9 @@ PIDController::PIDController(const double& kp, const double& ki, const double& k
 	bEnableLimit= false;
 	accumErr = 0;
 	prevErr  = 0;
-	bResetD = false;
+	bResetD = true;
 	bResetI = false;
-
+	m_LastValidErrorDiff = 0;
 }
 
 void PIDController::Setlimit(const double& upper,const double& lower)
@@ -260,6 +262,71 @@ double PIDController::getPID(const double& currValue, const double& targetValue)
 {
 	double e = targetValue - currValue;
 	return getPID(e);
+}
+
+double PIDController::getTimeDependentPID(const double& e, const double& dt)
+{
+	m_dt = dt;
+
+	if(bResetI)
+	{
+		bResetI = false;
+		accumErr = 0;
+	}
+
+	if(bResetD)
+	{
+		bResetD = false;
+		prevErr = e;
+	}
+
+	if(pid_v < upper_limit && pid_v > lower_limit)
+	{
+		accumErr = accumErr + (e*dt);
+	}
+
+
+	double edot = (e - prevErr);
+	if(dt > 0 && fabs(edot) > 0)
+	{
+		m_LastValidErrorDiff = edot/dt;
+	}
+
+	m_edot_list.push_back(m_LastValidErrorDiff);
+
+	if(m_edot_list.size() > 5)
+	{
+		double _sum = 0;
+		for(auto& v: m_edot_list)
+		{
+			_sum += v;
+		}
+
+		m_LastValidErrorDiff = _sum/m_edot_list.size();
+		m_edot_list.erase(m_edot_list.begin()+0);
+	}
+
+	kp_v = kp * e;
+	ki_v = ki * accumErr;
+	kd_v = kd * m_LastValidErrorDiff;
+
+	pid_v = kp_v + ki_v + kd_v;
+	pid_lim = pid_v;
+	if(bEnableLimit)
+	{
+		if(pid_v > upper_limit)
+		{
+			pid_lim = upper_limit;
+		}
+		else if ( pid_v < lower_limit)
+		{
+			pid_lim = lower_limit;
+		}
+	}
+
+	prevErr = e;
+
+	return pid_lim;
 }
 
 double PIDController::getPID(const double& e)
@@ -282,12 +349,14 @@ double PIDController::getPID(const double& e)
 	}
 
 	if(pid_v < upper_limit && pid_v > lower_limit)
+	{
 		accumErr += e;
+	}
 
-	double edot= e - prevErr;
+	double edot= (e - prevErr);
 
 	kp_v = kp * e;
-	ki_v = ki *  accumErr;
+	ki_v = ki * accumErr;
 	kd_v = kd * edot;
 
 	pid_v = kp_v + ki_v + kd_v;
@@ -313,17 +382,25 @@ std::string PIDController::ToStringHeader()
 {
 	std::ostringstream str_out;
 	str_out << "Time" << "," <<"KP" << "," << "KI" << "," << "KD" << "," << "KP_v" << "," << "KI_v" << "," << "KD_v"
-			<< "," << "pid_v" << "," << "," << "pid_lim" << "," << "," << "prevErr" << "," << "accumErr" << "," ;
+			<< "," << "pid_v_cut" << "," << "pid_v" << "," << "err" << "," << "accumErr" << "," ;
 	return str_out.str();
 }
 
-std::string PIDController::ToString()
+std::string PIDController::ToString(const double& dt)
 {
 	std::ostringstream str_out;
 	timespec t_stamp;
 	UtilityH::GetTickCount(t_stamp);
-	str_out << UtilityH::GetLongTime(t_stamp) << "," <<kp << "," << ki << "," << kd << "," << kp_v << "," << ki_v << "," << kd_v
-				<< "," << pid_v << "," << "," << pid_lim << "," << "," << prevErr << "," << accumErr << "," ;
+	if(m_dt > 0)
+	{
+		str_out << m_dt << "," <<kp << "," << ki << "," << kd << "," << kp_v << "," << ki_v << "," << kd_v
+					 << "," << pid_lim << "," << pid_v << "," << prevErr << "," << accumErr << "," ;
+	}
+	else
+	{
+		str_out << dt << "," <<kp << "," << ki << "," << kd << "," << kp_v << "," << ki_v << "," << kd_v
+							 << "," << pid_lim << "," << pid_v << "," << prevErr << "," << accumErr << "," ;
+	}
 
 	return str_out.str();
 
@@ -337,6 +414,12 @@ void PIDController::ResetD()
 void PIDController::ResetI()
 {
 	bResetI = true;
+}
+
+void PIDController::Reset()
+{
+	bResetI = true;
+	bResetD = true;
 }
 
 void PIDController::Init(const double& kp, const double& ki, const double& kd)
@@ -381,7 +464,7 @@ LowpassFilter::LowpassFilter(const int& filterOrder, const double& sampleFreq, c
 	Init(filterOrder, sampleFreq, cutOffFreq);
 }
 
-void LowpassFilter::Init(const int& n, const double& sampleFreq, const double& cutOffFreq)
+void LowpassFilter::Init(const double& sampleFreq, const double& cutOffFreq, const int& n)
 {
 	if(!(n == 2 || n == 4 || n == 6 || n == 8))
 	{
@@ -412,23 +495,6 @@ void LowpassFilter::Init(const int& n, const double& sampleFreq, const double& c
 		double su = sinh(u/(double)n);
 		double cu = cosh(u/(double)n);
 		double b, c;
-
-//		A  = new double[m];
-//		d1 = new double[m];
-//		d2 = new double[m];
-//		w0 = new double[m];
-//		w1 = new double[m];
-//		w2 = new double[m];
-//
-//		for(int i=0; i < m ; i++)
-//		{
-//			A[i]  = 0;
-//			d1[i] = 0;
-//			d2[i] = 0;
-//			w0[i] = 0;
-//			w1[i] = 0;
-//			w2[i] = 0;
-//		}
 
 		for(int i=0; i< m; ++i)
 		{

@@ -4,7 +4,6 @@
 /// \date Jan 10, 2018
 
 #include "op_planner/SimuDecisionMaker.h"
-#include "op_utility/UtilityH.h"
 #include "op_planner/PlanningHelpers.h"
 #include "op_planner/MappingHelpers.h"
 #include "op_planner/MatrixOperations.h"
@@ -47,10 +46,10 @@ void SimuDecisionMaker::ReInitializePlanner(const WayPoint& start_pose)
 	m_CurrentAccSteerAngle = m_CurrentAccVelocity = 0;
 
 	m_pCurrentBehaviorState = m_pFollowState;
-	m_TotalPath.clear();
-	m_TotalOriginalPath.clear();
+	m_TotalPaths.clear();
+	m_TotalOriginalPaths.clear();
 	m_Path.clear();
-	m_RollOuts.clear();
+	m_LanesRollOuts.clear();
 	m_pCurrentBehaviorState->m_Behavior = PlannerHNS::FORWARD_STATE;
 	FirstLocalizeMe(start_pose);
 	LocalizeMe(0);
@@ -65,7 +64,7 @@ void SimuDecisionMaker::SetSimulatedTargetOdometryReadings(const double& velocit
 
 void SimuDecisionMaker::FirstLocalizeMe(const WayPoint& initCarPos)
  {
-	pLane = initCarPos.pLane;
+	//pLane = initCarPos.pLane;
 	state = initCarPos;
 	m_OdometryState.pos.a = initCarPos.pos.a;
 	m_OdometryState.pos.x = initCarPos.pos.x + (m_CarInfo.wheel_base/2.0 * cos(initCarPos.pos.a));
@@ -97,6 +96,13 @@ void SimuDecisionMaker::FirstLocalizeMe(const WayPoint& initCarPos)
 	state.pos.a = m_OdometryState.pos.a;
 	state.pos.x = m_OdometryState.pos.x	 - (m_CurrentVelocity*dt* (m_CarInfo.wheel_base) * cos (m_OdometryState.pos.a));
 	state.pos.y = m_OdometryState.pos.y	 - (m_CurrentVelocity*dt* (m_CarInfo.wheel_base/2.0) * sin (m_OdometryState.pos.a));
+
+	int currIndex = PlannerHNS::PlanningHelpers::GetClosestNextPointIndexFast(m_Path, state);
+	if(currIndex >=0 && currIndex < m_Path.size())
+	{
+		state.pos.z = m_Path.at(currIndex).pos.z;
+	}
+
 }
 
  void SimuDecisionMaker::UpdateState(const PlannerHNS::VehicleState& state, const bool& bUseDelay)
@@ -135,7 +141,7 @@ void SimuDecisionMaker::FirstLocalizeMe(const WayPoint& initCarPos)
 	std::vector<PlannerHNS::WayPoint> sampledPoints_debug;
 	std::vector<std::vector<std::vector<PlannerHNS::WayPoint> > > _roll_outs;
 	PlannerHNS::PlannerH _planner;
-	_planner.GenerateRunoffTrajectory(m_TotalPath, state,
+	_planner.GenerateRunoffTrajectory(m_TotalPaths, state,
 						m_params.enableLaneChange,
 						state.v,
 						m_params.microPlanDistance,
@@ -156,14 +162,19 @@ void SimuDecisionMaker::FirstLocalizeMe(const WayPoint& initCarPos)
 						_roll_outs, sampledPoints_debug);
 
 	if(_roll_outs.size()>0)
-		m_RollOuts.clear();
+	{
+		m_LanesRollOuts.clear();
+	}
+
 	for(unsigned int i=0; i < _roll_outs.size(); i++)
 	{
+		std::vector<std::vector<PlannerHNS::WayPoint> > lanes;
 		for(unsigned int j=0; j < _roll_outs.at(i).size(); j++)
 		{
 			PlannerHNS::PlanningHelpers::PredictConstantTimeCostForTrajectory(_roll_outs.at(i).at(j), state, m_params.minSpeed, m_params.microPlanDistance);
-			m_RollOuts.push_back(_roll_outs.at(i).at(j));
+			lanes.push_back(_roll_outs.at(i).at(j));
 		}
+		m_LanesRollOuts.push_back(lanes);
 	}
  }
 
@@ -172,24 +183,29 @@ void SimuDecisionMaker::FirstLocalizeMe(const WayPoint& initCarPos)
 	 bool bNewTrajectory = false;
 	 PlannerHNS::PreCalculatedConditions *preCalcPrams = m_pCurrentBehaviorState->GetCalcParams();
 
-	 if(!preCalcPrams || m_TotalPath.size()==0) return bNewTrajectory;
+	 if(!preCalcPrams || m_TotalPaths.size() == 0 || preCalcPrams->bFinalLocalTrajectory)
+	{
+		 return bNewTrajectory;
+	}
 
 	int currIndex = PlannerHNS::PlanningHelpers::GetClosestNextPointIndexFast(m_Path, state);
 	int index_limit = 0;
 	if(index_limit<=0)
+	{
 		index_limit =  m_Path.size()/2.0;
+	}
 	if(currIndex > index_limit
 			|| preCalcPrams->bRePlan
 			|| preCalcPrams->bNewGlobalPath)
 	{
 		GenerateLocalRollOuts();
-		if(m_RollOuts.size() <= preCalcPrams->iCurrSafeTrajectory)
+		if(m_LanesRollOuts.size() > 0 && m_LanesRollOuts.at(0).size() <= preCalcPrams->iCurrSafeTrajectory)
 			return false;
 
-		std::cout << "New Local Plan !! " << currIndex << ", "<< preCalcPrams->bRePlan << ", " << preCalcPrams->bNewGlobalPath  << ", " <<  m_TotalOriginalPath.at(0).size() << ", PrevLocal: " << m_Path.size();
+		std::cout << "New Local Plan !! " << currIndex << ", "<< preCalcPrams->bRePlan << ", " << preCalcPrams->bNewGlobalPath  << ", " <<  m_TotalOriginalPaths.at(0).size() << ", PrevLocal: " << m_Path.size() << std::endl;
 		std::cout << ", NewLocal: " << m_Path.size() << std::endl;
 
-		m_Path = m_RollOuts.at(preCalcPrams->iCurrSafeTrajectory);
+		m_Path = m_LanesRollOuts.at(0).at(preCalcPrams->iCurrSafeTrajectory);
 		preCalcPrams->bNewGlobalPath = false;
 		preCalcPrams->bRePlan = false;
 		bNewTrajectory = true;
@@ -212,36 +228,62 @@ void SimuDecisionMaker::FirstLocalizeMe(const WayPoint& initCarPos)
 
  PlannerHNS::BehaviorState SimuDecisionMaker::DoOneStep(const double& dt,
 		const PlannerHNS::VehicleState& vehicleState,
-		const int& goalID,
 		const std::vector<TrafficLight>& trafficLight,
 		const std::vector<PlannerHNS::DetectedObject>& objects,
 		const bool& bEmergencyStop)
 {
 	 PlannerHNS::BehaviorState beh;
 	 state.v = vehicleState.speed;
-	 m_TotalPath.clear();
-	for(unsigned int i = 0; i < m_TotalOriginalPath.size(); i++)
+	 m_TotalPaths.clear();
+
+	 if(m_prev_index.size() != m_TotalOriginalPaths.size())
+	 {
+		 m_prev_index.clear();
+		 for(unsigned int i = 0; i < m_TotalOriginalPaths.size(); i++)
+		 {
+			 m_prev_index.push_back(0);
+		 }
+
+	 }
+
+	for(unsigned int i = 0; i < m_TotalOriginalPaths.size(); i++)
 	{
 		t_centerTrajectorySmoothed.clear();
-		PlannerHNS::PlanningHelpers::ExtractPartFromPointToDistanceDirectionFast(m_TotalOriginalPath.at(i), state, m_params.horizonDistance ,	m_params.pathDensity , t_centerTrajectorySmoothed);
-		m_TotalPath.push_back(t_centerTrajectorySmoothed);
+		m_prev_index.at(i) = PlannerHNS::PlanningHelpers::ExtractPartFromPointToDistanceDirectionFast(m_TotalOriginalPaths.at(i), state, m_params.horizonDistance ,	m_params.pathDensity , t_centerTrajectorySmoothed, m_prev_index.at(i));
+
+		if(m_prev_index.at(i) > 0 ) m_prev_index.at(i) = m_prev_index.at(i) -1;
+
+		m_TotalPaths.push_back(t_centerTrajectorySmoothed);
 	}
 
-	if(m_TotalPath.size()==0) return beh;
+	if(m_TotalPaths.size()==0) return beh;
 
-	UpdateCurrentLane(m_MaxLaneSearchDistance);
+	//UpdateCurrentLane(m_params.maxLaneSearchDistance);
 
-	PlannerHNS::TrajectoryCost tc = m_TrajectoryCostsCalculator.DoOneStepStatic(m_RollOuts, m_TotalPath.at(m_iCurrentTotalPathId), state,	m_params, m_CarInfo, vehicleState, objects);
+	if(m_LanesRollOuts.size() == 0)
+	{
+		GenerateLocalRollOuts();
+	}
+
+	PlannerHNS::TrajectoryCost tc;
+
+	if(m_LanesRollOuts.size() > 0)
+	{
+		tc = m_TrajectoryCostsCalculator.DoOneStepStatic(m_LanesRollOuts.at(0), m_TotalPaths.at(m_iCurrentTotalPathId), state,	m_params, m_CarInfo, vehicleState, objects);
+	}
 
 	//std::cout << "Detected Objects Distance: " << tc.closest_obj_distance << ", N RollOuts: " << m_RollOuts.size() << std::endl;
 
-	CalculateImportantParameterForDecisionMaking(vehicleState, goalID, bEmergencyStop, trafficLight, tc);
+	CalculateImportantParameterForDecisionMaking(vehicleState, bEmergencyStop, trafficLight, tc);
 
 	beh = GenerateBehaviorState(vehicleState);
 
 	beh.bNewPlan = SelectSafeTrajectory();
 
 	beh.maxVelocity = UpdateVelocityDirectlyToTrajectory(beh, vehicleState, dt);
+
+	if(beh.state != FORWARD_STATE && beh.state != OBSTACLE_AVOIDANCE_STATE && beh.state != FOLLOW_STATE && beh.maxVelocity < 0.5)
+	  beh.maxVelocity = 0;
 
 	//std::cout << "Eval_i: " << tc.index << ", Curr_i: " <<  m_pCurrentBehaviorState->GetCalcParams()->iCurrSafeTrajectory << ", Prev_i: " << m_pCurrentBehaviorState->GetCalcParams()->iPrevSafeTrajectory << std::endl;
 

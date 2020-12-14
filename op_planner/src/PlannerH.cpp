@@ -9,7 +9,6 @@
 #include <iostream>
 
 using namespace std;
-using namespace UtilityHNS;
 
 namespace PlannerHNS
 {
@@ -47,7 +46,7 @@ void PlannerH::GenerateRunoffTrajectory(const std::vector<std::vector<WayPoint> 
 		{
 			PlanningHelpers::CalculateRollInTrajectories(carPos, speed, referencePaths.at(i), s_index, e_index, e_distances,
 					local_rollOutPaths, microPlanDistance, maxSpeed, carTipMargin, rollInMargin,
-					rollInSpeedFactor, pathDensity, rollOutDensity,rollOutNumber,
+					rollInSpeedFactor, pathDensity, rollOutDensity, rollOutNumber,
 					SmoothDataWeight, SmoothWeight, SmoothTolerance, bHeadingSmooth, sampledPoints_debug);
 		}
 		else
@@ -133,7 +132,8 @@ double PlannerH::PlanUsingDPRandom(const WayPoint& start,
 
 double PlannerH::PlanUsingDP(const WayPoint& start,
 		const WayPoint& goalPos,
-		const double& maxPlanningDistance,
+		const double& maxSearchDistance,
+		const double& planning_distance,
 		const bool bEnableLaneChange,
 		const std::vector<int>& globalPath,
 		RoadNetwork& map,
@@ -141,7 +141,6 @@ double PlannerH::PlanUsingDP(const WayPoint& start,
 {
 	PlannerHNS::WayPoint* pStart = PlannerHNS::MappingHelpers::GetClosestWaypointFromMap(start, map);
 	PlannerHNS::WayPoint* pGoal = PlannerHNS::MappingHelpers::GetClosestWaypointFromMap(goalPos, map);
-	bool bEnableGoalBranching = false;
 
 	if(!pStart ||  !pGoal)
 	{
@@ -161,7 +160,7 @@ double PlannerH::PlanUsingDP(const WayPoint& start,
 	PlanningHelpers::GetRelativeInfo(pStart->pLane->points, start, start_info);
 	PlanningHelpers::GetRelativeInfo(pGoal->pLane->points, goalPos, goal_info);
 
-	vector<WayPoint> start_path, goal_path;
+	vector<WayPoint> goal_path;
 
 	if(fabs(start_info.perp_distance) > START_POINT_MAX_DISTANCE)
 	{
@@ -174,7 +173,7 @@ double PlannerH::PlanUsingDP(const WayPoint& start,
 
 	if(fabs(goal_info.perp_distance) > GOAL_POINT_MAX_DISTANCE)
 	{
-		if(fabs(start_info.perp_distance) > 20)
+		if(fabs(goal_info.perp_distance) > 20)
 		{
 			GPSPoint gp = goalPos.pos;
 			cout << endl << "Error: PlannerH -> Goal Distance to Lane is: " << goal_info.perp_distance
@@ -197,9 +196,9 @@ double PlannerH::PlanUsingDP(const WayPoint& start,
 	char bPlan = 'A';
 
 	if(all_cell_to_delete)
-		pLaneCell =  PlanningHelpers::BuildPlanningSearchTreeV2(pStart, *pGoal, globalPath, maxPlanningDistance,bEnableLaneChange, *all_cell_to_delete);
+		pLaneCell =  PlanningHelpers::BuildPlanningSearchTreeV2(pStart, *pGoal, globalPath, maxSearchDistance,bEnableLaneChange, *all_cell_to_delete);
 	else
-		pLaneCell =  PlanningHelpers::BuildPlanningSearchTreeV2(pStart, *pGoal, globalPath, maxPlanningDistance,bEnableLaneChange, local_cell_to_delete);
+		pLaneCell =  PlanningHelpers::BuildPlanningSearchTreeV2(pStart, *pGoal, globalPath, maxSearchDistance,bEnableLaneChange, local_cell_to_delete);
 
 	if(!pLaneCell)
 	{
@@ -207,9 +206,9 @@ double PlannerH::PlanUsingDP(const WayPoint& start,
 		cout << endl << "PlannerH -> Plan (A) Failed, Trying Plan (B)." << endl;
 
 		if(all_cell_to_delete)
-			pLaneCell =  PlanningHelpers::BuildPlanningSearchTreeStraight(pStart, BACKUP_STRAIGHT_PLAN_DISTANCE, *all_cell_to_delete);
+			pLaneCell =  PlanningHelpers::BuildPlanningSearchTreeStraight(pStart, planning_distance, *all_cell_to_delete);
 		else
-			pLaneCell =  PlanningHelpers::BuildPlanningSearchTreeStraight(pStart, BACKUP_STRAIGHT_PLAN_DISTANCE, local_cell_to_delete);
+			pLaneCell =  PlanningHelpers::BuildPlanningSearchTreeStraight(pStart, planning_distance, local_cell_to_delete);
 
 		if(!pLaneCell)
 		{
@@ -224,11 +223,16 @@ double PlannerH::PlanUsingDP(const WayPoint& start,
 	PlanningHelpers::TraversePathTreeBackwards(pLaneCell, pStart, globalPath, path, tempCurrentForwardPathss);
 	if(path.size()==0) return 0;
 
-	paths.clear();
+	/**
+	 * Next line is added on 27 September 2020, when planning with map with sparse waypoints, skipping the start waypoint is a problem,
+	 * so I inserted after generating the initial plan
+	 */
+	path.insert(path.begin(), *pStart);
 
+	paths.clear();
 	if(bPlan == 'A')
 	{
-		PlanningHelpers::ExtractPlanAlernatives(path, paths);
+		PlanningHelpers::ExtractPlanAlernatives(path, planning_distance, paths, LANE_CHANGE_SMOOTH_FACTOR_DISTANCE);
 	}
 	else if (bPlan == 'B')
 	{
@@ -236,26 +240,27 @@ double PlannerH::PlanUsingDP(const WayPoint& start,
 	}
 
 	//attach start path to beginning of all paths, but goal path to only the path connected to the goal path.
-	for(unsigned int i=0; i< paths.size(); i++ )
-	{
-		paths.at(i).insert(paths.at(i).begin(), start_path.begin(), start_path.end());
-		if(paths.at(i).size() > 0)
-		{
-			//if(hypot(paths.at(i).at(paths.at(i).size()-1).pos.y-goal_info.perp_point.pos.y, paths.at(i).at(paths.at(i).size()-1).pos.x-goal_info.perp_point.pos.x) < 1.5)
-			{
-
-				if(paths.at(i).size() > 0 && goal_path.size() > 0)
-				{
-					goal_path.insert(goal_path.begin(), paths.at(i).end()-5, paths.at(i).end());
-					PlanningHelpers::SmoothPath(goal_path, 0.25, 0.25);
-					PlanningHelpers::FixPathDensity(goal_path, 0.75);
-					PlanningHelpers::SmoothPath(goal_path, 0.25, 0.35);
-					paths.at(i).erase(paths.at(i).end()-5, paths.at(i).end());
-					paths.at(i).insert(paths.at(i).end(), goal_path.begin(), goal_path.end());
-				}
-			}
-		}
-	}
+//	vector<WayPoint> dummy_path;
+//	for(unsigned int i=0; i< paths.size(); i++ )
+//	{
+//		paths.at(i).insert(paths.at(i).begin(), dummy_path.begin(), dummy_path.end());
+//		if(paths.at(i).size() > 0)
+//		{
+//			//if(hypot(paths.at(i).at(paths.at(i).size()-1).pos.y-goal_info.perp_point.pos.y, paths.at(i).at(paths.at(i).size()-1).pos.x-goal_info.perp_point.pos.x) < 1.5)
+//			{
+//
+//				if(paths.at(i).size() > 0 && goal_path.size() > 0)
+//				{
+//					goal_path.insert(goal_path.begin(), paths.at(i).end()-5, paths.at(i).end());
+//					PlanningHelpers::SmoothPath(goal_path, 0.25, 0.25);
+//					PlanningHelpers::FixPathDensity(goal_path, 0.75);
+//					PlanningHelpers::SmoothPath(goal_path, 0.25, 0.35);
+//					paths.at(i).erase(paths.at(i).end()-5, paths.at(i).end());
+//					paths.at(i).insert(paths.at(i).end(), goal_path.begin(), goal_path.end());
+//				}
+//			}
+//		}
+//	}
 
 	cout << endl <<"Info: PlannerH -> Plan (" << bPlan << ") Path With Size (" << (int)path.size() << "), MultiPaths No(" << paths.size() << ") Extraction Time : " << endl;
 
@@ -330,7 +335,7 @@ double PlannerH::PredictPlanUsingDP(PlannerHNS::Lane* l, const WayPoint& start, 
 	return totalPlanDistance;
 }
 
-double PlannerH::PredictTrajectoriesUsingDP(const WayPoint& startPose, std::vector<WayPoint*> closestWPs, const double& maxPlanningDistance, std::vector<std::vector<WayPoint> >& paths, const bool& bFindBranches , const bool bDirectionBased, const bool pathDensity)
+double PlannerH::PredictTrajectoriesUsingDP(const WayPoint& startPose, std::vector<WayPoint*> closestWPs, const double& maxPlanningDistance, std::vector<std::vector<WayPoint> >& paths, const bool& bFindBranches , const bool& bDirectionBased, const double& pathDensity)
 {
 	vector<vector<WayPoint> > tempCurrentForwardPathss;
 	vector<WayPoint*> all_cell_to_delete;
@@ -341,6 +346,11 @@ double PlannerH::PredictTrajectoriesUsingDP(const WayPoint& startPose, std::vect
 	std::vector<WayPoint> path;
 	for(unsigned int j = 0 ; j < closestWPs.size(); j++)
 	{
+		RelativeInfo info;
+		PlanningHelpers::CalcAngleAndCost(closestWPs.at(j)->pLane->points);
+		int prev_index =0;
+		PlanningHelpers::GetRelativeInfoLimited(closestWPs.at(j)->pLane->points, *closestWPs.at(j), info, prev_index);
+
 		pLaneCells.clear();
 		int nPaths =  PlanningHelpers::PredictiveIgnorIdsDP(closestWPs.at(j), maxPlanningDistance, all_cell_to_delete, pLaneCells, unique_lanes);
 		for(unsigned int i = 0; i< pLaneCells.size(); i++)
@@ -366,7 +376,9 @@ double PlannerH::PredictTrajectoriesUsingDP(const WayPoint& startPose, std::vect
 
 			if(path.size()>0)
 			{
-				path.insert(path.begin(), startPose);
+				WayPoint first_wp_from_map = path.at(0);
+				first_wp_from_map.pos = info.perp_point.pos; // only update pose , some infor comes from map and affect the planning
+				path.insert(path.begin(), first_wp_from_map);
 				if(!bDirectionBased)
 					path.at(0).pos.a = path.at(1).pos.a;
 

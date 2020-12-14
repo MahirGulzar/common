@@ -39,7 +39,7 @@ catkin_package(
   vector_map_msgs
 )
 
-set(CMAKE_CXX_FLAGS "-O2 -g -Wall -Wno-unused-result ${CMAKE_CXX_FLAGS}")
+## set(CMAKE_CXX_FLAGS "-O2 -g -Wall -Wno-unused-result ${CMAKE_CXX_FLAGS}")
 
 include_directories(
   include

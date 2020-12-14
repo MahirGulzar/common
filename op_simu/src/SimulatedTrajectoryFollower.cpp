@@ -12,7 +12,6 @@
 #include <iostream>
 
 using namespace PlannerHNS;
-using namespace UtilityHNS;
 using namespace std;
 
 
@@ -40,7 +39,7 @@ void SimulatedTrajectoryFollower::Init(const ControllerParams& params, const CAR
 	m_Params = params;
 	m_VehicleInfo = vehicleInfo;
 	m_pidSteer.Init(params.Steering_Gain.kP, params.Steering_Gain.kI, params.Steering_Gain.kD); // for 3 m/s
-	m_pidSteer.Setlimit(vehicleInfo.max_steer_angle, -vehicleInfo.max_steer_angle);
+	m_pidSteer.Setlimit(vehicleInfo.max_wheel_angle, -vehicleInfo.max_wheel_angle);
 	m_pidVelocity.Init(params.Velocity_Gain.kP, params.Velocity_Gain.kI, params.Velocity_Gain.kD);
 }
 
@@ -105,10 +104,10 @@ int SimulatedTrajectoryFollower::SteerControllerUpdate(const PlannerHNS::Vehicle
 int SimulatedTrajectoryFollower::SteerControllerPart(const PlannerHNS::WayPoint& state, const PlannerHNS::WayPoint& way_point,
 		const double& lateral_error, double& steerd)
 {
-	double current_a = UtilityH::SplitPositiveAngle(state.pos.a);
+	double current_a = UtilityHNS::UtilityH::SplitPositiveAngle(state.pos.a);
 	double target_a = atan2(way_point.pos.y - state.pos.y, way_point.pos.x - state.pos.x);
 
-	double e =  UtilityH::SplitPositiveAngle(target_a - current_a);
+	double e =  UtilityHNS::UtilityH::SplitPositiveAngle(target_a - current_a);
 
 	if(e > M_PI_2 || e < -M_PI_2)
 		return -1;
