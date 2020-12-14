@@ -6,9 +6,16 @@ find_package(autoware_build_flags REQUIRED)
 
 find_package(catkin REQUIRED COMPONENTS
 		cmake_modules
+		geometry_msgs
+		roscpp
 		op_utility
+		lanelet2_extension
+		roslint
 )
 
+if(EXISTS "/usr/include/proj_api.h")
+  include(FindProj.cmake)
+endif()  
 find_package(TinyXML REQUIRED)
 
 ###################################
@@ -20,21 +27,22 @@ catkin_package(
   CATKIN_DEPENDS op_utility
   DEPENDS TinyXML
 )
+ 
+ ## set(CMAKE_CXX_FLAGS " -g -Wall -Wno-unused-result ${CMAKE_CXX_FLAGS}")
 
 ###########
 ## Build ##
 ###########
+
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
 	${TinyXML_INCLUDE_DIRS}
+	${PROJ_INCLUDE_DIRS}
 )
 
+
 set(PLANNERH_SRC
-	src/BehaviorPrediction.cpp 
-	src/BehaviorPrediction.cpp 
-	src/BehaviorPrediction.cpp 
-	src/BehaviorPrediction.cpp 
 	src/BehaviorPrediction.cpp 
 	src/BehaviorStateMachine.cpp
 	src/DecisionMaker.cpp
@@ -43,28 +51,27 @@ set(PLANNERH_SRC
 	src/MatrixOperations.cpp
 	src/PassiveDecisionMaker.cpp
 	src/PlannerH.cpp		
-	src/PlannerH.cpp		
-	src/PlannerH.cpp		
-	src/PlannerH.cpp		
-	src/PlannerH.cpp		
-	src/PlanningHelpers.cpp				
-	src/PlanningHelpers.cpp				
-	src/PlanningHelpers.cpp				
-	src/PlanningHelpers.cpp				
 	src/PlanningHelpers.cpp				
 	src/SimuDecisionMaker.cpp
 	src/TrajectoryCosts.cpp
 	src/TrajectoryDynamicCosts.cpp
+	src/TrajectoryEvaluator.cpp
+	src/KmlMapLoader.cpp
+	src/VectorMapLoader.cpp
+	src/Lanelet2MapLoader.cpp
+	src/RoadNetwork.cpp
+	src/hmi/HMIMSG.cpp
+	src/control/op_controller.cpp
+	src/control/op_acc.cpp
 )
 
 ## Declare a cpp library
 add_library(${PROJECT_NAME}
-	${PLANNERH_SRC}
+	${PLANNERH_SRC} 	
 )
 
 target_link_libraries(${PROJECT_NAME}
-	${catkin_LIBRARIES}
-	${TinyXML_LIBRARIES}
+	${catkin_LIBRARIES} ${TinyXML_LIBRARIES} ${PROJ_LIBRARY}
 )
 
 install(DIRECTORY include/${PROJECT_NAME}/
@@ -77,3 +84,14 @@ install(TARGETS op_planner
 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
+
+if (CATKIN_ENABLE_TESTING)
+
+roslint_add_test()
+find_package(rostest REQUIRED)
+
+add_rostest_gtest(test-op_planner_hmi test/test_op_planner_hmi.test test/src/test_op_planner_hmi.cpp )
+add_dependencies(test-op_planner_hmi ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test-op_planner_hmi ${catkin_LIBRARIES} ${PROJECT_NAME})
+
+endif ()

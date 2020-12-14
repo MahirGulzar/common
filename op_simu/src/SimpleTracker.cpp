@@ -5,11 +5,11 @@
 
 #include "op_simu/SimpleTracker.h"
 #include "op_planner/MatrixOperations.h"
-#include "op_utility/UtilityH.h"
 
 #include <iostream>
 #include <vector>
 #include <cstdio>
+#include <float.h>
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -138,7 +138,7 @@ void SimpleTracker::MatchClosest()
 	{
 		double iCloseset_track = -1;
 		double iCloseset_obj = -1;
-		double dCloseset = 99999999;
+		double dCloseset = DBL_MAX;
 		bool bFoundMatch = false;
 
 		double size_diff = -1;
@@ -184,7 +184,7 @@ void SimpleTracker::MatchClosest()
 
 		if(iCloseset_obj != -1 && iCloseset_track != -1 && (dCloseset <= m_MAX_ASSOCIATION_DISTANCE || bFoundMatch == true))
 		{
-			// std::cout << "MatchObj: " << m_TrackSimply.at(iCloseset_track).obj.id << ", MinD: " << dCloseset << ", SizeDiff: (" << size_diff <<  ")" << ", ObjI" << iCloseset_obj <<", TrackI: " << iCloseset_track << ", CMatch: " << bFoundMatch << std::endl;
+			std::cout << "MatchObj: " << m_TrackSimply.at(iCloseset_track).obj.id << ", MinD: " << dCloseset << ", SizeDiff: (" << size_diff <<  ")" << ", ObjI" << iCloseset_obj <<", TrackI: " << iCloseset_track << ", CMatch: " << bFoundMatch << std::endl;
 
 			m_DetectedObjects.at(iCloseset_obj).id = m_TrackSimply.at(iCloseset_track).obj.id;
 			MergeObjectAndTrack(m_TrackSimply.at(iCloseset_track), m_DetectedObjects.at(iCloseset_obj));
@@ -228,17 +228,17 @@ void SimpleTracker::MatchClosestCost()
 	{
 		//std::cout << std::endl;
 		double max_d = -1;
-		double min_d = 999999999;
+		double min_d = DBL_MAX;
 		double max_s = -1;
-		double min_s = 999999999;
+		double min_s = DBL_MAX;
 		double max_a = -1;
-		double min_a = 999999999;
+		double min_a = DBL_MAX;
 		double max_w = -1;
-		double min_w = 999999999;
+		double min_w = DBL_MAX;
 		double max_l = -1;
-		double min_l = 999999999;
+		double min_l = DBL_MAX;
 		double max_h = -1;
-		double min_h = 999999999;
+		double min_h = DBL_MAX;
 
 		m_CostsLists.clear();
 
@@ -346,7 +346,7 @@ void SimpleTracker::MatchClosestCost()
 		}
 
 		CostRecordSet min_set;
-		min_set.cost = 99999999;
+		min_set.cost = DBL_MAX;
 
 		for(unsigned int ic = 0 ; ic < m_CostsLists.size() ; ic++)
 		{
@@ -452,7 +452,7 @@ void SimpleTracker::AssociateAndTrack()
 	{
 		double iCloseset_track = -1;
 		double iCloseset_obj = -1;
-		double dCloseset = 99999999;
+		double dCloseset = DBL_MAX;
 		bool bFoundMatch = false;
 		double min_size = -1;
 		std::cout << "DetObjSize: " <<  m_DetectedObjects.size() <<  ", TracksSize: " << m_TrackSimply.size() << std::endl;

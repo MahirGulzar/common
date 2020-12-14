@@ -7,7 +7,7 @@
 
 #define START_POINT_MAX_DISTANCE 8 // meters
 #define GOAL_POINT_MAX_DISTANCE 8 // meters
-#define LANE_CHANGE_SMOOTH_FACTOR_DISTANCE 8 // meters
+#define LANE_CHANGE_SMOOTH_FACTOR_DISTANCE 25 // meters
 
 #include "RoadNetwork.h"
 
@@ -33,7 +33,7 @@ public:
 				std::vector<WayPoint>& sampledPoints);
 
 	double PlanUsingDP(const WayPoint& carPos,const WayPoint& goalPos,
-			const double& maxPlanningDistance, const bool bEnableLaneChange, const std::vector<int>& globalPath,
+			const double& maxSearchDistance, const double& planning_distance, const bool bEnableLaneChange, const std::vector<int>& globalPath,
 			RoadNetwork& map, std::vector<std::vector<WayPoint> >& paths, std::vector<WayPoint*>* all_cell_to_delete = 0);
 
 	 double PlanUsingDPRandom(const WayPoint& start,
@@ -46,7 +46,7 @@ public:
 
 	double PredictPlanUsingDP(const WayPoint& startPose, WayPoint* closestWP, const double& maxPlanningDistance, std::vector<std::vector<WayPoint> >& paths, const bool& bFindBranches = true);
 
-	double PredictTrajectoriesUsingDP(const WayPoint& startPose, std::vector<WayPoint*> closestWPs, const double& maxPlanningDistance, std::vector<std::vector<WayPoint> >& paths, const bool& bFindBranches = true, const bool bDirectionBased = false, const bool pathDensity = 1.0);
+	double PredictTrajectoriesUsingDP(const WayPoint& startPose, std::vector<WayPoint*> closestWPs, const double& maxPlanningDistance, std::vector<std::vector<WayPoint> >& paths, const bool& bFindBranches = true, const bool& bDirectionBased = false, const double& pathDensity = 1.0);
 
 	void DeleteWaypoints(std::vector<WayPoint*>& wps);
 };

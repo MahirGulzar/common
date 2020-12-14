@@ -46,7 +46,6 @@ public:
 
 	PlannerHNS::BehaviorState DoOneStep(const double& dt,
 			const PlannerHNS::VehicleState& vehicleState,
-			const int& goalID,
 			const std::vector<TrafficLight>& trafficLight,
 			const std::vector<PlannerHNS::DetectedObject>& objects,
 			const bool& bEmergencyStop);
