@@ -1063,12 +1063,13 @@ public:
 	double maxLaneSearchDistance;
 	double goalDiscoveryDistance;
 
-  double  k_stop;
-  double  follow_reaction_time;
+	bool    enableCost;
+    double  k_stop;
+    double  follow_reaction_time;
 	double  follow_deceleration;
 	double  stopping_deceleration;
 	double  d_forward;
-	double  k_speed_change;
+	double  speed_deceleration;
 	double  low_speed_upper_lim;
 	double  low_speed_lower_lim;
 
@@ -1103,12 +1104,13 @@ public:
 		giveUpDistance = -4;
 		nReliableCount = 2;
 
-    k_stop                          = 0.32;
-    follow_reaction_time            = 1.5;
-    follow_deceleration             = -1.0;
-    stopping_deceleration           = -1.0;
-    d_forward                       = 3.0;
-		k_speed_change                  = 0.10;
+        enableCost                      = true;
+		k_stop                          = 0.32;
+        follow_reaction_time            = 1.5;
+        follow_deceleration             = -1.0;
+        stopping_deceleration           = -1.0;
+        speed_deceleration              = -1.0;
+        d_forward                       = 3.0;
 		low_speed_upper_lim             = 2.0;
 		low_speed_lower_lim             = 1.0;
 
@@ -1140,7 +1142,7 @@ public:
 	//Following
 	double 				distanceToNext;
 	double				velocityOfNext;
-  double              egoFollowingVelocity;
+    double              egoFollowingVelocity;
   //-------------------------------------------//
 	//For Lane Change
 	int 				iPrevSafeLane;
@@ -1211,9 +1213,9 @@ public:
 		//distance to stop
 		distanceToNext = -1;
 		velocityOfNext = 0;
-    egoFollowingVelocity = 0.0;
-    egoStoppingVelocity = 0.0;
-    currentStopSignID = -1;
+        egoFollowingVelocity = 0.0;
+        egoStoppingVelocity = 0.0;
+        currentStopSignID = -1;
 		prevStopSignID = -1;
 		currentTrafficLightID = -1;
 		prevTrafficLightID = -1;

@@ -540,7 +540,7 @@ double DecisionMaker::UpdateVelocityDirectlyToTrajectory(const BehaviorState& be
   double desired_velocity = 0.;
   double max_velocity = std::min(PlannerHNS::PlanningHelpers::GetVelocityAheadLinear(
       m_TotalPaths.at(m_iCurrentTotalPathId), total_info, total_info.iBack, speed_change_distance, CurrStatus.speed,
-      m_params.k_speed_change), m_params.maxSpeed);
+      m_params.speed_deceleration), m_params.maxSpeed);
 
 //   std::cout << "Max Velocity : " << max_velocity << "," << m_params.maxSpeed << std::endl;
 

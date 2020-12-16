@@ -493,7 +493,7 @@ void BehaviorPrediction::MoveParticles(ObjParticles* pParts)
 
 	for(unsigned int t=0; t < pParts->m_TrajectoryTracker.size(); t++)
 	{
-		PlanningHelpers::GenerateRecommendedSpeed(pParts->m_TrajectoryTracker.at(t)->trajectory, carInfo.max_speed_forward, 1.0);
+		PlanningHelpers::GenerateRecommendedSpeed(pParts->m_TrajectoryTracker.at(t)->trajectory, carInfo.max_speed_forward, 1.0, false);
 	}
 
 	if(m_bDebugMotion)
