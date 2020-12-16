@@ -721,7 +721,7 @@ void LocalPlannerH::ReInitializePlanner(const WayPoint& start_pose)
 		 	PlanningHelpers::FixPathDensity(m_TotalOriginalPath.at(m_iCurrentTotalPathId), m_pCurrentBehaviorState->m_pParams->pathDensity);
 		 	PlanningHelpers::SmoothPath(m_TotalOriginalPath.at(m_iCurrentTotalPathId), 0.49, 0.25, 0.05);
 		 	
-			PlanningHelpers::GenerateRecommendedSpeed(m_TotalOriginalPath.at(m_iCurrentTotalPathId), m_CarInfo.max_speed_forward, m_pCurrentBehaviorState->m_pParams->speedProfileFactor);
+			PlanningHelpers::GenerateRecommendedSpeed(m_TotalOriginalPath.at(m_iCurrentTotalPathId), m_CarInfo.max_speed_forward, m_pCurrentBehaviorState->m_pParams->speedProfileFactor, m_pCurrentBehaviorState->m_pParams->enableCost);
 			m_TotalOriginalPath.at(m_iCurrentTotalPathId).at(m_TotalOriginalPath.at(m_iCurrentTotalPathId).size()-1).v = 0;
 
 		}

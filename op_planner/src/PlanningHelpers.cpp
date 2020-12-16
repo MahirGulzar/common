@@ -2290,11 +2290,11 @@ void PlanningHelpers::ExtendMinCostAlongPath(vector<WayPoint>& path_in)
 
     double min_cost = std::numeric_limits<double>::max();
 
-    cout << "j start : " << -forward << endl;
-    cout << "j until : " << backward << endl;
+    //cout << "j start : " << -forward << endl;
+    //cout << "j until : " << backward << endl;
 
     for(int j = -forward; j < backward; j++){
-      cout << "In loop" << endl;
+      //cout << "In loop" << endl;
       if(path_in.at(i+j).cost < min_cost)
         min_cost = path_in.at(i+j).cost;
     }
@@ -2305,37 +2305,44 @@ void PlanningHelpers::ExtendMinCostAlongPath(vector<WayPoint>& path_in)
   path_in = newpath;
 }
 
-void PlanningHelpers::GenerateRecommendedSpeed(vector<WayPoint>& path, const double& max_speed, const double& speedProfileFactor)
+void PlanningHelpers::GenerateRecommendedSpeed(vector<WayPoint>& path, const double& max_speed, const double& speedProfileFactor, const bool& enableCost)
 {
   CalcAngleAndCostAndCurvatureAnd2D(path);
   SmoothCurvatureProfiles(path, 0.4, 0.3, 0.01);
-  ExtendMinCostAlongPath(path);
 
-  double v = 0;
+  if(enableCost) {
+      ExtendMinCostAlongPath(path);
 
-  for(unsigned int i = 0 ; i < path.size(); i++)
-  {
+      double v = 0;
 
-    double k_ratio = path.at(i).cost*9.2;
+      for (unsigned int i = 0; i < path.size(); i++) {
 
-    double local_max = (path.at(i).v >= 0 && max_speed > path.at(i).v) ? path.at(i).v : max_speed;
+          double k_ratio = path.at(i).cost * 9.2;
 
-    if(k_ratio >= 9.5)
-      v = local_max;
-    else if(k_ratio <= 8.5)
-      v = 1.0*speedProfileFactor;
-    else
-    {
-      k_ratio = k_ratio - 8.5;
-      v = (local_max - 1.0) * k_ratio + 1.0;
-      v = v*speedProfileFactor;
-    }
+          double local_max = (path.at(i).v >= 0 && max_speed > path.at(i).v) ? path.at(i).v : max_speed;
 
-    if(v > local_max)
-      path.at(i).v = local_max;
-    else
-      path.at(i).v = v;
+          // disabled velocity recalculation based on cost
+          if (k_ratio >= 9.5)
+              v = local_max;
+          else if (k_ratio <= 8.5)
+              v = 1.0 * speedProfileFactor;
+          else {
+              k_ratio = k_ratio - 8.5;
+              v = (local_max - 1.0) * k_ratio + 1.0;
+              v = v * speedProfileFactor;
+          }
 
+          if (v > local_max)
+              path.at(i).v = local_max;
+          else
+              path.at(i).v = v;
+      }
+  }
+  else {
+      for (unsigned int i = 0; i < path.size(); i++) {
+          double local_max = (path.at(i).v >= 0 && max_speed > path.at(i).v) ? path.at(i).v : max_speed;
+          path.at(i).v = local_max;
+      }
   }
 }
 
@@ -3204,7 +3211,7 @@ double PlanningHelpers::GetVelocityAhead(const std::vector<WayPoint>& path, cons
 
 double PlanningHelpers::GetVelocityAheadLinear(const std::vector<WayPoint>& path, const RelativeInfo& info,
                                                int& prev_index, const double& reasonable_brake_distance,
-                                               const double& current_v, const double& k_speed_change)
+                                               const double& current_v, const double& speed_deceleration)
 {
   if (path.empty())
     return 0;
@@ -3224,8 +3231,8 @@ double PlanningHelpers::GetVelocityAheadLinear(const std::vector<WayPoint>& path
     d +=
         hypot(path.at(local_i).pos.y - path.at(local_i - 1).pos.y, path.at(local_i).pos.x - path.at(local_i - 1).pos.x);
 
-    // calculate desired velocity using linear formula
-    double dv = d * k_speed_change + path.at(local_i).v;
+    // calculate desired velocity using constant acceleration formula
+    double dv = sqrt(pow(path.at(local_i).v, 2) - 2 * speed_deceleration * d);
     // std::cout << " --- tV: " << path.at(local_i).v << ", tD: " << d << ", dV: " << dv << ", lv:" << local_v <<
     // std::endl;
 

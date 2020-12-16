@@ -137,7 +137,7 @@ public:
 
   static void ExtendMinCostAlongPath(std::vector<WayPoint>& path_in);
 
-	static void GenerateRecommendedSpeed(std::vector<WayPoint>& path, const double& max_speed, const double& speedProfileFactor);
+	static void GenerateRecommendedSpeed(std::vector<WayPoint>& path, const double& max_speed, const double& speedProfileFactor, const bool& enableCost);
 
 	static void ShiftRecommendedSpeed(std::vector<WayPoint>& path, const double& max_speed, const double& curr_speed, const double& inc_ratio, const double& path_density);
 
@@ -192,7 +192,7 @@ public:
 
 	static double GetVelocityAhead(const std::vector<WayPoint>& path, const RelativeInfo& info,int& prev_index, const double& reasonable_brake_distance);
 
-  static double GetVelocityAheadLinear(const std::vector<WayPoint>& path, const RelativeInfo& info,int& prev_index, const double& reasonable_brake_distance, const double& currentSpeed, const double& k_speed_change);
+  static double GetVelocityAheadLinear(const std::vector<WayPoint>& path, const RelativeInfo& info,int& prev_index, const double& reasonable_brake_distance, const double& currentSpeed, const double& speed_deceleration);
 
 	static bool CompareTrajectories(const std::vector<WayPoint>& path1, const std::vector<WayPoint>& path2);
 
