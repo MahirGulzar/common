@@ -1064,11 +1064,9 @@ public:
 	double goalDiscoveryDistance;
 
 	bool    enableCost;
-    double  k_stop;
     double  follow_reaction_time;
 	double  follow_deceleration;
 	double  stopping_deceleration;
-	double  d_forward;
 	double  speed_deceleration;
 	double  low_speed_upper_lim;
 	double  low_speed_lower_lim;
@@ -1105,12 +1103,10 @@ public:
 		nReliableCount = 2;
 
         enableCost                      = true;
-		k_stop                          = 0.32;
         follow_reaction_time            = 1.5;
         follow_deceleration             = -1.0;
         stopping_deceleration           = -1.0;
         speed_deceleration              = -1.0;
-        d_forward                       = 3.0;
 		low_speed_upper_lim             = 2.0;
 		low_speed_lower_lim             = 1.0;
 

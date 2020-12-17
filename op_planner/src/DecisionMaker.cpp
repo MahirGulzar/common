@@ -536,7 +536,7 @@ double DecisionMaker::UpdateVelocityDirectlyToTrajectory(const BehaviorState& be
   PlanningHelpers::GetRelativeInfo(m_Path, state, info);
 
   std::stringstream log_stream;
-  double speed_change_distance = CurrStatus.speed * m_params.d_forward;
+  double speed_change_distance = -pow(CurrStatus.speed,2) / (2 * m_params.speed_deceleration);
   double desired_velocity = 0.;
   double max_velocity = std::min(PlannerHNS::PlanningHelpers::GetVelocityAheadLinear(
       m_TotalPaths.at(m_iCurrentTotalPathId), total_info, total_info.iBack, speed_change_distance, CurrStatus.speed,
@@ -560,10 +560,10 @@ double DecisionMaker::UpdateVelocityDirectlyToTrajectory(const BehaviorState& be
     } else {
       setDeceleration(5.0);
       desired_velocity = beh.egoStoppingVelocity;
-      log_stream << "NRM - tv_raw: " << desired_velocity << " - ";
     }
 
-    log_stream << "spd: " << CurrStatus.speed << ", tV: " << desired_velocity << ", stpDist: " << beh.stopDistance << ", vs_dist: " << m_params.verticalSafetyDistance;
+    log_stream << "spd: " << CurrStatus.speed << ", tV: " << desired_velocity << ", stpDist: " << beh.stopDistance
+               << ", egoFolV: " << beh.egoFollowingVelocity << ", egoStpV: " << beh.egoStoppingVelocity;
     ROS_INFO_STREAM(log_stream.str());
     return clipTargetVelocityAndWriteToPath(desired_velocity, max_velocity);
 
@@ -596,7 +596,8 @@ double DecisionMaker::UpdateVelocityDirectlyToTrajectory(const BehaviorState& be
     }
 
     log_stream << "spd: " << CurrStatus.speed << ", tV: " << desired_velocity << ", fD: " << beh.followDistance
-              << ", fV: " << beh.followVelocity << ", min_d: " << min_dist;
+              << ", fV: " << beh.followVelocity << ", min_d: " << min_dist
+              << ", egoFolV: " << beh.egoFollowingVelocity << ", egoStpV: " << beh.egoStoppingVelocity;
     ROS_INFO_STREAM(log_stream.str());
     return clipTargetVelocityAndWriteToPath(desired_velocity, max_velocity);
 
@@ -604,8 +605,8 @@ double DecisionMaker::UpdateVelocityDirectlyToTrajectory(const BehaviorState& be
     setDeceleration(1.0);
     desired_velocity = max_velocity;
     log_stream <<"FORWARD - "
-              << "spd: " << CurrStatus.speed << ", tV: " << desired_velocity << ", d_forward: " << m_params.d_forward
-              << ", spd_ch_d: " << speed_change_distance;
+              << "spd: " << CurrStatus.speed << ", tV: " << desired_velocity << ", spd_ch_d: " << speed_change_distance
+              << ", egoFolV: " << beh.egoFollowingVelocity << ", egoStpV: " << beh.egoStoppingVelocity;
     ROS_INFO_STREAM(log_stream.str());
     return clipTargetVelocityAndWriteToPath(desired_velocity, max_velocity);
 
