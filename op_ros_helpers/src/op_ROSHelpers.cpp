@@ -1876,7 +1876,9 @@ void ROSHelpers::ConvertFromLocalLaneToAutowareLane(const std::vector<PlannerHNS
 {
 	trajectory.waypoints.clear();
 
-	for(unsigned int i = iStart; i < path.size(); i++)
+    trajectory.header.frame_id = "map";
+
+    for(unsigned int i = iStart; i < path.size(); i++)
 	{
 		autoware_msgs::Waypoint wp;
 
@@ -1900,7 +1902,6 @@ void ROSHelpers::ConvertFromLocalLaneToAutowareLane(const std::vector<PlannerHNS
 			wp.direction = path.at(i).actionCost.at(0).first;
 			wp.cost += path.at(i).actionCost.at(0).second;
 		}
-
 		trajectory.waypoints.push_back(wp);
 	}
 }
