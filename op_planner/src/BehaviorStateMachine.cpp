@@ -523,8 +523,10 @@ BehaviorStateMachine* StopStateII::GetNextState()
 {
   PreCalculatedConditions* pCParams = GetCalcParams();
 
-  if (pCParams->currentVelocity <= m_zero_velocity && pCParams->distanceToGoal - m_pParams->verticalSafetyDistance > 1. && pCParams->distanceToGoal - m_pParams->verticalSafetyDistance > m_pParams->carTipMargin)
-  {
+  if (pCParams->egoStoppingVelocity > pCParams->egoFollowingVelocity) {
+    return FindBehaviorState(FOLLOW_STATE);
+  }
+  else if (pCParams->distanceToGoal > m_pParams->goalDiscoveryDistance) {
     return FindBehaviorState(FORWARD_STATE);
   }
   else
