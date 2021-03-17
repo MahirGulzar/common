@@ -136,6 +136,7 @@ void DecisionMaker::InitBehaviorStates()
 
   m_pStopState->InsertNextState(m_pGoToGoalState);
   m_pStopState->InsertNextState(m_pGoalState);
+  m_pStopState->InsertNextState(m_pFollowState);
   m_pStopState->decisionMakingCount = 0;
 
   m_pGoToGoalState->InsertNextState(m_pAvoidObstacleState);
@@ -167,6 +168,7 @@ void DecisionMaker::InitBehaviorStates()
   m_pFollowState->InsertNextState(m_pStopSignStopState);
   m_pFollowState->InsertNextState(m_pTrafficLightStopState);
   m_pFollowState->InsertNextState(m_pGoalState);
+  m_pFollowState->InsertNextState(m_pStopState);
   m_pFollowState->decisionMakingCount = 0;  // m_params.nReliableCount;
 
   m_pInitState->decisionMakingCount = 0;  // m_params.nReliableCount;
