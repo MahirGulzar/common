@@ -538,9 +538,8 @@ void TrajectoryEvaluator::CalcCostsAndObsOnRollouts(
   PlanningHelpers::GetRelativeInfo(roll_outs[center_index], roll_outs[center_index].end()[-1], goalInfoRollout);
 
   // Distance to goal
-  distance_to_goal =
-      PlanningHelpers::GetExactDistanceOnTrajectory(roll_outs[center_index], carInfoGlobal, goalInfoRollout) -
-      params.additionalBrakingDistance + params.verticalSafetyDistance;
+  distance_to_goal = PlanningHelpers::GetDistanceFromPoseToEnd(curr_pos, roll_outs[center_index]) -
+                     params.additionalBrakingDistance + params.verticalSafetyDistance;
 
   int rollout_index = 0;
 
@@ -584,7 +583,8 @@ void TrajectoryEvaluator::CalcCostsAndObsOnRollouts(
         longitudinalDistOnGlobal = -longitudinalDistOnGlobal;
       }
 
-      if (longitudinalDistOnGlobal > distance_to_goal) {
+      if (distance_to_goal > params.minFollowingDistance &&
+          longitudinalDistOnGlobal > distance_to_goal) {
         continue;
       }
 

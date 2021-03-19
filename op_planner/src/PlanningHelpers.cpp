@@ -3402,11 +3402,22 @@ void PlanningHelpers::GetCubeAndCenterofTwoPoints(const PlannerHNS::WayPoint& p1
 
 double PlanningHelpers::GetDistanceFromPoseToEnd(const PlannerHNS::WayPoint& pose, const std::vector<WayPoint>& path)
 {
-	PlannerHNS::RelativeInfo info, goal_info;
-	PlanningHelpers::GetRelativeInfo(path, pose, info);
-	PlanningHelpers::GetRelativeInfo(path, path.end()[-1], goal_info);
+  PlannerHNS::RelativeInfo info;
+  PlanningHelpers::GetRelativeInfoLimited(path, pose, info);
 
-  return PlanningHelpers::GetExactDistanceOnTrajectory(path, info, goal_info);
+  if(info.bAfter)
+    return -info.from_back_distance;
+
+  double d = 0;
+  for(unsigned int i = info.iFront; i < path.size()-1; i++)
+  {
+    d += hypot(path.at(i+1).pos.y - path.at(i).pos.y, path.at(i+1).pos.x - path.at(i).pos.x);
+  }
+
+  if(info.bBefore)
+    d += info.to_front_distance;
+
+  return d;
 }
 
 void PlanningHelpers::InitializeSafetyPolygon(const PlannerHNS::WayPoint& curr_state, const PlannerHNS::CAR_BASIC_INFO& car_info,
