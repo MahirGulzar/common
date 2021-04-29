@@ -490,7 +490,7 @@ BehaviorStateMachine* TrafficLightStopStateII::GetNextState()
     return FindBehaviorState(FOLLOW_STATE);
   }
 
-  else if (pCParams->bTrafficIsRed && pCParams->currentVelocity <= m_zero_velocity)
+  else if (pCParams->bTrafficIsRed && pCParams->currentVelocity <= m_zero_velocity && pCParams->egoStoppingVelocity < m_pParams->low_speed_lower_lim)
   {
     // std::cout << "Velocity Changed Stopping for trafficLight ("  <<pCParams->currentVelocity << ", " <<
     // m_zero_velocity << ")" <<  std::endl;
