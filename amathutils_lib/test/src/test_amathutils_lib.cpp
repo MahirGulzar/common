@@ -182,23 +182,99 @@ TEST(TestSuite, GetAngle)
   ASSERT_DOUBLE_EQ(amathutils::find_angle(ptB, ptA), 225) << "Angle should be -45deg";
 }
 
+// Values from https://www.geeksforgeeks.org/orientation-3-ordered-points/
+TEST(TestSuite, GetOrientation)
+{
+  geometry_msgs::Point ptA, ptB, ptC;
+
+  ptA.x = 0;  ptA.y = 0;  ptA.z = 0;
+  ptB.x = 4;  ptB.y = 4;  ptB.z = 0;
+  ptC.x = 1;  ptC.y = 2;  ptC.z = 0;
+  ASSERT_EQ(amathutils::findOrientation(ptA, ptB, ptC), 2) << "Orientation should be CounterClockwise: 2";
+
+  ptA.x = 0;  ptA.y = 0;  ptA.z = 0;
+  ptB.x = 4;  ptB.y = 4;  ptB.z = 0;
+  ptC.x = 2;  ptC.y = 0;  ptC.z = 0;
+  ASSERT_EQ(amathutils::findOrientation(ptA, ptB, ptC), 1) << "Orientation should be Clockwise: 1";
+
+  ptA.x = 0;  ptA.y = 0;  ptA.z = 0;
+  ptB.x = 4;  ptB.y = 4;  ptB.z = 0;
+  ptC.x = 1;  ptC.y = 1;  ptC.z = 0;
+  ASSERT_EQ(amathutils::findOrientation(ptA, ptB, ptC), 0) << "Orientation should be Collinear: 0";
+
+  // Collinear testing for very close points
+  ptA.x = 0.0;        ptA.y = 0.0;        ptA.z = 0.0;
+  ptB.x = 4.0;        ptB.y = 4.0;        ptB.z = 0.0;
+  ptC.x = 3.9999999;  ptC.y = 4.0000001;  ptC.z = 0.0;
+  ASSERT_EQ(amathutils::findOrientation(ptA, ptB, ptC), 0) << "Orientation should be Collinear: 0";
+
+  // Collinear testing for very closely collinear points
+  ptA.x = 0.0;        ptA.y = 0.0;        ptA.z = 0.0;
+  ptB.x = 4.0;        ptB.y = 4.0;        ptB.z = 0.0;
+  ptC.x = 1.9999999;  ptC.y = 2.0000001;  ptC.z = 0.0;
+  ASSERT_EQ(amathutils::findOrientation(ptA, ptB, ptC), 0) << "Orientation should be Collinear: 0";
+}
+
+TEST(TestSuite, PointOnLine)
+{
+  geometry_msgs::Point ptT, ptA, ptB;
+
+  ptT.x = 2;  ptT.y = 2;  ptT.z = 0;
+  ptA.x = 0;  ptA.y = 0;  ptA.z = 0;
+  ptB.x = 4;  ptB.y = 4;  ptB.z = 0;
+  ASSERT_TRUE(amathutils::isPointOnLine(ptT, ptA, ptB)) << "Point should be on the line";
+
+  // Epsilon testing
+  ptT.x = 1.9999999;  ptT.y = 2.0000001;  ptT.z = 0.0;
+  ptA.x = 0.0;        ptA.y = 0.0;        ptA.z = 0.0;
+  ptB.x = 4.0;        ptB.y = 4.0;        ptB.z = 0.0;
+  ASSERT_TRUE(amathutils::isPointOnLine(ptT, ptA, ptB)) << "Point should be on the line";
+}
+
 // Values from https://www.mathopenref.com/coordintersection.html
 TEST(TestSuite, LineIntersect)
 {
   geometry_msgs::Point l1_p1, l1_p2, l2_p1, l2_p2;
-  l1_p1.x = 29;
-  l1_p1.y = 5;
-  l1_p1.z = 0;
-  l1_p2.x = 51;
-  l1_p2.y = 15;
-  l1_p2.z = 0;
-  l2_p1.x = 15;
-  l2_p1.y = 10;
-  l2_p1.z = 0;
-  l2_p2.x = 58;
-  l2_p2.y = 10;
-  l2_p2.z = 0;
 
+  l1_p1.x = 29;  l1_p1.y = 5;   l1_p1.z = 0;
+  l1_p2.x = 51;  l1_p2.y = 15;  l1_p2.z = 0;
+  l2_p1.x = 15;  l2_p1.y = 10;  l2_p1.z = 0;
+  l2_p2.x = 58;  l2_p2.y = 10;  l2_p2.z = 0;
+  ASSERT_TRUE(amathutils::isIntersectLine(l1_p1, l1_p2, l2_p1, l2_p2)) << "Lines intersect";
+
+  // crossing perpendicular line
+  l1_p1.x =  10;  l1_p1.y =  10;  l1_p1.z = 0;
+  l1_p2.x = -10;  l1_p2.y = -10;  l1_p2.z = 0;
+  l2_p1.x = -10;  l2_p1.y =  10;  l2_p1.z = 0;
+  l2_p2.x =  10;  l2_p2.y = -10;  l2_p2.z = 0;
+  ASSERT_TRUE(amathutils::isIntersectLine(l1_p1, l1_p2, l2_p1, l2_p2)) << "Lines intersect";
+
+  // crossing vertical line
+  l1_p1.x =  0;  l1_p1.y =  10;  l1_p1.z = 0;
+  l1_p2.x =  0;  l1_p2.y = -10;  l1_p2.z = 0;
+  l2_p1.x =  1;  l2_p1.y =  10;  l2_p1.z = 0;
+  l2_p2.x = -1;  l2_p2.y = -10;  l2_p2.z = 0;
+  ASSERT_TRUE(amathutils::isIntersectLine(l1_p1, l1_p2, l2_p1, l2_p2)) << "Lines intersect";
+
+  // crossing vertical line (large)
+  l1_p1.x =  1;  l1_p1.y =  1000;  l1_p1.z = 0;
+  l1_p2.x = -1;  l1_p2.y = -1000;  l1_p2.z = 0;
+  l2_p1.x =  0;  l2_p1.y =  1000;  l2_p1.z = 0;
+  l2_p2.x =  0;  l2_p2.y = -1000;  l2_p2.z = 0;
+  ASSERT_TRUE(amathutils::isIntersectLine(l1_p1, l1_p2, l2_p1, l2_p2)) << "Lines intersect";
+
+  // crossing horizontal line
+  l1_p1.x =  10;  l1_p1.y =  0;  l1_p1.z = 0;
+  l1_p2.x = -10;  l1_p2.y =  0;  l1_p2.z = 0;
+  l2_p1.x =  10;  l2_p1.y =  1;  l2_p1.z = 0;
+  l2_p2.x = -10;  l2_p2.y = -1;  l2_p2.z = 0;
+  ASSERT_TRUE(amathutils::isIntersectLine(l1_p1, l1_p2, l2_p1, l2_p2)) << "Lines intersect";
+
+  // crossing horizontal line (large)
+  l1_p1.x =  1000;  l1_p1.y =  1;  l1_p1.z = 0;
+  l1_p2.x = -1000;  l1_p2.y = -1;  l1_p2.z = 0;
+  l2_p1.x =  1000;  l2_p1.y =  0;  l2_p1.z = 0;
+  l2_p2.x = -1000;  l2_p2.y =  0;  l2_p2.z = 0;
   ASSERT_TRUE(amathutils::isIntersectLine(l1_p1, l1_p2, l2_p1, l2_p2)) << "Lines intersect";
 }
 
@@ -206,19 +282,23 @@ TEST(TestSuite, LineIntersect)
 TEST(TestSuite, ParallelLines)
 {
   geometry_msgs::Point l1_p1, l1_p2, l2_p1, l2_p2;
-  l1_p1.x = 29;
-  l1_p1.y = 5;
-  l1_p1.z = 0;
-  l1_p2.x = 51;
-  l1_p2.y = 15;
-  l1_p2.z = 0;
-  l2_p1.x = 15;
-  l2_p1.y = 10;
-  l2_p1.z = 0;
-  l2_p2.x = 49;
-  l2_p2.y = 25;
-  l2_p2.z = 0;
 
+  l1_p1.x = 29;  l1_p1.y = 5;   l1_p1.z = 0;
+  l1_p2.x = 51;  l1_p2.y = 15;  l1_p2.z = 0;
+  l2_p1.x = 15;  l2_p1.y = 10;  l2_p1.z = 0;
+  l2_p2.x = 49;  l2_p2.y = 25;  l2_p2.z = 0;
+  ASSERT_TRUE(!amathutils::isIntersectLine(l1_p1, l1_p2, l2_p1, l2_p2)) << "Parallel lines";
+
+  l1_p1.x =  10;  l1_p1.y =  1;  l1_p1.z = 0;
+  l1_p2.x = -10;  l1_p2.y =  1;  l1_p2.z = 0;
+  l2_p1.x =  10;  l2_p1.y = -1;  l2_p1.z = 0;
+  l2_p2.x = -10;  l2_p2.y = -1;  l2_p2.z = 0;
+  ASSERT_TRUE(!amathutils::isIntersectLine(l1_p1, l1_p2, l2_p1, l2_p2)) << "Parallel lines";
+
+  l1_p1.x =  1;  l1_p1.y =  10;  l1_p1.z = 0;
+  l1_p2.x =  1;  l1_p2.y = -10;  l1_p2.z = 0;
+  l2_p1.x = -1;  l2_p1.y =  10;  l2_p1.z = 0;
+  l2_p2.x = -1;  l2_p2.y = -10;  l2_p2.z = 0;
   ASSERT_TRUE(!amathutils::isIntersectLine(l1_p1, l1_p2, l2_p1, l2_p2)) << "Parallel lines";
 }
 

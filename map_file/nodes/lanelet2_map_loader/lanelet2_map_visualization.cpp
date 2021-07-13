@@ -58,7 +58,9 @@ void binMapCallback(autoware_lanelet2_msgs::MapBin msg)
   // get lanelets etc to visualize
   lanelet::ConstLanelets all_lanelets = lanelet::utils::query::laneletLayer(viz_lanelet_map);
   lanelet::ConstLanelets road_lanelets = lanelet::utils::query::roadLanelets(all_lanelets);
+  lanelet::ConstLanelets highway_lanelets = lanelet::utils::query::highwayLanelets(all_lanelets);
   lanelet::ConstLanelets crosswalk_lanelets = lanelet::utils::query::crosswalkLanelets(all_lanelets);
+  road_lanelets.insert(road_lanelets.end(), highway_lanelets.begin(), highway_lanelets.end());
 
   std::vector<lanelet::ConstLineString3d> tl_stop_lines = lanelet::utils::query::getTrafficLightStopLines(road_lanelets);
   std::vector<lanelet::ConstLineString3d> ss_stop_lines = lanelet::utils::query::getStopSignStopLines(road_lanelets);

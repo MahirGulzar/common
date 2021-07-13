@@ -72,6 +72,13 @@ lanelet::ConstLanelets crosswalkLanelets(const lanelet::ConstLanelets lls);
 lanelet::ConstLanelets roadLanelets(const lanelet::ConstLanelets lls);
 
 /**
+ * [highwayLanelets extracts highway lanelets]
+ * @param  lls [input lanelets with subtype highway]
+ * @return     [highway lanelets]
+ */
+lanelet::ConstLanelets highwayLanelets(const lanelet::ConstLanelets lls);
+
+/**
  * [trafficLights extracts Traffic Light regulatory element from lanelets]
  * @param lanelets [input lanelets]
  * @return         [traffic light that are associated with input lanenets]

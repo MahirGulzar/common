@@ -15,6 +15,7 @@
  */
 
 #include <amathutils_lib/amathutils.hpp>
+#include <algorithm>
 
 namespace amathutils
 {
@@ -61,18 +62,82 @@ double find_angle(const geometry_msgs::Point &_from, const geometry_msgs::Point 
   return _angle * 360 / (2 * M_PI);
 }
 
-bool isIntersectLine(const geometry_msgs::Point &_l1_p1, const geometry_msgs::Point &_l1_p2,
-                     const geometry_msgs::Point &_l2_p1, const geometry_msgs::Point &_l2_p2)
+int findOrientation(const geometry_msgs::Point &p, const geometry_msgs::Point &q, const geometry_msgs::Point &r)
 {
-  const double ta = (_l2_p1.x - _l2_p2.x) * (_l1_p1.y - _l2_p1.y) + (_l2_p1.y - _l2_p2.y) * (_l2_p1.x - _l1_p1.x);
-  const double tb = (_l2_p1.x - _l2_p2.x) * (_l1_p2.y - _l2_p1.y) + (_l2_p1.y - _l2_p2.y) * (_l2_p1.x - _l1_p2.x);
-  const double tc = (_l1_p1.x - _l1_p2.x) * (_l2_p1.y - _l1_p1.y) + (_l1_p1.y - _l1_p2.y) * (_l1_p1.x - _l2_p1.x);
-  const double td = (_l1_p1.x - _l1_p2.x) * (_l2_p2.y - _l1_p1.y) + (_l1_p1.y - _l1_p2.y) * (_l1_p1.x - _l2_p2.x);
+  // To find orientation of ordered triplet (p, q, r).
+  // The function returns following values
+  // 0 --> p, q and r are collinear
+  // 1 --> Clockwise
+  // 2 --> Counterclockwise
+  // See https://www.geeksforgeeks.org/orientation-3-ordered-points/
+  // for details of below formula.
+  double val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
 
-  if (tc * td < 0 && ta * tb < 0)
+  if (std::fabs(val) <= eps)  // collinear
+  {
+    return 0;
+  }
+  else if (val > 0)  // clockwise
+  {
+    return 1;
+  }
+  else  // counterclockwise
+  {
+    return 2;
+  }
+}
+
+bool isPointOnLine(const geometry_msgs::Point &_target, const geometry_msgs::Point &_line_p1,
+  const geometry_msgs::Point &_line_p2)
+{
+  // Given three collinear points _line_p1, _target, _line_p2, the function checks if
+  // point _target lies on line segment '_line_p1::_line_p2'
+  double x_max = std::max(_line_p1.x, _line_p2.x);
+  double x_min = std::min(_line_p1.x, _line_p2.x);
+  double y_max = std::max(_line_p1.y, _line_p2.y);
+  double y_min = std::min(_line_p1.y, _line_p2.y);
+  if ((_target.x < x_max || std::fabs(x_max - _target.x) < eps) &&  // _target.x <= x_max
+      (_target.x > x_min || std::fabs(x_min - _target.x) < eps) &&  // _target.x >= x_min
+      (_target.y < y_max || std::fabs(y_max - _target.y) < eps) &&  // _target.y <= y_max
+      (_target.y > y_min || std::fabs(y_min - _target.y) < eps))    // _target.y >= y_min
     return true;
   else
     return false;
+}
+
+bool isIntersectLine(const geometry_msgs::Point &_l1_p1, const geometry_msgs::Point &_l1_p2,
+                     const geometry_msgs::Point &_l2_p1, const geometry_msgs::Point &_l2_p2)
+{
+  // See https://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/
+  // for details of below algorithm
+
+  int o1 = findOrientation(_l1_p1, _l1_p2, _l2_p1);
+  int o2 = findOrientation(_l1_p1, _l1_p2, _l2_p2);
+  int o3 = findOrientation(_l2_p1, _l2_p2, _l1_p1);
+  int o4 = findOrientation(_l2_p1, _l2_p2, _l1_p2);
+
+  // General Case:
+  // (_l1_p1, _l1_p2, _l2_p1) and (_l1_p1, _l1_p2, _l2_p2) have different orientations
+  // && (_l2_p1, _l2_p2, _l1_p1) and _l2_p1, _l2_p2, _l1_p2) have different orientations
+  if (o1 != o2 && o3 != o4)
+      return true;
+
+  // Special Cases:
+  // _l1_p1, _l1_p2 and _l2_p1 are colinear and _l2_p1 lies on segment _l1_p1::_l1_p2
+  if (o1 == 0 && isPointOnLine(_l2_p1, _l1_p1, _l1_p2))
+    return true;
+  // _l1_p1, _l1_p2 and _l2_p2 are colinear and _l2_p2 lies on segment _l1_p1::_l1_p2
+  if (o2 == 0 && isPointOnLine(_l2_p2, _l1_p1, _l1_p2))
+    return true;
+  // _l2_p1, _l2_p2 and _l1_p1 are colinear and _l1_p1 lies on segment _l2_p1::_l2_p2
+  if (o3 == 0 && isPointOnLine(_l1_p1, _l2_p1, _l2_p2))
+    return true;
+  // _l2_p1, _l2_p2 and _l1_p2 are colinear and _l1_p2 lies on segment _l2_p1::_l2_p2
+  if (o4 == 0 && isPointOnLine(_l1_p2, _l2_p1, _l2_p2))
+    return true;
+
+  // Otherwise, the lines do not intersect
+  return false;
 }
 
 /*
@@ -88,12 +153,20 @@ int isPointLeftFromLine(const geometry_msgs::Point &_target, const geometry_msgs
   const int LEFT = 1;
   const int RIGHT = -1;
   const int ONLINE = 0;
-  const double n = _target.x * (_line_p1.y - _line_p2.y) + _line_p1.x * (_line_p2.y - _target.y) +
-                   _line_p2.x * (_target.y - _line_p1.y);
-
-  return n > 0 ? LEFT : n < 0 ? RIGHT : ONLINE;
+  const int ret = findOrientation(_line_p1, _target, _line_p2);
+  if (ret == 1)
+  {
+    return LEFT;
+  }
+  else if (ret == 2)
+  {
+    return RIGHT;
+  }
+  else
+  {
+    return ONLINE;
+  }
 }
-
 
 // Following implementation comes from the website below:
 // Author: Dan Sunday

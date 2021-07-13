@@ -81,6 +81,11 @@ lanelet::ConstLanelets query::roadLanelets(const lanelet::ConstLanelets lls)
   return (query::subtypeLanelets(lls, lanelet::AttributeValueString::Road));
 }
 
+lanelet::ConstLanelets query::highwayLanelets(const lanelet::ConstLanelets lls)
+{
+  return (query::subtypeLanelets(lls, lanelet::AttributeValueString::Highway));
+}
+
 std::vector<lanelet::TrafficLightConstPtr> query::trafficLights(const lanelet::ConstLanelets lanelets)
 {
   std::vector<lanelet::TrafficLightConstPtr> tl_reg_elems;
