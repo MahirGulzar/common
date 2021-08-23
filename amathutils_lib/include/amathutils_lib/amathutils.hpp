@@ -31,6 +31,7 @@ namespace amathutils
 {
 
 #define G_MPSS 9.80665  // m/s^2
+const double eps = 1e-5;
 
 inline double rad2deg(double _angle)
 {
@@ -76,6 +77,9 @@ geometry_msgs::Point getNearPtOnLine(const geometry_msgs::Point &_p, const geome
 double find_distance(const geometry_msgs::Point &_from, const geometry_msgs::Point &_to);
 double find_distance(const geometry_msgs::Pose &_from, const geometry_msgs::Pose &_to);
 double find_angle(const geometry_msgs::Point &_from, const geometry_msgs::Point &_to);
+bool isPointOnLine(const geometry_msgs::Point &_target, const geometry_msgs::Point &_line_p1,
+  const geometry_msgs::Point &_line_p2);
+int findOrientation(const geometry_msgs::Point &p, const geometry_msgs::Point &q, const geometry_msgs::Point &r);
 bool isIntersectLine(const geometry_msgs::Point &_l1_p1, const geometry_msgs::Point &_l1_p2,
   const geometry_msgs::Point &_l2_p1, const geometry_msgs::Point &_l2_p2);
 int isPointLeftFromLine(const geometry_msgs::Point &_target, const geometry_msgs::Point &_line_p1,
