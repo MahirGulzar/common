@@ -66,6 +66,7 @@ public:
 	static void CreateLoggingMainFolder();
 	static void CreateLoggingFolders(const std::string& mainFolderName);
 	static void CreateExperimentFolder(const std::string& folderName);
+	static void CreateCustomSimulatedDataFolder(const std::string& folderName);
 
 	static void writeCSVFile(const std::string& folder, const std::string& title,
 			const std::string& header,

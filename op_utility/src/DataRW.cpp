@@ -75,6 +75,17 @@ void DataRW::CreateLoggingFolders(const std::string& mainFolderName)
 	dir_err = mkdir(main_folder.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 }
 
+
+void DataRW::CreateCustomSimulatedDataFolder(const std::string& folderName)
+{
+	int dir_err = mkdir(folderName.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+	if (-1 == dir_err)
+	{
+		cout << "Can't create custom simulated data folder" << endl;
+	}
+
+}
+
 void DataRW::CreateExperimentFolder(const std::string& folderName)
 {
 	std::string main_folder = UtilityH::GetHomeDirectory() + DataRW::LoggingMainfolderName + DataRW::ExperimentsFolderName + folderName;
