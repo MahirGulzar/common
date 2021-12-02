@@ -544,38 +544,23 @@ double DecisionMaker::UpdateVelocityDirectlyToTrajectory(const BehaviorState& be
       m_TotalPaths.at(m_iCurrentTotalPathId), total_info, total_info.iBack, speed_change_distance, CurrStatus.speed,
       m_params.speed_deceleration), m_params.maxSpeed);
 
-//   std::cout << "Max Velocity : " << max_velocity << "," << m_params.maxSpeed << std::endl;
-
   if (beh.state == STOPPING_STATE || beh.state == TRAFFIC_LIGHT_STOP_STATE || beh.state == STOP_SIGN_STOP_STATE) {
     double min_dist = pow(CurrStatus.speed, 2) / (4.0 * 2);
-
-    if (beh.state == STOPPING_STATE) {
-      log_stream << "STOP_GOAL_";
-    } else {
-      log_stream << "STOP_";
-    }
 
     if (beh.stopDistance <= min_dist && m_params.enableQuickStop) {
       setDeceleration(0.0);
       desired_velocity = 0.0;
-      log_stream << "EXT - ";
     } else {
       setDeceleration(5.0);
       desired_velocity = beh.egoStoppingVelocity;
     }
-
-    log_stream << "spd: " << CurrStatus.speed << ", tV: " << desired_velocity << ", stpDist: " << beh.stopDistance
-               << ", egoFolV: " << beh.egoFollowingVelocity << ", egoStpV: " << beh.egoStoppingVelocity;
-    ROS_INFO_STREAM(log_stream.str());
     return clipTargetVelocityAndWriteToPath(desired_velocity, max_velocity);
 
   } else if (beh.state == FOLLOW_STATE) {
     double min_dist = pow(CurrStatus.speed - beh.followVelocity, 2)/(4.0 * 2);
-    log_stream << "FOLLOW_";
     if (beh.followDistance <= min_dist && m_params.enableQuickStop) {
       setDeceleration(0.0);
       desired_velocity = 0.0;
-      log_stream << "EXT - ";
     }
     // HACK
     // First cycles (4-7) when object is detected its velocity is 0.0. It means a standing obstacle and will result
@@ -584,7 +569,6 @@ double DecisionMaker::UpdateVelocityDirectlyToTrajectory(const BehaviorState& be
     else if (beh.followVelocity == 0.0) {
       setDeceleration(5.0);
       desired_velocity = CurrStatus.speed;
-      log_stream << "HCK - ";
     } else {
       setDeceleration(5.0);
 
@@ -594,43 +578,24 @@ double DecisionMaker::UpdateVelocityDirectlyToTrajectory(const BehaviorState& be
       } else {
         desired_velocity = beh.egoFollowingVelocity;
       }
-      log_stream << "NRM - ";
     }
-
-    log_stream << "spd: " << CurrStatus.speed << ", tV: " << desired_velocity << ", fD: " << beh.followDistance
-              << ", fV: " << beh.followVelocity << ", min_d: " << min_dist
-              << ", egoFolV: " << beh.egoFollowingVelocity << ", egoStpV: " << beh.egoStoppingVelocity;
-    ROS_INFO_STREAM(log_stream.str());
     return clipTargetVelocityAndWriteToPath(desired_velocity, max_velocity);
 
   } else if (beh.state == FORWARD_STATE || beh.state == OBSTACLE_AVOIDANCE_STATE) {
     setDeceleration(1.0);
     desired_velocity = max_velocity;
-    log_stream <<"FORWARD - "
-              << "spd: " << CurrStatus.speed << ", tV: " << desired_velocity << ", spd_ch_d: " << speed_change_distance
-              << ", egoFolV: " << beh.egoFollowingVelocity << ", egoStpV: " << beh.egoStoppingVelocity;
-    ROS_INFO_STREAM(log_stream.str());
     return clipTargetVelocityAndWriteToPath(desired_velocity, max_velocity);
 
   } else if (beh.state == STOP_SIGN_WAIT_STATE || beh.state == TRAFFIC_LIGHT_WAIT_STATE) {
     desired_velocity = 0.;
-    log_stream << "WAIT - "
-              << "spd: " << CurrStatus.speed << ", tV: " << desired_velocity;
-    ROS_INFO_STREAM(log_stream.str());
     return clipTargetVelocityAndWriteToPath(desired_velocity, max_velocity);
 
   } else if (beh.state == FINISH_STATE) {
     desired_velocity = 0.;
-    log_stream << "FINISH - "
-              << "spd: " << CurrStatus.speed << ", tV: " << desired_velocity;
-    ROS_INFO_STREAM(log_stream.str());
     return clipTargetVelocityAndWriteToPath(desired_velocity, max_velocity);
 
   } else {
     desired_velocity = 0.;
-    log_stream << "Other - "
-              << "spd: " << CurrStatus.speed << ", tV: " << desired_velocity;
-    ROS_INFO_STREAM(log_stream.str());
     return clipTargetVelocityAndWriteToPath(desired_velocity, max_velocity);
   }
 }
