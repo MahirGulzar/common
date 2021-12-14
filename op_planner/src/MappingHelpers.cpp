@@ -1373,6 +1373,7 @@ void MappingHelpers::FixUnconnectedLanes(std::vector<Lane>& lanes, const int& ma
 
 void MappingHelpers::LinkTrafficLightsAndStopLinesV2(RoadNetwork& map)
 {
+    // link stoplines with lanes
 	for(unsigned int rs = 0; rs < map.roadSegments.size(); rs++)
 	{
 		for(unsigned int i =0; i < map.roadSegments.at(rs).Lanes.size(); i++)
@@ -1380,9 +1381,12 @@ void MappingHelpers::LinkTrafficLightsAndStopLinesV2(RoadNetwork& map)
 			for(unsigned int p= 0; p < map.roadSegments.at(rs).Lanes.at(i).points.size(); p++)
 			{
 				WayPoint* pWP = &map.roadSegments.at(rs).Lanes.at(i).points.at(p);
+                // look through all the roadSeg, lanes and all the points in them
 
+                // start with all the stoplines
 				for(unsigned int isl = 0; isl < map.stopLines.size(); isl++)
 				{
+                    // if stopline linkID (link to lane) is equal to "should be laneId"
 					if(map.stopLines.at(isl).linkID == pWP->originalMapID)
 					{
 						map.stopLines.at(isl).laneId = pWP->laneId;
@@ -1391,6 +1395,7 @@ void MappingHelpers::LinkTrafficLightsAndStopLinesV2(RoadNetwork& map)
 
 						pWP->stopLineID = map.stopLines.at(isl).id;
 
+                        // link traffic lights with stoplines
 						for(unsigned int itl = 0; itl < map.trafficLights.size(); itl++)
 						{
 							bool bFound = false;
@@ -1412,6 +1417,7 @@ void MappingHelpers::LinkTrafficLightsAndStopLinesV2(RoadNetwork& map)
 								{
 									if(tl_item.id != map.trafficLights.at(itl).id && tl_item.groupID == map.trafficLights.at(itl).groupID)
 									{
+                                        // add links to also other signals (2 other lamps)
 										tl_item.laneIds.push_back(pWP->laneId);
 										tl_item.pLanes.push_back(pWP->pLane);
 									}
@@ -1425,6 +1431,7 @@ void MappingHelpers::LinkTrafficLightsAndStopLinesV2(RoadNetwork& map)
 		}
 	}
 
+    // Link traffic lights to lanes
 	for(unsigned int rs = 0; rs < map.roadSegments.size(); rs++)
 	{
 		for(unsigned int i =0; i < map.roadSegments.at(rs).Lanes.size(); i++)
@@ -1760,7 +1767,8 @@ bool MappingHelpers::IsPointExist(const WayPoint& p, const std::vector<PlannerHN
 	 {
 		 for(auto& sl: map.stopLines)
 		 {
-			 if(sl.id == tl.stopLineID)
+             // changed from tl.stopLineID to linkID (our change to csv map) and stopLineID is not filled by this time anyway (0)
+			 if(sl.id == tl.linkID)
 			 {
 				 InsertUniqueId(sl.lightIds, tl.id);
 				 break;

@@ -163,6 +163,9 @@ void VectorMapLoader::ConstructRoadNetworkFromROSMessage(UtilityHNS::MapRaw& map
 	MappingHelpers::ConnectTrafficLightsAndStopLines(map);
 	MappingHelpers::ConnectTrafficSignsAndStopLines(map);
 
+    // print out map connections created
+    // PrintMap(map);
+
 	std::cout << " >> Map loaded from data with " << roadLanes.size()  << " lanes, and " << map.lines.size() << " lines." << std::endl;
 }
 
@@ -1432,5 +1435,46 @@ void VectorMapLoader::LinkTrafficLightsAndStopLinesConData(const std::vector<Uti
 	}
 }
 
+void VectorMapLoader::PrintMap(RoadNetwork& map) {
+
+    std::cout << "=================================================================" << std::endl;
+
+    // print stopline data
+    for (auto &sl: map.stopLines) {
+        std::cout << "Stopline id: " << sl.id
+                  << ", linkID: " << sl.linkID
+                  << ", roadId: " << sl.roadId
+                  << ", laneId: " << sl.laneId
+                  << ", stopSignID: " << sl.stopSignID << std::endl;
+        std::cout << "  - laneIds (" << sl.laneIds.size() << "): " << PrintIds(sl.laneIds) << std::endl;
+        std::cout << "  - lightIds (" << sl.lightIds.size() << "): " << PrintIds(sl.lightIds) << std::endl;
+    }
+
+    std::cout << "" << std::endl;
+
+    // print traffic lights data
+    for (auto &tfl: map.trafficLights) {
+        std::cout << "Traffic Light id: " << tfl.id
+                  << ", linkID: " << tfl.linkID
+                  << ", stopLineID: " << tfl.stopLineID
+                  << ", groupID: " << tfl.groupID << std::endl;
+        std::cout << "  - laneIds (" << tfl.laneIds.size() << "): " << PrintIds(tfl.laneIds) << std::endl;
+
+    }
+
+    std::cout << "=================================================================" << std::endl;
+}
+
+std::string VectorMapLoader::PrintIds(std::vector<int> data) {
+
+    std::string result = "";
+
+    for (unsigned int i = 0; i < data.size(); i++){
+        result += (std::to_string(data.at(i)) + ", ");
+    }
+
+    return result;
+
+}
 
 } /* namespace PlannerHNS */

@@ -1030,10 +1030,9 @@ double PlanningHelpers::GetDistanceToClosestStopLineAndCheck(const std::vector<W
 
 			for(unsigned int j = 0; j < path.at(i).pLane->stopLines.size(); j++)
 			{
-
 				if(path.at(i).pLane->stopLines.at(j).id == path.at(i).stopLineID)
-				{
-					stopLineID = path.at(i).stopLineID;
+                {
+             		stopLineID = path.at(i).stopLineID;
 
 					RelativeInfo stop_info;
 					WayPoint stopLineWP ;

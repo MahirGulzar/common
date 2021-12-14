@@ -320,6 +320,9 @@ void DecisionMaker::CalculateImportantParameterForDecisionMaking(const PlannerHN
   if (stopLineID != -1) {
     pValues->stoppingDistances.push_back(distanceToClosestStopLine);
   }
+//    for(unsigned int i=0; i < pValues->stoppingDistances.size(); i++){
+//        std::cout << "   OP - stoppingDistances [" << i << "]: " << pValues->stoppingDistances.at(i) << std::endl;
+//    }
 
   // We take the closest stop line as stopping point.
   double distance_to_stop = *std::min_element(pValues->stoppingDistances.begin(), pValues->stoppingDistances.end());
@@ -339,17 +342,14 @@ void DecisionMaker::CalculateImportantParameterForDecisionMaking(const PlannerHN
   if (!pValues->bFullyBlock)
   {
     pValues->egoFollowingVelocity = m_params.maxSpeed;
-  }
-  else
-  {
+  } else {
     // clip small speeds of object
     double objectVelocity = 0.0;
     if (pValues->velocityOfNext > 2)
       objectVelocity = pValues->velocityOfNext;
 
     // object speed dependent - in higher speeds keeps bigger distance
-    double normalDistance =
-        pValues->distanceToNext - m_params.follow_reaction_time * objectVelocity - m_params.additionalBrakingDistance;
+    double normalDistance = pValues->distanceToNext - m_params.follow_reaction_time * objectVelocity - m_params.additionalBrakingDistance;
 
     double under_sqrt = objectVelocity * objectVelocity - 2 * m_params.follow_deceleration * normalDistance;
     if (under_sqrt > 0)
@@ -357,6 +357,7 @@ void DecisionMaker::CalculateImportantParameterForDecisionMaking(const PlannerHN
     else
       pValues->egoFollowingVelocity = 0.0;
   }
+
   // clip ego FOLLOW velocity between 0 and maxSpeed
   pValues->egoFollowingVelocity = std::min(std::max(pValues->egoFollowingVelocity, 0.0), m_params.maxSpeed);
 
@@ -367,20 +368,23 @@ void DecisionMaker::CalculateImportantParameterForDecisionMaking(const PlannerHN
   if (distanceToClosestStopLine <= m_params.giveUpDistance) {
     m_bWindowReached = false;
   }
+//  std::cout << " op_planner d: " << distanceToClosestStopLine
+//            << ", stopLineID: " << stopLineID
+//            << ", stoppingVel: " << pValues->egoStoppingVelocity
+//            << ", givupD: " << m_params.giveUpDistance
+//            << ", window: " << ( m_bWindowReached ? "true " : "false ") << std::endl;
 
   if (m_bWindowReached) {
-    if (m_pCurrentBehaviorState->m_pParams->enableTrafficLightBehavior) {
-      pValues->currentTrafficLightID = trafficLightID;
-      for (const auto& detectedLight : detectedLights) {
-        if (detectedLight.id == trafficLightID) {
-          bGreenTrafficLight = (detectedLight.lightType == GREEN_LIGHT);
-        }
+      if (m_pCurrentBehaviorState->m_pParams->enableTrafficLightBehavior) {
+          for (const auto &detectedLight: detectedLights) {
+              if (detectedLight.stopLineID == stopLineID) {
+//                  std::cout << "    OP - detected light linkId: " << detectedLight.linkID << ", stopLineID: " << detectedLight.stopLineID << ", type: " << detectedLight.lightType << std::endl;
+                  // write closest stopline value
+                  pValues->currentTrafficLightID = stopLineID;
+                  bGreenTrafficLight = (detectedLight.lightType == GREEN_LIGHT);
+              }
+          }
       }
-    }
-
-//    std::cout << "enableStopSignBehavior : " << m_pCurrentBehaviorState->m_pParams->enableStopSignBehavior;
-//    std::cout << ", enableTrafficLightBehavior : " << m_pCurrentBehaviorState->m_pParams->enableTrafficLightBehavior;
-
 
     if (m_pCurrentBehaviorState->m_pParams->enableStopSignBehavior ||
         m_pCurrentBehaviorState->m_pParams->enableTrafficLightBehavior) {
@@ -396,6 +400,7 @@ void DecisionMaker::CalculateImportantParameterForDecisionMaking(const PlannerHN
   // SignID: " << stopSignID << ", TFID: " << trafficLightID << std::endl;
 
   pValues->bTrafficIsRed = !bGreenTrafficLight;
+//  std::cout << " OP - traffic light is red: " << (pValues->bTrafficIsRed ? "True  " : "False  ") << std::endl;
 
   if (bEmergencyStop) {
     pValues->bFullyBlock = true;

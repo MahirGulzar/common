@@ -125,6 +125,12 @@ private:
 	void LinkTrafficLightsAndStopLinesConData(const std::vector<UtilityHNS::AisanDataConnFileReader::DataConn>& conn_data,
 			const std::vector<std::pair<int,int> >& id_replace_list, RoadNetwork& map); //pointers link
 
+    /**
+	 * @brief Print out some map data to verify relations created by parser
+	 * @param map
+	 */
+    void PrintMap(RoadNetwork& map);
+    std::string PrintIds(std::vector<int> data);
 };
 
 } /* namespace PlannerHNS */
