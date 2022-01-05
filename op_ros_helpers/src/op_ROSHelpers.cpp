@@ -662,6 +662,18 @@ void ROSHelpers::ConvertFromRoadNetworkToAutowareVisualizeMapFormat(const Planne
 //				edge_color.b = 0.5;
 //			}
 
+			// color centerlines based on turn cost - blinker behavior
+			if(map.roadSegments.at(i).Lanes.at(j).points.at(p).actionCost.at(0).first == RIGHT_TURN_ACTION)
+			{
+				edge_color.b = 0.5;
+				edge_color.g = 0.5;
+			}
+			if(map.roadSegments.at(i).Lanes.at(j).points.at(p).actionCost.at(0).first == LEFT_TURN_ACTION)
+			{
+				edge_color.r = 0.5;
+				edge_color.g = 0.5;
+			}
+
 			lane_waypoint_marker.colors.push_back(edge_color);
 			lane_waypoint_marker.points.push_back(point);
 		  }
