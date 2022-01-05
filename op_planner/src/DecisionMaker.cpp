@@ -672,7 +672,8 @@ PlannerHNS::BehaviorState DecisionMaker::GenerateBehaviorState(const PlannerHNS:
 
   currentBehavior.iLane = m_iCurrentTotalPathId;
 
-  double indication_distance = preCalcPrams->minStoppingDistance;
+  // speed * time (3 seconds) to get the needed distance for indicators
+  double indication_distance = vehicleState.speed * 3.0;
   if (indication_distance < m_params.minIndicationDistance) {
     indication_distance = m_params.minIndicationDistance;
   }

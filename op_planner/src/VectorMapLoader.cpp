@@ -88,30 +88,35 @@ void VectorMapLoader::ConstructRoadNetworkFromROSMessage(UtilityHNS::MapRaw& map
 	std::cout << " >> Link lanes and waypoints with pointers ... " << std::endl;
 	MappingHelpers::LinkLanesPointers(map);
 
-	for(unsigned int rs = 0; rs < map.roadSegments.size(); rs++)
-	{
-		for(unsigned int i =0; i < map.roadSegments.at(rs).Lanes.size(); i++)
-		{
-			Lane* pL = &map.roadSegments.at(rs).Lanes.at(i);
-			for(unsigned int j = 0 ; j < pL->points.size(); j++)
-			{
-			    if(pL->points.at(j).actionCost.size() > 0)
-			  {
-				  if(pL->points.at(j).actionCost.at(0).first == LEFT_TURN_ACTION)
-					{
-					  MappingHelpers::AssignActionCostToLane(pL, LEFT_TURN_ACTION, LEFT_INITIAL_TURNS_COST);
-					  break;
-					}
-				  else if(pL->points.at(j).actionCost.at(0).first == RIGHT_TURN_ACTION)
-					{
-					  MappingHelpers::AssignActionCostToLane(pL, RIGHT_TURN_ACTION, RIGHT_INITIAL_TURNS_COST);
-					break;
+	/*
+	// Commenting out this part - takes first turn command from lane and assigns to all the lane
+	// Overwrites original lane types and messes up our blinker behavior!
 
-					}
-				}
-			}
-		}
-	}
+	 for(unsigned int rs = 0; rs < map.roadSegments.size(); rs++)
+	 {
+	 	for(unsigned int i =0; i < map.roadSegments.at(rs).Lanes.size(); i++)
+	 	{
+	 		Lane* pL = &map.roadSegments.at(rs).Lanes.at(i);
+	 		for(unsigned int j = 0 ; j < pL->points.size(); j++)
+	 		{
+	 		    if(pL->points.at(j).actionCost.size() > 0)
+	 		  {
+	 			  if(pL->points.at(j).actionCost.at(0).first == LEFT_TURN_ACTION)
+	 				{
+	 				  MappingHelpers::AssignActionCostToLane(pL, LEFT_TURN_ACTION, LEFT_INITIAL_TURNS_COST);
+	 				  break;
+	 				}
+	 			  else if(pL->points.at(j).actionCost.at(0).first == RIGHT_TURN_ACTION)
+	 				{
+	 				  MappingHelpers::AssignActionCostToLane(pL, RIGHT_TURN_ACTION, RIGHT_INITIAL_TURNS_COST);
+	 				break;
+
+	 				}
+	 			}
+	 		}
+	 	}
+	 }
+	 */
 
 	if(_find_parallel_lanes)
 	{
