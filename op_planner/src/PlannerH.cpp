@@ -71,13 +71,13 @@ double PlannerH::PlanUsingDPRandom(const WayPoint& start,
 	if(!pStart)
 	{
 		GPSPoint sp = start.pos;
-		cout << endl << "Error: PlannerH -> Can't Find Global Waypoint Nodes in the Map for Start (" <<  sp.ToString() << ")" << endl;
+		//cout << endl << "Error: PlannerH -> Can't Find Global Waypoint Nodes in the Map for Start (" <<  sp.ToString() << ")" << endl;
 		return 0;
 	}
 
 	if(!pStart->pLane)
 	{
-		cout << endl << "Error: PlannerH -> Null Lane, Start (" << pStart->pLane << ")" << endl;
+		//cout << endl << "Error: PlannerH -> Null Lane, Start (" << pStart->pLane << ")" << endl;
 		return 0;
 	}
 
@@ -87,9 +87,9 @@ double PlannerH::PlanUsingDPRandom(const WayPoint& start,
 	if(start_info.perp_distance > START_POINT_MAX_DISTANCE)
 	{
 		GPSPoint sp = start.pos;
-		cout << endl << "Error: PlannerH -> Start Distance to Lane is: " << start_info.perp_distance
-				<< ", Pose: " << sp.ToString() << ", LanePose:" << start_info.perp_point.pos.ToString()
-				<< ", LaneID: " << pStart->pLane->id << " -> Check origin and vector map. " << endl;
+		// cout << endl << "Error: PlannerH -> Start Distance to Lane is: " << start_info.perp_distance
+		// 		<< ", Pose: " << sp.ToString() << ", LanePose:" << start_info.perp_point.pos.ToString()
+		// 		<< ", LaneID: " << pStart->pLane->id << " -> Check origin and vector map. " << endl;
 		return 0;
 	}
 
@@ -99,7 +99,7 @@ double PlannerH::PlanUsingDPRandom(const WayPoint& start,
 
 	if(!pLaneCell)
 	{
-		cout << endl << "PlannerH -> Plan (B) Failed, Sorry we Don't have plan (C) This is the END." << endl;
+		// cout << endl << "PlannerH -> Plan (B) Failed, Sorry we Don't have plan (C) This is the END." << endl;
 		return 0;
 	}
 
@@ -108,7 +108,7 @@ double PlannerH::PlanUsingDPRandom(const WayPoint& start,
 	vector<vector<WayPoint> > tempCurrentForwardPathss;
 	const std::vector<int> globalPath;
 	PlanningHelpers::TraversePathTreeBackwards(pLaneCell, pStart, globalPath, path, tempCurrentForwardPathss);
-	cout << endl <<"Info: PlannerH -> Plan (B) Path With Size (" << (int)path.size() << "), MultiPaths No(" << paths.size() << ") Extraction Time : " << endl;
+	// cout << endl <<"Info: PlannerH -> Plan (B) Path With Size (" << (int)path.size() << "), MultiPaths No(" << paths.size() << ") Extraction Time : " << endl;
 
 	//PlanningHelpers::CreateManualBranch(path, 0, FORWARD_RIGHT_DIR);
 	//cout << "Right Branch Created with Size: " << path.size()  << endl;
@@ -117,7 +117,7 @@ double PlannerH::PlanUsingDPRandom(const WayPoint& start,
 
 	if(path.size()<2)
 	{
-		cout << endl << "Err: PlannerH -> Invalid Path, Car Should Stop." << endl;
+		// cout << endl << "Err: PlannerH -> Invalid Path, Car Should Stop." << endl;
 		if(pLaneCell)
 			DeleteWaypoints(local_cell_to_delete);
 		return 0 ;
@@ -146,13 +146,13 @@ double PlannerH::PlanUsingDP(const WayPoint& start,
 	{
 		GPSPoint sp = start.pos;
 		GPSPoint gp = goalPos.pos;
-		cout << endl << "Error: PlannerH -> Can't Find Global Waypoint Nodes in the Map for Start (" <<  sp.ToString() << ") and Goal (" << gp.ToString() << ")" << endl;
+		// cout << endl << "Error: PlannerH -> Can't Find Global Waypoint Nodes in the Map for Start (" <<  sp.ToString() << ") and Goal (" << gp.ToString() << ")" << endl;
 		return 0;
 	}
 
 	if(!pStart->pLane || !pGoal->pLane)
 	{
-		cout << endl << "Error: PlannerH -> Null Lane, Start (" << pStart->pLane << ") and Goal (" << pGoal->pLane << ")" << endl;
+		// cout << endl << "Error: PlannerH -> Null Lane, Start (" << pStart->pLane << ") and Goal (" << pGoal->pLane << ")" << endl;
 		return 0;
 	}
 
@@ -165,9 +165,9 @@ double PlannerH::PlanUsingDP(const WayPoint& start,
 	if(fabs(start_info.perp_distance) > START_POINT_MAX_DISTANCE)
 	{
 		GPSPoint sp = start.pos;
-		cout << endl << "Error: PlannerH -> Start Distance to Lane is: " << start_info.perp_distance
-				<< ", Pose: " << sp.ToString() << ", LanePose:" << start_info.perp_point.pos.ToString()
-				<< ", LaneID: " << pStart->pLane->id << " -> Check origin and vector map. " << endl;
+		// cout << endl << "Error: PlannerH -> Start Distance to Lane is: " << start_info.perp_distance
+		// 		<< ", Pose: " << sp.ToString() << ", LanePose:" << start_info.perp_point.pos.ToString()
+		// 		<< ", LaneID: " << pStart->pLane->id << " -> Check origin and vector map. " << endl;
 		return 0;
 	}
 
@@ -176,9 +176,9 @@ double PlannerH::PlanUsingDP(const WayPoint& start,
 		if(fabs(goal_info.perp_distance) > 20)
 		{
 			GPSPoint gp = goalPos.pos;
-			cout << endl << "Error: PlannerH -> Goal Distance to Lane is: " << goal_info.perp_distance
-					<< ", Pose: " << gp.ToString() << ", LanePose:" << goal_info.perp_point.pos.ToString()
-					<< ", LaneID: " << pGoal->pLane->id << " -> Check origin and vector map. " << endl;
+			// cout << endl << "Error: PlannerH -> Goal Distance to Lane is: " << goal_info.perp_distance
+			// 		<< ", Pose: " << gp.ToString() << ", LanePose:" << goal_info.perp_point.pos.ToString()
+			// 		<< ", LaneID: " << pGoal->pLane->id << " -> Check origin and vector map. " << endl;
 			return 0;
 		}
 		else
@@ -203,7 +203,7 @@ double PlannerH::PlanUsingDP(const WayPoint& start,
 	if(!pLaneCell)
 	{
 		bPlan = 'B';
-		cout << endl << "PlannerH -> Plan (A) Failed, Trying Plan (B)." << endl;
+		// cout << endl << "PlannerH -> Plan (A) Failed, Trying Plan (B)." << endl;
 
 		if(all_cell_to_delete)
 			pLaneCell =  PlanningHelpers::BuildPlanningSearchTreeStraight(pStart, planning_distance, *all_cell_to_delete);
@@ -213,7 +213,7 @@ double PlannerH::PlanUsingDP(const WayPoint& start,
 		if(!pLaneCell)
 		{
 			bPlan = 'Z';
-			cout << endl << "PlannerH -> Plan (B) Failed, Sorry we Don't have plan (C) This is the END." << endl;
+			// cout << endl << "PlannerH -> Plan (B) Failed, Sorry we Don't have plan (C) This is the END." << endl;
 			return 0;
 		}
 	}
@@ -262,12 +262,12 @@ double PlannerH::PlanUsingDP(const WayPoint& start,
 //		}
 //	}
 
-	cout << endl <<"Info: PlannerH -> Plan (" << bPlan << ") Path With Size (" << (int)path.size() << "), MultiPaths No(" << paths.size() << ") Extraction Time : " << endl;
+	// cout << endl <<"Info: PlannerH -> Plan (" << bPlan << ") Path With Size (" << (int)path.size() << "), MultiPaths No(" << paths.size() << ") Extraction Time : " << endl;
 
 
 	if(path.size()<2)
 	{
-		cout << endl << "Err: PlannerH -> Invalid Path, Car Should Stop." << endl;
+		// cout << endl << "Err: PlannerH -> Invalid Path, Car Should Stop." << endl;
 		if(pLaneCell && !all_cell_to_delete)
 			DeleteWaypoints(local_cell_to_delete);
 		return 0 ;
@@ -284,7 +284,7 @@ double PlannerH::PredictPlanUsingDP(PlannerHNS::Lane* l, const WayPoint& start, 
 {
 	if(!l)
 	{
-		cout <<endl<< "Err: PredictPlanUsingDP, PlannerH -> Null Lane !!" << endl;
+		// cout <<endl<< "Err: PredictPlanUsingDP, PlannerH -> Null Lane !!" << endl;
 		return 0;
 	}
 
@@ -300,9 +300,9 @@ double PlannerH::PredictPlanUsingDP(PlannerHNS::Lane* l, const WayPoint& start, 
 
 	if(distance2points(closest_p.pos, carPos.pos) > 8)
 	{
-		cout <<endl<< "Err: PredictiveDP PlannerH -> Distance to Lane is: " << distance2points(closest_p.pos, carPos.pos)
- 				<< ", Pose: " << carPos.pos.ToString() << ", LanePose:" << closest_p.pos.ToString()
- 				<< ", LaneID: " << l->id << " -> Check origin and vector map. " << endl;
+		// cout <<endl<< "Err: PredictiveDP PlannerH -> Distance to Lane is: " << distance2points(closest_p.pos, carPos.pos)
+ 		// 		<< ", Pose: " << carPos.pos.ToString() << ", LanePose:" << closest_p.pos.ToString()
+ 		// 		<< ", LaneID: " << l->id << " -> Check origin and vector map. " << endl;
 		return 0;
 	}
 
@@ -311,7 +311,7 @@ double PlannerH::PredictPlanUsingDP(PlannerHNS::Lane* l, const WayPoint& start, 
 
 	if(nPaths==0)
 	{
-		cout <<endl<< "Err PlannerH -> Null Tree Head." << endl;
+		// cout <<endl<< "Err PlannerH -> Null Tree Head." << endl;
 		return 0;
 	}
 
@@ -347,6 +347,7 @@ double PlannerH::PredictTrajectoriesUsingDP(const WayPoint& startPose, std::vect
 	for(unsigned int j = 0 ; j < closestWPs.size(); j++)
 	{
 		RelativeInfo info;
+		// Calculate total distance cost of a closest waypoint
 		PlanningHelpers::CalcAngleAndCost(closestWPs.at(j)->pLane->points);
 		int prev_index =0;
 		PlanningHelpers::GetRelativeInfoLimited(closestWPs.at(j)->pLane->points, *closestWPs.at(j), info, prev_index);
@@ -433,7 +434,7 @@ double PlannerH::PredictPlanUsingDP(const WayPoint& startPose, WayPoint* closest
 {
 	if(!closestWP || !closestWP->pLane)
 	{
-		cout <<endl<< "Err: PredictPlanUsingDP, PlannerH -> Null Lane !!" << endl;
+		// cout <<endl<< "Err: PredictPlanUsingDP, PlannerH -> Null Lane !!" << endl;
 		return 0;
 	}
 
@@ -446,7 +447,7 @@ double PlannerH::PredictPlanUsingDP(const WayPoint& startPose, WayPoint* closest
 
 	if(nPaths==0)
 	{
-		cout <<endl<< "Err PlannerH -> Null Tree Head." << endl;
+		// cout <<endl<< "Err PlannerH -> Null Tree Head." << endl;
 		return 0;
 	}
 

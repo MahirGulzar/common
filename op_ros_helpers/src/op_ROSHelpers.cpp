@@ -428,7 +428,8 @@ void ROSHelpers::InitCurbsMarkers(const int& nMarkers, visualization_msgs::Marke
 
 void ROSHelpers::ConvertPredictedTrqajectoryMarkers(std::vector<std::vector<PlannerHNS::WayPoint> >& paths,visualization_msgs::MarkerArray& path_markers, visualization_msgs::MarkerArray& path_markers_d)
 {
-	path_markers = path_markers_d;
+
+	path_markers.markers.clear();
 	int iCount = 0;
 	for(unsigned int i = 0; i < paths.size(); i++)
 	{
@@ -452,10 +453,12 @@ void ROSHelpers::ConvertPredictedTrqajectoryMarkers(std::vector<std::vector<Plan
 		if(bCurrent == true)
 		{
 			g = 1.0;
+			b = 1.0;
 		}
 		else
 		{
 			r = 1.0;
+			g = 1.0;
 		}
 //		if(i == 0)
 //		{
@@ -479,7 +482,7 @@ void ROSHelpers::ConvertPredictedTrqajectoryMarkers(std::vector<std::vector<Plan
 //			r = 1.0;
 //		}
 
-		visualization_msgs::Marker path_mkr = CreateGenMarker(0,0,0,0,r,g,b,0.1,iCount,"Predicted_Trajectories", visualization_msgs::Marker::LINE_STRIP);
+		visualization_msgs::Marker path_mkr = CreateGenMarker(0,0,0,0,r,g,b,0.4,iCount,"Predicted_Trajectories", visualization_msgs::Marker::LINE_STRIP);
 
 		//visualization_msgs::Marker path_mkr = CreateGenMarker(0,0,0,0,1.0*prop,0.1*prop,0.1*prop,0.1,i,"Predicted_Trajectories", visualization_msgs::Marker::LINE_STRIP);
 
@@ -489,57 +492,14 @@ void ROSHelpers::ConvertPredictedTrqajectoryMarkers(std::vector<std::vector<Plan
 			point.x = paths.at(i).at(p).pos.x;
 			point.y = paths.at(i).at(p).pos.y;
 			point.z = paths.at(i).at(p).pos.z + additional_z;
+			path_mkr.lifetime = ros::Duration(0.3);
 			path_mkr.points.push_back(point);
 		}
 
-		if(iCount < path_markers.markers.size())
-			path_markers.markers.at(iCount) = path_mkr;
-		else
-			path_markers.markers.push_back(path_mkr);
+		path_markers.markers.push_back(path_mkr);
 
 		iCount++;
 
-		r = 0.9;
-		g = 0.9;
-		b = 0.0;
-		for(unsigned int p = 0; p < paths.at(i).size(); p++)
-		{
-			geometry_msgs::Point point;
-			point.x = paths.at(i).at(p).pos.x;
-			point.y = paths.at(i).at(p).pos.y;
-			point.z = paths.at(i).at(p).pos.z + additional_z;
-
-			visualization_msgs::Marker circle_mkr = CreateGenMarker(point.x,point.y,point.z,0.4,r,g,b,0.5,iCount,"Predicted_Trajectories", visualization_msgs::Marker::CYLINDER);
-			if(iCount < path_markers.markers.size())
-				path_markers.markers.at(iCount) = circle_mkr;
-			else
-				path_markers.markers.push_back(circle_mkr);
-			iCount++;
-		}
-
-		r = 0.6;
-		g = 0.6;
-		b = 0.6;
-		for(unsigned int p = 0; p < paths.at(i).size(); p++)
-		{
-			geometry_msgs::Point point;
-			point.x = paths.at(i).at(p).pos.x;
-			point.y = paths.at(i).at(p).pos.y + 0.5;
-			point.z = paths.at(i).at(p).pos.z + additional_z + 0.01;
-			std::ostringstream str_out;
-			str_out.precision(3);
-			str_out << paths.at(i).at(p).timeCost;
-
-			visualization_msgs::Marker txt_mkr = CreateGenMarker(point.x,point.y,point.z,0.4,r,g,b,0.5,iCount,"Predicted_Trajectories", visualization_msgs::Marker::TEXT_VIEW_FACING);
-			txt_mkr.text = str_out.str();
-
-			if(iCount < path_markers.markers.size())
-				path_markers.markers.at(iCount) = txt_mkr;
-			else
-				path_markers.markers.push_back(txt_mkr);
-
-			iCount++;
-		}
 	}
 
 	//if(iCount > 0) iCount--;
