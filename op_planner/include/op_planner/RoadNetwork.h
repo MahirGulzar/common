@@ -908,9 +908,9 @@ public:
 	double stopDistance;
 	double followVelocity;
 	double followDistance;
-  double egoStoppingVelocity;
-  double egoFollowingVelocity;
-  LIGHT_INDICATOR indicator;
+	double egoStoppingVelocity;
+	double egoFollowingVelocity;
+	LIGHT_INDICATOR indicator;
 	bool bNewPlan;
 	int iTrajectory;
 	int iLane;
@@ -924,9 +924,9 @@ public:
 		stopDistance = 0;
 		followVelocity = 0;
 		followDistance = 0;
-    egoStoppingVelocity = 0.0;
-    egoFollowingVelocity = 0.0;
-    indicator  = INDICATOR_NONE;
+		egoStoppingVelocity = 0.0;
+		egoFollowingVelocity = 0.0;
+		indicator  = INDICATOR_NONE;
 		bNewPlan = false;
 		iTrajectory = -1;
 		iLane = -1;
@@ -1136,12 +1136,13 @@ public:
 	bool				bTargetLaneSafe;
 	//-------------------------------------------//
 	//Traffic Lights & Stop Sign
-  double      egoStoppingVelocity;
+	double				egoStoppingVelocity;
 	int 				currentStopSignID;
 	int 				prevStopSignID;
 	int 				currentTrafficLightID;
 	int 				prevTrafficLightID;
 	bool 				bTrafficIsRed; //On , off status
+	std::string			stopLineInfoRviz;
 	//-------------------------------------------//
 	//Swerving
 	int 				iPrevSafeTrajectory;
@@ -1196,6 +1197,7 @@ public:
 		currentTrafficLightID = -1;
 		prevTrafficLightID = -1;
 		bTrafficIsRed = false;
+        stopLineInfoRviz = "";
 		iCurrSafeTrajectory = -1;
 		bFullyBlock = false;
 

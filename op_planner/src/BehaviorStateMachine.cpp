@@ -323,12 +323,15 @@ BehaviorStateMachine* ForwardStateII::GetNextState()
 {
   PreCalculatedConditions* pCParams = GetCalcParams();
 
-  if (m_pParams->enableTrafficLightBehavior && pCParams->currentTrafficLightID > 0 && pCParams->bTrafficIsRed)
+  if (m_pParams->enableTrafficLightBehavior &&
+      pCParams->bTrafficIsRed &&
+      pCParams->egoStoppingVelocity < pCParams->currentVelocity)
     return FindBehaviorState(TRAFFIC_LIGHT_STOP_STATE);
 
   else if (m_pParams->enableStopSignBehavior &&
            pCParams->currentStopSignID > 0 &&
-           pCParams->currentStopSignID != pCParams->prevStopSignID)
+           pCParams->currentStopSignID != pCParams->prevStopSignID &&
+           pCParams->egoStoppingVelocity < pCParams->currentVelocity)
     return FindBehaviorState(STOP_SIGN_STOP_STATE);
 
   else if (m_pParams->enableFollowing && pCParams->bFullyBlock)
@@ -360,14 +363,16 @@ BehaviorStateMachine* FollowStateII::GetNextState()
   }
 
   // added: stopline distance compared to follow distance: car is faster, tfl red and we need to stopDecisionMaker.cpp
-  else if (m_pParams->enableTrafficLightBehavior && pCParams->currentTrafficLightID > 0 && pCParams->bTrafficIsRed &&
+  else if (m_pParams->enableTrafficLightBehavior &&
+           pCParams->bTrafficIsRed &&
            pCParams->egoStoppingVelocity < pCParams->egoFollowingVelocity)
   {
     return FindBehaviorState(TRAFFIC_LIGHT_STOP_STATE);
   }
 
   // added: if egostoppingVelocity smaller go to STOP_SIGN stopping
-  else if (m_pParams->enableStopSignBehavior && pCParams->currentStopSignID > 0 &&
+  else if (m_pParams->enableStopSignBehavior &&
+           pCParams->currentStopSignID > 0 &&
            pCParams->currentStopSignID != pCParams->prevStopSignID &&
            pCParams->egoStoppingVelocity < pCParams->egoFollowingVelocity)
   {
@@ -479,8 +484,6 @@ BehaviorStateMachine* TrafficLightStopStateII::GetNextState()
 
   if (!pCParams->bTrafficIsRed)
   {
-    // std::cout << "Color Changed Stopping for trafficLight "  << std::endl;
-    pCParams->prevTrafficLightID = pCParams->currentTrafficLightID;
     return FindBehaviorState(FORWARD_STATE);
   }
 
@@ -490,10 +493,10 @@ BehaviorStateMachine* TrafficLightStopStateII::GetNextState()
     return FindBehaviorState(FOLLOW_STATE);
   }
 
-  else if (pCParams->bTrafficIsRed && pCParams->currentVelocity <= m_zero_velocity && pCParams->egoStoppingVelocity < m_pParams->low_speed_lower_lim)
+  else if (pCParams->bTrafficIsRed &&
+           pCParams->currentVelocity <= m_zero_velocity &&
+           pCParams->egoStoppingVelocity < m_pParams->low_speed_lower_lim)
   {
-    // std::cout << "Velocity Changed Stopping for trafficLight ("  <<pCParams->currentVelocity << ", " <<
-    // m_zero_velocity << ")" <<  std::endl;
     return FindBehaviorState(TRAFFIC_LIGHT_WAIT_STATE);
   }
 
@@ -507,14 +510,11 @@ BehaviorStateMachine* TrafficLightWaitStateII::GetNextState()
 {
   PreCalculatedConditions* pCParams = GetCalcParams();
 
-  // std::cout << "Wait for trafficLight "  << std::endl;
-
-  if (!pCParams->bTrafficIsRed)
+  if (!pCParams->bTrafficIsRed ||
+      pCParams->egoStoppingVelocity > m_pParams->low_speed_lower_lim)
   {
-    pCParams->prevTrafficLightID = pCParams->currentTrafficLightID;
     return FindBehaviorState(FORWARD_STATE);
   }
-
   else
     return FindBehaviorState(this->m_Behavior);
 }
@@ -526,9 +526,12 @@ BehaviorStateMachine* StopStateII::GetNextState()
   if (pCParams->egoStoppingVelocity > pCParams->egoFollowingVelocity) {
     return FindBehaviorState(FOLLOW_STATE);
   }
+  // causes flicker between FORWARD and STOP states
+  /*
   else if (pCParams->distanceToGoal > m_pParams->goalDiscoveryDistance) {
     return FindBehaviorState(FORWARD_STATE);
   }
+  */
   else
   {
     return FindBehaviorState(this->m_Behavior);

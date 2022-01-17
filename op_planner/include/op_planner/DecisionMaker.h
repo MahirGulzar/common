@@ -48,7 +48,6 @@ public:
 	StopStateII* m_pStopState;
 
 	void InitBehaviorStates();
-  bool m_bWindowReached;
 
 	//For Simulation
 	UtilityHNS::PIDController m_pidVelocity;
