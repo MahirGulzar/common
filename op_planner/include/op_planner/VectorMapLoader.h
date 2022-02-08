@@ -73,6 +73,9 @@ private:
 				const GPSPoint& origin, RoadNetwork& map);
 	void ExtractStopLinesDataV2(const std::vector<UtilityHNS::AisanStopLineFileReader::AisanStopLine>& stop_line_data,
 					UtilityHNS::AisanLinesFileReader* pLineData, UtilityHNS::AisanPointsFileReader* pPointData, const GPSPoint& origin, RoadNetwork& map);
+	void ExtractRoadSignsDataV2(const std::vector<UtilityHNS::AisanRoadSignFileReader::AisanRoadSign>& sign_data,
+			const std::vector<UtilityHNS::AisanVectorFileReader::AisanVector>& vector_data,	UtilityHNS::AisanPointsFileReader* pPointData,
+			const GPSPoint& origin, RoadNetwork& map);
 	void ExtractLines(UtilityHNS::AisanLinesFileReader* pLineData, UtilityHNS::AisanWhitelinesFileReader* pWhitelineData,
 			UtilityHNS::AisanPointsFileReader* pPointsData, const GPSPoint& origin, RoadNetwork& map);
 	void ExtractCurbDataV2(const std::vector<UtilityHNS::AisanCurbFileReader::AisanCurb>& curb_data, UtilityHNS::AisanLinesFileReader* pLinedata,
@@ -80,10 +83,18 @@ private:
 	void ExtractWayArea(const std::vector<UtilityHNS::AisanAreasFileReader::AisanArea>& area_data,
 			const std::vector<UtilityHNS::AisanWayareaFileReader::AisanWayarea>& wayarea_data, const std::vector<UtilityHNS::AisanLinesFileReader::AisanLine>& line_data,
 			const std::vector<UtilityHNS::AisanPointsFileReader::AisanPoints>& points_data, const GPSPoint& origin, RoadNetwork& map);
+	void ExtractIntersectionArea(const std::vector<UtilityHNS::AisanAreasFileReader::AisanArea>& area_data,
+		const std::vector<UtilityHNS::AisanIntersectionFileReader::AisanIntersection>& intersection_data,
+		const std::vector<UtilityHNS::AisanLinesFileReader::AisanLine>& line_data,
+		const std::vector<UtilityHNS::AisanPointsFileReader::AisanPoints>& points_data,
+		const GPSPoint& origin, RoadNetwork& map);
 	bool GetWayPoint(const int& id, const int& laneID,const double& refVel, const int& did, UtilityHNS::AisanPointsFileReader* pPointsData,
 				UtilityHNS::AisanCenterLinesFileReader* pDtData, const GPSPoint& origin, WayPoint& way_point);
 	int ReplaceMyID(int& id, const std::vector<std::pair<int,int> >& rep_list);
 	void ExtractSignalData(const std::vector<UtilityHNS::AisanSignalFileReader::AisanSignal>& signal_data,
+				const std::vector<UtilityHNS::AisanVectorFileReader::AisanVector>& vector_data,
+				const std::vector<UtilityHNS::AisanPointsFileReader::AisanPoints>& points_data, const GPSPoint& origin, RoadNetwork& map);
+	void ExtractRoadSignData(const std::vector<UtilityHNS::AisanRoadSignFileReader::AisanRoadSign>& road_sign_data,
 				const std::vector<UtilityHNS::AisanVectorFileReader::AisanVector>& vector_data,
 				const std::vector<UtilityHNS::AisanPointsFileReader::AisanPoints>& points_data, const GPSPoint& origin, RoadNetwork& map);
 	void ExtractStopLinesData(const std::vector<UtilityHNS::AisanStopLineFileReader::AisanStopLine>& stop_line_data,

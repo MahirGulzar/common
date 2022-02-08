@@ -1031,8 +1031,8 @@ double PlanningHelpers::GetDistanceToClosestStopLineAndCheck(const std::vector<W
 			for(unsigned int j = 0; j < path.at(i).pLane->stopLines.size(); j++)
 			{
 				if(path.at(i).pLane->stopLines.at(j).id == path.at(i).stopLineID)
-                {
-             		stopLineID = path.at(i).stopLineID;
+				{
+					stopLineID = path.at(i).stopLineID;
 
 					RelativeInfo stop_info;
 					WayPoint stopLineWP ;
@@ -1054,6 +1054,180 @@ double PlanningHelpers::GetDistanceToClosestStopLineAndCheck(const std::vector<W
 
 	return -1;
 }
+
+    double PlanningHelpers::GetDistanceToClosestStopLineAndCheckWithRvizInfo(const std::vector<WayPoint>& path, 
+		const WayPoint& p, 
+		const double& giveUpDistance, 
+		const double& horizonDistance, 
+		const bool& enableTrafficLightBehavior, 
+		const bool& enableStopSignBehavior, 
+		const std::vector<TrafficLight>& detectedLights, 
+		std::string& stopLineInfoRviz, 
+		int& stopLineID, 
+		int& stopSignID, 
+		int& trafficLightID, 
+		const int& prevIndex)
+    {
+        stopLineInfoRviz = "";
+
+        // TODO: Need to return -1 if no stoplines on path?
+        double closestDistance = horizonDistance;
+
+        trafficLightID = stopSignID = stopLineID = -1;
+
+        RelativeInfo info;
+        GetRelativeInfo(path, p, info, prevIndex);
+
+        for(unsigned int i=info.iBack; i<path.size(); i++)
+        {
+            // go through all the stoplines on the path
+            if(path.at(i).stopLineID > 0 && path.at(i).pLane)
+            {
+                // find all the stopLines in the linked lane
+                for(unsigned int j = 0; j < path.at(i).pLane->stopLines.size(); j++)
+                {
+                    // if finds itself in associated lane.stopLines
+                    if(path.at(i).pLane->stopLines.at(j).id == path.at(i).stopLineID)
+                    {
+
+                        RelativeInfo stop_info;
+                        WayPoint stopLineWP ;
+                        stopLineWP = path.at(i).pLane->stopLines.at(j).points.at(0);
+                        GetRelativeInfo(path, stopLineWP, stop_info);
+                        double localDistance = GetExactDistanceOnTrajectory(path, info, stop_info);
+
+                        // check if traffic light
+                        if(path.at(i).pLane->stopLines.at(j).lightIds.size() > 0)
+                        {
+                            bool noMatchInDetectedSignals = true;
+
+                            // Find match in detectedLights
+                            for (const auto &detectedLight: detectedLights)
+                            {
+                                if (path.at(i).stopLineID == detectedLight.stopLineID)
+                                {
+                                    // check color. GREEN_LIGHT = 2 (RoadNetwork.h)
+                                    if(detectedLight.lightType == 2)
+                                    {
+                                        stopLineInfoRviz += "GREEN ";
+                                    }
+                                    else
+                                    {
+                                        stopLineInfoRviz += "RED ";
+                                        // write as closest distance
+                                        if(giveUpDistance < localDistance && localDistance < closestDistance && enableTrafficLightBehavior)
+                                        {
+                                            stopLineID = path.at(i).stopLineID;
+                                            closestDistance = localDistance;
+                                            trafficLightID = path.at(i).stopLineID;
+                                        }
+                                    }
+
+                                    // Hack stoppingDistance used to represent radius - can decide if cam or api based detection
+                                    if(detectedLight.stoppingDistance < 10000)
+                                        stopLineInfoRviz += "cam ";
+                                    else
+                                        stopLineInfoRviz += "api ";
+
+                                    // only one match from detected lights
+                                    noMatchInDetectedSignals = false;
+                                    break;
+                                }
+                            }
+                            //
+                            if(noMatchInDetectedSignals)
+                                stopLineInfoRviz += "UNDETECTED ";
+                        }
+                        // check if stopsign
+                        else
+                        {
+                            stopLineInfoRviz += "STOPSIGN ";
+
+                            if(giveUpDistance < localDistance && localDistance < closestDistance && enableStopSignBehavior)
+                            {
+                                stopLineID = path.at(i).stopLineID;
+                                closestDistance = localDistance;
+                                stopSignID = path.at(i).pLane->stopLines.at(j).stopSignID;
+                            }
+
+                        }
+
+						// std::cout<<"---------------------------------------- "<< endl;
+
+                        // add distance information
+                        stopLineInfoRviz += "( Sign_ID: "+to_string(stopSignID)+" Distance: "+ to_string((int)(localDistance - 3.5)) + " m);";
+                    }
+                }
+            }
+        }
+        return closestDistance;
+    }
+
+double PlanningHelpers::GetDistanceToClosestStopLine(
+		const RoadNetwork& m_Map,
+		const std::vector<WayPoint>& path, 
+		const WayPoint& p, 
+		const double& giveUpDistance, 
+		const double& horizonDistance, 
+		const bool & enableStopSignBehavior, 
+		int& stopLineID, 
+		int& stopSignID,
+		WayPoint& stop_wp,
+		TRAFFIC_SIGN_TYPE& signType,
+		const int& prevIndex)
+    {
+        // TODO: Need to return -1 if no stoplines on path?
+        double closestDistance = horizonDistance;
+
+        stopSignID = stopLineID = -1;
+
+        RelativeInfo info;
+        GetRelativeInfo(path, p, info, prevIndex);
+		
+		// std::cout<<"all stop lines " << path.size() << endl;
+        for(unsigned int i=info.iBack; i<path.size(); i++)
+        {
+            // go through all the stoplines on the path
+            if(path.at(i).stopLineID > 0 && path.at(i).pLane)
+            {
+                // find all the stopLines in the linked lane
+                for(unsigned int j = 0; j < path.at(i).pLane->stopLines.size(); j++)
+                {
+
+					RelativeInfo stop_info;
+					WayPoint stopLineWP ;
+
+					stopLineWP = path.at(i).pLane->stopLines.at(j).points.at(0);
+					GetRelativeInfo(path, stopLineWP, stop_info);
+					double localDistance = GetExactDistanceOnTrajectory(path, info, stop_info);
+
+					// check if its not a traffic light
+					if(path.at(i).pLane->stopLines.at(j).lightIds.size() <= 0)
+					{
+						if(giveUpDistance < localDistance && localDistance < closestDistance && enableStopSignBehavior)
+						{
+							stopLineID = path.at(i).stopLineID;
+							closestDistance = localDistance;
+							stopSignID = path.at(i).pLane->stopLines.at(j).stopSignID;
+
+							for(auto &trafficSign : m_Map.signs)
+							{
+								if(trafficSign.id == stopSignID)
+								{
+									signType = trafficSign.signType;
+									break;
+								}
+							}
+
+							stop_wp = stop_info.perp_point;
+						}
+						// return closestDistance;
+					}
+                }
+            }
+        }
+        return closestDistance;
+    }
 
 void PlanningHelpers::CreateManualBranchFromTwoPoints(WayPoint& p1,WayPoint& p2 , const double& distance, const DIRECTION_TYPE& direction, std::vector<WayPoint>& path)
 {
@@ -2318,7 +2492,7 @@ void PlanningHelpers::GenerateRecommendedSpeed(vector<WayPoint>& path, const dou
 
           double k_ratio = path.at(i).cost * 9.2;
 
-          double local_max = (path.at(i).v >= 0 && max_speed > path.at(i).v) ? path.at(i).v : max_speed;
+          double local_max = (path.at(i).v >= 0 && max_speed > path.at(i).v) ? max_speed : path.at(i).v;
 
           // disabled velocity recalculation based on cost
           if (k_ratio >= 9.5)
@@ -2339,7 +2513,7 @@ void PlanningHelpers::GenerateRecommendedSpeed(vector<WayPoint>& path, const dou
   }
   else {
       for (unsigned int i = 0; i < path.size(); i++) {
-          double local_max = (path.at(i).v >= 0 && max_speed > path.at(i).v) ? path.at(i).v : max_speed;
+          double local_max = (path.at(i).v >= 0 && max_speed > path.at(i).v) ? max_speed : path.at(i).v;
           path.at(i).v = local_max;
       }
   }

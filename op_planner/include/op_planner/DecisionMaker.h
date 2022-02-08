@@ -46,9 +46,10 @@ public:
 	StopSignStopStateII* m_pStopSignStopState;
 	StopSignWaitStateII* m_pStopSignWaitState;
 	StopStateII* m_pStopState;
+	StopSignYieldState* m_pStopSignYieldState;
+	YieldingWaitState* m_pYieldingWaitState;
 
 	void InitBehaviorStates();
-  bool m_bWindowReached;
 
 	//For Simulation
 	UtilityHNS::PIDController m_pidVelocity;
@@ -76,6 +77,8 @@ public:
 			const std::vector<TrafficLight>& trafficLight,
 			const TrajectoryCost& tc,
 			const bool& bEmergencyStop);
+			
+	std::string GetBehaviorNameFromCode(const PlannerHNS::STATE_TYPE& behState);
 
 protected:
 	bool GetNextTrafficLight(const int& prevTrafficLightId, const std::vector<TrafficLight>& trafficLights, TrafficLight& trafficL);

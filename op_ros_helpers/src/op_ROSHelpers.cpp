@@ -688,7 +688,7 @@ void ROSHelpers::ConvertFromRoadNetworkToAutowareVisualizeMapFormat(const Planne
 		roll_color.r = 1;
 		roll_color.g = 1;
 		roll_color.b = 1;
-		roll_color.a = 0.5;
+		roll_color.a = 1.0;
 		stop_line_marker.color = roll_color;
 		stop_line_marker.pose.orientation = tf::createQuaternionMsgFromYaw(0);
 		stop_line_marker.frame_locked = false;
@@ -1509,8 +1509,11 @@ std::string ROSHelpers::GetBehaviorNameFromCode(const PlannerHNS::STATE_TYPE& be
 	case PlannerHNS::GOAL_STATE:
 		str = "Goal Achieved";
 		break;
-	case PlannerHNS::YIELDING_STATE:
-		str = "Yielding";
+	case PlannerHNS::STOP_SIGN_YIELD_STATE:
+		str = "Yield Stop";
+		break;
+	case PlannerHNS::YIELDING_WAIT_STATE:
+		str = "Yield Wait";
 		break;
 	case PlannerHNS::BRANCH_LEFT_STATE:
 		str = "Turning Left";
@@ -2142,6 +2145,38 @@ void ROSHelpers::GetTrafficLightForVisualization(std::vector<PlannerHNS::Traffic
 			visualization_msgs::Marker mkr = CreateGenMarker(lights.at(i).pose.pos.x,lights.at(i).pose.pos.y,lights.at(i).pose.pos.z,0,0,1,0,3,i,"traffic_light_visualize", visualization_msgs::Marker::SPHERE);
 			markerArray.markers.push_back(mkr);
 		}
+	}
+}
+
+void ROSHelpers::GetROIPointsForVisualization(std::vector<std::vector<PlannerHNS::WayPoint>>& points, visualization_msgs::MarkerArray& markerArray)
+{
+	markerArray.markers.clear();
+	int counter =0;
+	for(unsigned int i=0; i<points.size(); i++)
+	{
+		visualization_msgs::Marker path_mkr = CreateGenMarker(0,0,0,0,0,1,0,0.4,counter,"boundary", visualization_msgs::Marker::LINE_STRIP);
+		counter++;
+		for(unsigned int j=0; j<points.at(i).size(); j++)
+		{
+			visualization_msgs::Marker mkr = CreateGenMarker(points.at(i).at(j).pos.x, points.at(i).at(j).pos.y, points.at(i).at(j).pos.z ,0,1,0,0,3,counter,"roi_point", visualization_msgs::Marker::SPHERE);
+			markerArray.markers.push_back(mkr);
+			counter++;
+
+			geometry_msgs::Point point;
+			point.x = points.at(i).at(j).pos.x;
+			point.y = points.at(i).at(j).pos.y;
+			point.z = points.at(i).at(j).pos.z;
+			path_mkr.lifetime = ros::Duration(0.3);
+			path_mkr.points.push_back(point);
+		}
+		geometry_msgs::Point point;
+		point.x = points.at(i).at(0).pos.x;
+		point.y = points.at(i).at(0).pos.y;
+		point.z = points.at(i).at(0).pos.z;
+		path_mkr.lifetime = ros::Duration(0.3);
+		path_mkr.points.push_back(point);
+		markerArray.markers.push_back(path_mkr);
+		
 	}
 }
 

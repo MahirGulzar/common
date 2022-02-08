@@ -132,6 +132,10 @@ void VectorMapLoader::ConstructRoadNetworkFromROSMessage(UtilityHNS::MapRaw& map
 	std::cout << " >> Extract Stop lines data ... " << std::endl;
 	ExtractStopLinesDataV2(mapRaw.pStopLines->m_data_list, mapRaw.pLines , mapRaw.pPoints , origin.pos, map);
 
+	//Signs
+	std::cout << " >> Extract Sign data ... " << std::endl;
+	ExtractRoadSignsDataV2(mapRaw.pSigns->m_data_list, mapRaw.pVectors->m_data_list, mapRaw.pPoints, origin.pos, map);
+
 	if(_load_lines)
 	{
 		//Lines
@@ -152,6 +156,11 @@ void VectorMapLoader::ConstructRoadNetworkFromROSMessage(UtilityHNS::MapRaw& map
 		std::cout << " >> Extract wayarea data ... " << std::endl;
 		ExtractWayArea(mapRaw.pAreas->m_data_list, mapRaw.pWayAreas->m_data_list, mapRaw.pLines->m_data_list, mapRaw.pPoints->m_data_list, origin.pos, map);
 	}
+
+	//Intersection
+	// std::cout << " >> Extract Intersection .. " << std::endl;
+	// ExtractIntersectionArea(mapRaw.pAreas->m_data_list, mapRaw.pIntersections->m_data_list, mapRaw.pLines->m_data_list, mapRaw.pPoints->m_data_list, origin.pos, map);
+
 
 	std::cout << " >> Connect Wayarea (boundaries) to waypoints ... " << std::endl;
 	MappingHelpers::ConnectBoundariesToWayPoints(map);
@@ -599,6 +608,77 @@ void VectorMapLoader::ExtractSignalDataV2(const std::vector<UtilityHNS::AisanSig
 	}
 }
 
+
+void VectorMapLoader::ExtractRoadSignsDataV2(const std::vector<UtilityHNS::AisanRoadSignFileReader::AisanRoadSign>& sign_data,
+			const std::vector<UtilityHNS::AisanVectorFileReader::AisanVector>& vector_data,	UtilityHNS::AisanPointsFileReader* pPointData,
+			const GPSPoint& origin, RoadNetwork& map)
+{
+	for(unsigned int is=0; is< sign_data.size(); is++)
+	{
+		TrafficSign ts;
+		ts.id = sign_data.at(is).ID;
+		ts.groupID = sign_data.at(is).PLID;
+		switch(sign_data.at(is).Type)
+		{
+		case 1:
+			ts.signType= STOP_SIGN;
+			break;
+		case 2:
+			ts.signType = YIELD;
+			break;
+		case 3:
+			ts.signType = YIELD_RIGHT;
+			break;
+		case 4:
+			ts.signType = YIELD_LEFT;
+			break;
+		case 5:
+			ts.signType = YIELD_LEFT_RIGHT;
+			break;
+		case 6:
+			ts.signType= YIELD_FORWARD;
+			break;
+		case 7:
+			ts.signType = YIELD_FORWARD_RIGHT;
+			break;
+		case 8:
+			ts.signType = YIELD_FORWARD_LEFT;
+			break;
+		case 9:
+			ts.signType = MAX_SPEED_SIGN;
+			break;
+		case 10:
+			ts.signType = MIN_SPEED_SIGN;
+			break;
+		case 11:
+			ts.signType = NO_PARKING_SIGN;
+			break;
+		case 12:
+			ts.signType = SCHOOL_CROSSING_SIGN;
+			break;
+		default:
+			ts.signType = UNKNOWN_SIGN;
+			break;
+		}
+
+		for(unsigned int iv = 0; iv < vector_data.size(); iv++)
+		{
+			if(sign_data.at(is).VID == vector_data.at(iv).VID)
+			{
+				ts.horizontal_angle = -vector_data.at(iv).Hang-180.0;
+				ts.vertical_angle = vector_data.at(iv).Vang;
+				WayPoint p;
+				GetPointFromDataList(pPointData, vector_data.at(iv).PID, p);
+				p.pos.a = ts.horizontal_angle*DEG2RAD;
+				ts.pose = p;
+			}
+		}
+		map.signs.push_back(ts);
+		if(ts.id > RoadNetwork::g_max_traffic_sign_id)
+			RoadNetwork::g_max_traffic_sign_id = ts.id;
+	}
+}
+
 void VectorMapLoader::ExtractStopLinesDataV2(const std::vector<UtilityHNS::AisanStopLineFileReader::AisanStopLine>& stop_line_data,
 			UtilityHNS::AisanLinesFileReader* pLineData, UtilityHNS::AisanPointsFileReader* pPointData, const GPSPoint& origin, RoadNetwork& map)
 {
@@ -610,7 +690,10 @@ void VectorMapLoader::ExtractStopLinesDataV2(const std::vector<UtilityHNS::Aisan
 		if(stop_line_data.at(ist).TLID>0)
 			sl.lightIds.push_back(stop_line_data.at(ist).TLID);
 		else
-			sl.stopSignID = 100+ist;
+		{
+			// TODO change this to take sign type from road_signs.csv and not use stopsignID as sign type
+			sl.stopSignID = stop_line_data.at(ist).SignID;
+		}
 
 		UtilityHNS::AisanLinesFileReader::AisanLine* pLine = pLineData->GetDataRowById(stop_line_data.at(ist).LID);
 		if(pLine != nullptr)
@@ -745,6 +828,53 @@ void VectorMapLoader::ExtractWayArea(const std::vector<UtilityHNS::AisanAreasFil
 								p.pos.lat = points_data.at(ip).B;
 								p.pos.lon = points_data.at(ip).L;
 								p.pos.alt = points_data.at(ip).H;
+								MappingHelpers::correct_gps_coor(p.pos.lat, p.pos.lon);
+								bound.type = NORMAL_ROAD_BOUNDARY;
+								bound.points.push_back(p);
+							}
+						}
+					}
+				}
+			}
+		}
+
+		map.boundaries.push_back(bound);
+	}
+}
+
+
+void VectorMapLoader::ExtractIntersectionArea(const std::vector<UtilityHNS::AisanAreasFileReader::AisanArea>& area_data,
+		const std::vector<UtilityHNS::AisanIntersectionFileReader::AisanIntersection>& intersection_data,
+			const std::vector<UtilityHNS::AisanLinesFileReader::AisanLine>& line_data,
+			const std::vector<UtilityHNS::AisanPointsFileReader::AisanPoints>& points_data,
+			const GPSPoint& origin, RoadNetwork& map)
+{
+	for(unsigned int iw=0; iw < intersection_data.size(); iw ++)
+	{
+		Boundary bound;
+		bound.id = intersection_data.at(iw).ID;
+
+		for(unsigned int ia=0; ia < area_data.size(); ia ++)
+		{
+			if(intersection_data.at(iw).AID == area_data.at(ia).AID)
+			{
+				int s_id = area_data.at(ia).SLID;
+				int e_id = area_data.at(ia).ELID;
+
+				for(unsigned int il=0; il< line_data.size(); il++)
+				{
+					if(line_data.at(il).LID >= s_id && line_data.at(il).LID <= e_id)
+					{
+						for(unsigned int ip=0; ip < points_data.size(); ip++)
+						{
+							if(points_data.at(ip).PID == line_data.at(il).BPID)
+							{
+
+								WayPoint p(points_data.at(ip).Ly + origin.x, points_data.at(ip).Bx + origin.y, points_data.at(ip).H + origin.z, 0);
+								p.pos.lat = points_data.at(ip).B;
+								p.pos.lon = points_data.at(ip).L;
+								p.pos.alt = points_data.at(ip).H;
+								bound.type = INTERSECTION_BOUNDARY;
 								MappingHelpers::correct_gps_coor(p.pos.lat, p.pos.lon);
 								bound.points.push_back(p);
 							}
@@ -1129,6 +1259,11 @@ void VectorMapLoader::ConstructRoadNetworkFromROSMessageVer0(UtilityHNS::MapRaw&
 		ExtractWayArea(mapRaw.pAreas->m_data_list, mapRaw.pWayAreas->m_data_list, mapRaw.pLines->m_data_list, mapRaw.pPoints->m_data_list, origin.pos, map);
 	}
 
+	//Intersection
+	// std::cout << " >> Extract Intersection .. " << std::endl;
+	// ExtractIntersectionArea(mapRaw.pAreas->m_data_list, mapRaw.pIntersections->m_data_list, mapRaw.pLines->m_data_list, mapRaw.pPoints->m_data_list, origin.pos, map);
+
+
 	//Fix angle for lanes
 	std::cout << " >> Fix waypoint direction .. " << std::endl;
 	for(unsigned int rs = 0; rs < map.roadSegments.size(); rs++)
@@ -1240,7 +1375,10 @@ void VectorMapLoader::ExtractStopLinesData(const std::vector<UtilityHNS::AisanSt
 		if(stop_line_data.at(ist).TLID>0)
 			sl.lightIds.push_back(stop_line_data.at(ist).TLID);
 		else
-			sl.stopSignID = 100+ist;
+		{
+			// TODO change this to take sign type from road_signs.csv and not use stopsignID as sign type
+			sl.stopSignID = stop_line_data.at(ist).SignID;
+		}
 
 		for(unsigned int il=0; il < line_data.size(); il++)
 		{

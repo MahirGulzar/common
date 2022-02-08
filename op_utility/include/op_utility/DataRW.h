@@ -1418,6 +1418,7 @@ public:
 	UtilityHNS::AisanLinesFileReader* pLines;
 	UtilityHNS::AisanStopLineFileReader* pStopLines;
 	UtilityHNS::AisanSignalFileReader* pSignals;
+	UtilityHNS::AisanRoadSignFileReader* pSigns;
 	UtilityHNS::AisanVectorFileReader* pVectors;
 	UtilityHNS::AisanCurbFileReader* pCurbs;
 	UtilityHNS::AisanRoadEdgeFileReader* pRoadedges;
@@ -1448,6 +1449,7 @@ public:
 		pLines = nullptr;
 		pStopLines = nullptr;
 		pSignals = nullptr;
+		pSigns = nullptr;
 		pVectors = nullptr;
 		pCurbs = nullptr;
 		pRoadedges = nullptr;
@@ -1520,6 +1522,12 @@ public:
 		{
 			delete pSignals;
 			pSignals = nullptr;
+		}
+
+		if(pSigns != nullptr)
+		{
+			delete pSigns;
+			pSigns = nullptr;
 		}
 
 		if(pVectors != nullptr)
@@ -1631,6 +1639,7 @@ public:
 		//this->pPoledata = new UtilityHNS::AisanPoledataFileReader(vector_map_msgs::Pole);
 		this->pRoadedges = new UtilityHNS::AisanRoadEdgeFileReader(vector_map_msgs::RoadEdgeArray());
 		this->pSignals = new UtilityHNS::AisanSignalFileReader(vector_map_msgs::SignalArray());
+		this->pSigns = new UtilityHNS::AisanRoadSignFileReader(vector_map_msgs::RoadSignArray());
 		this->pStopLines = new UtilityHNS::AisanStopLineFileReader(vector_map_msgs::StopLineArray());
 		this->pStreetLight = new UtilityHNS::AisanStreetlightFileReader(vector_map_msgs::StreetLightArray());
 		//this->pSurfacemark = new UtilityHNS::AisanSurfacemarkFileReader(vector_map_msgs::sur);
@@ -1690,6 +1699,9 @@ public:
 		this->pSignals = new UtilityHNS::AisanSignalFileReader(vector_map_folder);
 		this->pSignals->ReadAllData();
 
+		this->pSigns = new UtilityHNS::AisanRoadSignFileReader(vector_map_folder);
+		this->pSigns->ReadAllData();
+
 		this->pStopLines = new UtilityHNS::AisanStopLineFileReader(vector_map_folder);
 		this->pStopLines->ReadAllData();
 
@@ -1718,6 +1730,7 @@ public:
 	bool AreMessagesReceived()
 	{
 		bool bBasicData =  pLanes != nullptr && pPoints != nullptr && pCenterLines  != nullptr && pNodes  != nullptr;
+		//  && pSigns != nullptr
 
 		if(bBasicData)
 		{
@@ -1744,6 +1757,9 @@ public:
 
 			if(this->pSignals == nullptr)
 				this->pSignals = new UtilityHNS::AisanSignalFileReader(vector_map_msgs::SignalArray());
+
+			if(this->pSigns == nullptr)
+				this->pSigns = new UtilityHNS::AisanRoadSignFileReader(vector_map_msgs::RoadSignArray());
 
 			if(this->pStopLines == nullptr)
 				this->pStopLines = new UtilityHNS::AisanStopLineFileReader(vector_map_msgs::StopLineArray());
@@ -1807,6 +1823,9 @@ public:
 
 			if(pSignals  == nullptr)
 				pSignals  = new AisanSignalFileReader(vector_map_msgs::SignalArray());
+
+			if(pSigns  == nullptr)
+				pSigns  = new AisanRoadSignFileReader(vector_map_msgs::RoadSignArray());
 
 			if(pVectors  == nullptr)
 				pVectors  = new AisanVectorFileReader(vector_map_msgs::VectorArray());

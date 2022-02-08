@@ -71,9 +71,10 @@ enum STATE_TYPE {INITIAL_STATE = 0,
 	OBSTACLE_AVOIDANCE_STATE = 11,
 	GOAL_STATE = 12,
 	FINISH_STATE = 13,
-	YIELDING_STATE = 14,
+	STOP_SIGN_YIELD_STATE = 14,
 	BRANCH_LEFT_STATE = 15,
-	BRANCH_RIGHT_STATE = 16};
+	BRANCH_RIGHT_STATE = 16,
+	YIELDING_WAIT_STATE = 17};
 
 enum LIGHT_INDICATOR {INDICATOR_LEFT, INDICATOR_RIGHT, INDICATOR_BOTH , INDICATOR_NONE};
 
@@ -104,7 +105,7 @@ enum MARKING_COLOR{MARK_COLOR_WHITE, MARK_COLOR_YELLOW, MARK_COLOR_RED, MARK_COL
 
 enum LINE_TYPE{DEFAULT_WHITE_LINE, CONTINUOUS_LINE, SEPARATION_LINE, SUPPORT_LINE, GENERAL_LINE};
 
-enum TRAFFIC_SIGN_TYPE {UNKNOWN_SIGN, STOP_SIGN, MAX_SPEED_SIGN, MIN_SPEED_SIGN, NO_PARKING_SIGN, SCHOOL_CROSSING_SIGN};
+enum TRAFFIC_SIGN_TYPE {UNKNOWN_SIGN=0, STOP_SIGN=1, YIELD=2, YIELD_RIGHT=3, YIELD_LEFT=4, YIELD_LEFT_RIGHT=5, YIELD_FORWARD=6, YIELD_FORWARD_RIGHT=7, YIELD_FORWARD_LEFT=8, MAX_SPEED_SIGN=9, MIN_SPEED_SIGN=10, NO_PARKING_SIGN=11, SCHOOL_CROSSING_SIGN=12};
 
 enum TRAFFIC_LIGHT_TYPE {UNKNOWN_LIGHT=0, RED_LIGHT=1, GREEN_LIGHT=2, YELLOW_LIGHT=3, CROSS_GREEN=4, CROSS_RED=5, LEFT_GREEN=6, FORWARD_GREEN=7, RIGHT_GREEN=8, FLASH_YELLOW=9, FLASH_RED=10};
 
@@ -908,9 +909,9 @@ public:
 	double stopDistance;
 	double followVelocity;
 	double followDistance;
-  double egoStoppingVelocity;
-  double egoFollowingVelocity;
-  LIGHT_INDICATOR indicator;
+	double egoStoppingVelocity;
+	double egoFollowingVelocity;
+	LIGHT_INDICATOR indicator;
 	bool bNewPlan;
 	int iTrajectory;
 	int iLane;
@@ -924,9 +925,9 @@ public:
 		stopDistance = 0;
 		followVelocity = 0;
 		followDistance = 0;
-    egoStoppingVelocity = 0.0;
-    egoFollowingVelocity = 0.0;
-    indicator  = INDICATOR_NONE;
+		egoStoppingVelocity = 0.0;
+		egoFollowingVelocity = 0.0;
+		indicator  = INDICATOR_NONE;
 		bNewPlan = false;
 		iTrajectory = -1;
 		iLane = -1;
@@ -1136,18 +1137,20 @@ public:
 	bool				bTargetLaneSafe;
 	//-------------------------------------------//
 	//Traffic Lights & Stop Sign
-  double      egoStoppingVelocity;
+	double				egoStoppingVelocity;
 	int 				currentStopSignID;
 	int 				prevStopSignID;
 	int 				currentTrafficLightID;
 	int 				prevTrafficLightID;
 	bool 				bTrafficIsRed; //On , off status
+	std::string			stopLineInfoRviz;
 	//-------------------------------------------//
 	//Swerving
 	int 				iPrevSafeTrajectory;
 	int 				iCurrSafeTrajectory;
 	int 				iCentralTrajectory;
 	bool				bFullyBlock;
+	bool				bPredictiveBlock;
 	LIGHT_INDICATOR 	indicator;
 
 	//-------------------------------------------//
@@ -1196,6 +1199,7 @@ public:
 		currentTrafficLightID = -1;
 		prevTrafficLightID = -1;
 		bTrafficIsRed = false;
+        stopLineInfoRviz = "";
 		iCurrSafeTrajectory = -1;
 		bFullyBlock = false;
 
@@ -1299,6 +1303,7 @@ public:
 	double lateral_cost;
 	double longitudinal_cost;
 	bool bBlocked;
+	bool predictive_blocked;
 	std::vector<std::pair<int, double> > lateral_costs;
 
 
@@ -1318,6 +1323,7 @@ public:
 		lateral_cost = 0;
 		longitudinal_cost = 0;
 		bBlocked = false;
+		predictive_blocked = false;
 	}
 
 	std::string ToString()
