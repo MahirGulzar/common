@@ -280,8 +280,21 @@ void DecisionMaker::CalculateImportantParameterForDecisionMaking(const PlannerHN
   /**
    * Set reach goal state values
    */
-  pValues->distanceToGoal =
-      PlannerHNS::PlanningHelpers::GetDistanceFromPoseToEnd(state, m_TotalPaths.at(pValues->iCurrSafeLane)) - critical_long_front_distance;
+  
+  // Get relative infos for ego car and goal_point
+  PlannerHNS::RelativeInfo ego_info;
+  PlanningHelpers::GetRelativeInfo(m_TotalPaths.at(pValues->iCurrSafeLane), state, ego_info);
+
+  PlannerHNS::RelativeInfo goal_info;
+  int goal_index = m_TotalPaths.at(pValues->iCurrSafeLane).size() - 1;
+  PlanningHelpers::GetRelativeInfo(m_TotalPaths.at(pValues->iCurrSafeLane), m_TotalPaths.at(pValues->iCurrSafeLane).at(goal_index), goal_info);
+
+  // Calculate distance to goal
+  pValues->distanceToGoal = PlannerHNS::PlanningHelpers::GetExactDistanceOnTrajectory(m_TotalPaths.at(pValues->iCurrSafeLane), ego_info, goal_info) - critical_long_front_distance;
+
+  // This returns slightly wrong value and causes jerky braking for goal points
+  //pValues->distanceToGoal =
+  //    PlannerHNS::PlanningHelpers::GetDistanceFromPoseToEnd(state, m_TotalPaths.at(pValues->iCurrSafeLane)) - critical_long_front_distance;
 
   if ((pValues->distanceToGoal < -m_params.goalDiscoveryDistance) ||
       (pValues->distanceToGoal > m_params.horizonDistance)) {
