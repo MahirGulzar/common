@@ -133,6 +133,8 @@ void TrajectoryEvaluator::collectContoursAndTrajectories(const std::vector<Plann
       p.width = 0;
       contour_points.push_back(p);
     }
+    // adding centroid to contours list for obstacle checking
+    contour_points.push_back(obj_list.at(i).center);
 
     if (b_static_only)
     {
