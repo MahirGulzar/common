@@ -1277,13 +1277,13 @@ int main(int argc, char **argv)
   vmap.subscribe(nh, category);
 
   visualization_msgs::MarkerArray marker_array;
-  insertMarkerArray(marker_array, createRoadEdgeMarkerArray(vmap, Color::GRAY));
+  insertMarkerArray(marker_array, createRoadEdgeMarkerArray(vmap, Color::LIGHT_YELLOW));
   insertMarkerArray(marker_array, createGutterMarkerArray(vmap, Color::GRAY, Color::GRAY, Color::GRAY));
-  insertMarkerArray(marker_array, createCurbMarkerArray(vmap, Color::GRAY));
+  insertMarkerArray(marker_array, createCurbMarkerArray(vmap, Color::LIGHT_YELLOW));
   insertMarkerArray(marker_array, createWhiteLineMarkerArray(vmap, Color::WHITE, Color::YELLOW));
   insertMarkerArray(marker_array, createStopLineMarkerArray(vmap, Color::WHITE));
   insertMarkerArray(marker_array, createZebraZoneMarkerArray(vmap, Color::WHITE));
-  insertMarkerArray(marker_array, createCrossWalkMarkerArray(vmap, Color::WHITE));
+  insertMarkerArray(marker_array, createCrossWalkMarkerArray(vmap, Color::CYAN));
   insertMarkerArray(marker_array, createRoadMarkMarkerArray(vmap, Color::WHITE));
   insertMarkerArray(marker_array, createRoadPoleMarkerArray(vmap, Color::GRAY));
   insertMarkerArray(marker_array, createRoadSignMarkerArray(vmap, Color::GREEN, Color::GRAY));
