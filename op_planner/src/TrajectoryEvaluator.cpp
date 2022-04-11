@@ -125,13 +125,6 @@ void TrajectoryEvaluator::collectContoursAndTrajectories(const std::vector<Plann
   {
     double w = obj_list.at(i).w / 2.0;
 
-    // Preparing centroid as WayPoint to be added to contours list
-      centroid.pos = obj_list.at(i).center.pos;
-      centroid.pos.a = obj_list.at(i).center.pos.a;
-      centroid.v = obj_list.at(i).center.v;
-      centroid.id = static_cast<int>(i);
-      centroid.width = 0;
-
     for (unsigned int i_con = 0; i_con < obj_list.at(i).contour.size(); i_con++)
     {
       p.pos = obj_list.at(i).contour.at(i_con);
@@ -141,9 +134,9 @@ void TrajectoryEvaluator::collectContoursAndTrajectories(const std::vector<Plann
       p.width = 0;
       contour_points.push_back(p);
     }
-
     // adding centroid to contours list for obstacle checking
-    contour_points.push_back(centroid);
+    contour_points.push_back(obj_list.at(i).center);
+
     if (b_static_only)
     {
       continue;
