@@ -357,6 +357,10 @@ void DecisionMaker::CalculateImportantParameterForDecisionMaking(const PlannerHN
   // We take the closest stop line as stopping point.
   double distance_to_stop = *std::min_element(pValues->stoppingDistances.begin(), pValues->stoppingDistances.end());
 
+  // calculate deceleration needed for stopping behind the stopline - used to decide if ego goes to LIGHT_STOP
+  // distance_to_stop can go to negative if stopline is crossed (giveUpDistance: -2) and it would flip the sign
+  pValues->egoStoplineDeceleration = -pow(car_state.speed, 2) / (2.0 * (distance_to_stop > 0 ? distance_to_stop : 0.0));
+
   // Calculate ego car velocity for STOPPING state
   if (distance_to_stop < 0) {
     pValues->egoStoppingVelocity = 0;

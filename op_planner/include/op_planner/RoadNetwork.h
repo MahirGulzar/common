@@ -1048,6 +1048,7 @@ public:
 	double  follow_deceleration;
 	double  stopping_deceleration;
 	double  speed_deceleration;
+	double  stopline_deceleration_limit;
 	double  low_speed_upper_lim;
 	double  low_speed_lower_lim;
 
@@ -1082,11 +1083,12 @@ public:
 		giveUpDistance = -4;
 		nReliableCount = 2;
 
-        enableCost                      = true;
-        follow_reaction_time            = 1.5;
-        follow_deceleration             = -1.0;
-        stopping_deceleration           = -1.0;
-        speed_deceleration              = -1.0;
+		enableCost                      = true;
+		follow_reaction_time            = 1.5;
+		follow_deceleration             = -1.0;
+		stopping_deceleration           = -1.0;
+		speed_deceleration              = -1.0;
+		stopline_deceleration_limit     = -3.0;
 		low_speed_upper_lim             = 2.0;
 		low_speed_lower_lim             = 1.0;
 
@@ -1137,6 +1139,7 @@ public:
 	//-------------------------------------------//
 	//Traffic Lights & Stop Sign
 	double				egoStoppingVelocity;
+	double				egoStoplineDeceleration;
 	int 				currentStopSignID;
 	int 				prevStopSignID;
 	int 				currentTrafficLightID;
@@ -1190,14 +1193,15 @@ public:
 		//distance to stop
 		distanceToNext = -1;
 		velocityOfNext = 0;
-        egoFollowingVelocity = 0.0;
-        egoStoppingVelocity = 0.0;
-        currentStopSignID = -1;
+		egoFollowingVelocity = 0.0;
+		egoStoppingVelocity = 0.0;
+		egoStoplineDeceleration = 0.0;
+		currentStopSignID = -1;
 		prevStopSignID = -1;
 		currentTrafficLightID = -1;
 		prevTrafficLightID = -1;
 		bTrafficIsRed = false;
-        stopLineInfoRviz = "";
+		stopLineInfoRviz = "";
 		iCurrSafeTrajectory = -1;
 		bFullyBlock = false;
 
