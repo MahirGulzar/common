@@ -35,6 +35,7 @@ BehaviorPrediction::BehaviorPrediction()
 	m_bStepByStep = false;
 	//m_bCanDecide = true;
 	m_bParticleFilter = false;
+	m_bsignEstimation = false;
 	UtilityHNS::UtilityH::GetTickCount(m_GenerationTimer);
 	UtilityHNS::UtilityH::GetTickCount(m_ResamplingTimer);
 	m_bFirstMove = true;
@@ -172,6 +173,31 @@ void BehaviorPrediction::PredictCurrentTrajectory(RoadNetwork& map, ObjParticles
 {
 	pCarPart->obj.predTrajectories.clear();
 	PlannerH planner;
+
+	Vector tracked_velocity(pCarPart->obj.center.v, pCarPart->obj.acceleration_raw, pCarPart->obj.acceleration_desc);
+	int speed_sign = 1;
+
+	// ------------------------------
+	// Speed Sign Estimation
+	// ------------------------------
+	if (m_bsignEstimation)
+	{
+		WayPoint* closest = MappingHelpers::GetClosestWaypointFromMap(pCarPart->obj.center, map, pCarPart->obj.bDirection);
+
+		if(closest)
+		{
+			double angle_diff = fabs(
+						RAD2DEG * UtilityHNS::UtilityH::FixNegativeAngle(atan2((double)tracked_velocity[1], (double)tracked_velocity[0])) -
+							RAD2DEG *UtilityHNS::UtilityH::FixNegativeAngle(closest->pos.a));
+			
+			if (angle_diff > 90 && angle_diff < 270)
+			{
+				speed_sign = -1;
+			}
+		}
+	}
+	
+	pCarPart->obj.center.v = tracked_velocity.length()*speed_sign;
 
 	CalPredictionTimeForObject(pCarPart, m_MinPredictionDistance);
 	pCarPart->obj.pClosestWaypoints = MappingHelpers::GetClosestWaypointsListFromMap(pCarPart->obj.center, map, m_LaneDetectionDistance, pCarPart->obj.bDirection);

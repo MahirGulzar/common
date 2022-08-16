@@ -1458,6 +1458,7 @@ public:
 	bool m_bGenerateBranches;
 	bool m_bStepByStep;
 	bool m_bParticleFilter;
+	bool m_bsignEstimation;
 
 	std::vector<ObjParticles*> m_temp_list;
 	std::vector<ObjParticles*> m_ParticleInfo;
