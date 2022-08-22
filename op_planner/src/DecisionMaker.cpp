@@ -92,6 +92,7 @@ void DecisionMaker::Init(const ControllerParams& ctrlParams, const PlannerHNS::P
     pValues->iPrevSafeTrajectory = pValues->iCentralTrajectory;
     pValues->iCurrSafeLane = 0;
     pValues->stoppingDistances.clear();
+    pValues->stoppingPoints.clear();
     pValues->stoppingDistances.push_back(m_params.horizonDistance);
     pValues->currentVelocity = 0;
     pValues->bTrafficIsRed = false;
@@ -315,6 +316,7 @@ void DecisionMaker::CalculateImportantParameterForDecisionMaking(const PlannerHN
 
   // Stopline list, containing all the potential stopping points ahead of us.
   pValues->stoppingDistances.clear();
+  pValues->stoppingPoints.clear();
   pValues->stoppingDistances.push_back(m_params.horizonDistance);
   pValues->currentVelocity = car_state.speed;
   pValues->bTrafficIsRed = false;
@@ -404,6 +406,8 @@ void DecisionMaker::CalculateImportantParameterForDecisionMaking(const PlannerHN
   int stopSignID = -1;
   int trafficLightID = -1;
   double distanceToClosestStopLine;
+  // Stopline waypoint projected on the rollout.
+  WayPoint stopWp;
   bool bGreenTrafficLight = true;
 
   /*
@@ -412,14 +416,15 @@ void DecisionMaker::CalculateImportantParameterForDecisionMaking(const PlannerHN
                                   stopLineID,stopSignID, trafficLightID) - m_params.verticalSafetyDistance;
   */
 
-  // find closest stopping point and provide Rviz info
+
+  // find closest stopping point and provide Rviz info and waypoint
   distanceToClosestStopLine = PlanningHelpers::GetDistanceToClosestStopLineAndCheckWithRvizInfo(
             m_TotalPaths.at(pValues->iCurrSafeLane), state,
             m_params.giveUpDistance, m_params.horizonDistance,
             m_pCurrentBehaviorState->m_pParams->enableTrafficLightBehavior,
             m_pCurrentBehaviorState->m_pParams->enableStopSignBehavior,
             detectedLights, pValues->stopLineInfoRviz,
-            stopLineID, stopSignID, trafficLightID) - m_params.verticalSafetyDistance;
+            stopLineID, stopSignID, trafficLightID, stopWp) - m_params.verticalSafetyDistance;
 
   // Stopline within horizon
   if (stopLineID != -1) {
@@ -431,8 +436,16 @@ void DecisionMaker::CalculateImportantParameterForDecisionMaking(const PlannerHN
   // if traffic light is next and is added then must be RED
   if(trafficLightID > 0){
       pValues->bTrafficIsRed = true;
+      // Add stopping waypoint to display as marker for stopping at red light.
+      pValues->stoppingPoints.push_back(stopWp);
   } else {
       pValues->bTrafficIsRed = false;
+  }
+
+  if (pValues->bPredictiveBlock)
+  {
+    // Add stopping waypoint to display as marker for yielding
+    pValues->stoppingPoints.push_back(stopWp);
   }
 
   /**

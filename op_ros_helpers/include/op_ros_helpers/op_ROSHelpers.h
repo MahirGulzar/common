@@ -157,6 +157,8 @@ public:
 
 	static void GetROIPointsForVisualization(std::vector<std::vector<PlannerHNS::WayPoint>>& points, visualization_msgs::MarkerArray& markerArray);
 
+	static void VisualizeStoppingPoint(PlannerHNS::WayPoint stoppingPoint, visualization_msgs::Marker& marker);
+
 	static void ConvertFromAutowareDetectedObjectToOpenPlannerDetectedObject(const autoware_msgs::DetectedObject& det_obj, PlannerHNS::DetectedObject& obj);
 
 	static void ConvertFromOpenPlannerDetectedObjectToAutowareDetectedObject(const PlannerHNS::DetectedObject& det_obj, const bool& bSimulationMode, autoware_msgs::DetectedObject& obj);

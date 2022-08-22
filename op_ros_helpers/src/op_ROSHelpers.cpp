@@ -2180,6 +2180,16 @@ void ROSHelpers::GetROIPointsForVisualization(std::vector<std::vector<PlannerHNS
 	}
 }
 
+void ROSHelpers::VisualizeStoppingPoint(PlannerHNS::WayPoint stoppingPoint, visualization_msgs::Marker& marker)
+{
+	double correct_angle = stoppingPoint.pos.a;
+	marker = CreateGenMarker(stoppingPoint.pos.x,stoppingPoint.pos.y,stoppingPoint.pos.z, correct_angle,1,0,0,1,0,"boundary", visualization_msgs::Marker::CUBE);
+	marker.scale.x = 0.5;
+	marker.scale.y = 10;
+	marker.scale.z = 5;
+	marker.lifetime = ros::Duration(0.3);
+}
+
 void ROSHelpers::ConvertFromAutowareDetectedObjectToOpenPlannerDetectedObject(const autoware_msgs::DetectedObject& det_obj, PlannerHNS::DetectedObject& obj)
 {
 	obj.id = det_obj.id;

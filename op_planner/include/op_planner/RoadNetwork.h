@@ -1163,6 +1163,7 @@ public:
 	int 				bOutsideControl; // 0 waiting, 1 start, 2 Green Traffic Light, 3 Red Traffic Light, 5 Emergency Stop
 	bool				bGreenOutsideControl;
 	std::vector<double> stoppingDistances;
+	std::vector<WayPoint> stoppingPoints;
 
 	double 				distanceToGoal;
 
@@ -1179,6 +1180,12 @@ public:
 			}
 		}
 		return minS;
+	}
+
+	WayPoint closestStoppingWayPoint()
+	{
+		if(stoppingPoints.size()==0) return WayPoint(DBL_MAX,0,0,0);
+		return stoppingPoints.at(stoppingPoints.size()-1);
 	}
 
 	PreCalculatedConditions()

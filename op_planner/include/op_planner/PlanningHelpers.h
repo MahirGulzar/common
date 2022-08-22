@@ -200,6 +200,8 @@ public:
 
     static double GetDistanceToClosestStopLineAndCheckWithRvizInfo(const std::vector<WayPoint>& path, const WayPoint& p, const double& giveUpDistance, const double& horizonDistance, const bool& enableTrafficLightBehavior, const bool& enableStopSignBehavior, const std::vector<TrafficLight>& detectedLights, std::string& stopLineInfoRviz, int& stopLineID,int& stopSignID, int& trafficLightID, const int& prevIndex = 0);
 
+	static double GetDistanceToClosestStopLineAndCheckWithRvizInfo(const std::vector<WayPoint>& path, const WayPoint& p, const double& giveUpDistance, const double& horizonDistance, const bool& enableTrafficLightBehavior, const bool& enableStopSignBehavior, const std::vector<TrafficLight>& detectedLights, std::string& stopLineInfoRviz, int& stopLineID,int& stopSignID, int& trafficLightID, WayPoint& stopWp, const int& prevIndex = 0);
+
 	static double GetDistanceToClosestStopLine(const RoadNetwork& m_Map, const std::vector<WayPoint>& path, const WayPoint& p, const double& giveUpDistance, const double& horizonDistance, const bool& enableStopSignBehavior, int& stopLineID,int& stopSignID, WayPoint &stop_wp, TRAFFIC_SIGN_TYPE& signType, const int& prevIndex = 0);
 	
 	static bool GetThreePointsInfo(const WayPoint& p0, const WayPoint& p1, const WayPoint& p2, WayPoint& perp_p, double& long_d, double lat_d);
