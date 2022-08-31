@@ -723,7 +723,7 @@ void TrajectoryEvaluator::CalcCostsAndObsOnRollouts(
 
 
     // If Ego is approaching yielding line then evaluate rollout for yielding
-    if (distanceToClosestStopLine < 60 && stopSignID > 0)
+    if (distanceToClosestStopLine < 500 && stopSignID > 0)
     {
       EvaluateRolloutForPredictiveYielding(
         curr_pos,
@@ -1029,6 +1029,7 @@ void TrajectoryEvaluator::EvaluateRolloutForPredictiveYielding(
   {
       int prev_index = 0;
       skip_this_obstacle = false;
+      bool mockup_trajectories = false;
       RelativeInfo obstacle_info;
       WayPoint obs;
 
@@ -1104,6 +1105,55 @@ void TrajectoryEvaluator::EvaluateRolloutForPredictiveYielding(
       double lastLateralCost = 0;
       double lastNearestCollisionPoint = 0;
       bool predictiveBlocked = false;
+
+      // Check if obstacle has near zero velocity. Maybe there is a traffic conjestion.
+      // We generate zero obstacle rollouts for this car and do collision estimation with them.
+
+      // std::cout<<"obs.v "<<obs.v<<std::endl;
+      if (obs.v < 5)
+      {
+        if(obs.v < 1)
+        {
+          mockup_trajectories = true;
+        }
+        
+        PlannerH planner;
+        // Lane speed limit goes in max speed
+        double max_speed = 25;
+        double min_prediction_distance = 2;
+        double d = (21 * max_speed) + filtered_obs_.at(j).l;
+
+        if(d > 2)
+        {
+          min_prediction_distance = d;
+        }
+
+        obs.v = max_speed;
+        filtered_obs_.at(j).center.v = max_speed;
+        filtered_obs_traj_pair_.at(j).clear();
+        std::vector<WayPoint*> pClosestWaypoints = MappingHelpers::GetClosestWaypointsListFromMap(filtered_obs_.at(j).center, m_Map, 2, true);
+
+        filtered_obs_.at(j).predTrajectories.clear();
+        planner.PredictTrajectoriesUsingDP(filtered_obs_.at(j).center, pClosestWaypoints, 60, filtered_obs_.at(j).predTrajectories, false, filtered_obs_.at(j).bDirection, 0.5);
+
+        for(unsigned int t = 0; t < filtered_obs_.at(j).predTrajectories.size(); t ++)
+        {
+          if(filtered_obs_.at(j).predTrajectories.at(t).size() > 0)
+          {
+            filtered_obs_.at(j).predTrajectories.at(t).at(0).collisionCost = 0;
+          }
+        }
+        
+        for(unsigned int k=0; k < filtered_obs_.at(j).predTrajectories.size(); k++)
+        {
+          PlannerHNS::PlanningHelpers::PredictConstantTimeCostForTrajectory(filtered_obs_.at(j).predTrajectories.at(k), filtered_obs_.at(j).center, -1, min_prediction_distance);
+          for(auto& updated_point: filtered_obs_.at(j).predTrajectories.at(k))
+          {
+            filtered_obs_traj_pair_.at(j).push_back(updated_point);
+          }
+        }
+      }
+
   
       for (int i = 0; i < filtered_obs_traj_pair_.at(j).size() - 1; i++)
       {
@@ -1138,8 +1188,7 @@ void TrajectoryEvaluator::EvaluateRolloutForPredictiveYielding(
         // Time to reach difference between nearest rollout point and current predicted trajectory point
         double t_diff = fabs(trajectoryPoint_info.perp_point.timeCost - filtered_obs_traj_pair_.at(j).at(i).timeCost);
         
-        if (actual_longitudinal_distance < params.minFollowingDistance 
-            && actual_lateral_distance < g_lateral_skip_value 
+        if (actual_lateral_distance < g_lateral_skip_value 
             && !trajectoryPoint_info.bAfter 
             && !trajectoryPoint_info.bBefore)
         {
@@ -1154,6 +1203,13 @@ void TrajectoryEvaluator::EvaluateRolloutForPredictiveYielding(
           {
             // trajectory_costs[rollout_index].lateral_cost +=2.0;  // use half meter fixed critical distance as contact cost for all collision points in the range
             // trajectory_costs[rollout_index].predictive_blocked= true;
+
+            if(mockup_trajectories && !trajectory_costs[rollout_index].bBlocked)
+            {
+              // Skip mockups 
+               continue;
+            }
+
             lastLateralCost += 2.0;
             predictiveBlocked = true;
 
@@ -1169,6 +1225,11 @@ void TrajectoryEvaluator::EvaluateRolloutForPredictiveYielding(
             lastLateralCost += actual_lateral_distance;
           }
         }
+      }
+
+      if(mockup_trajectories)
+      {
+        mockup_trajectories = false;
       }
 
       if (skip_this_obstacle)
