@@ -374,7 +374,7 @@ public:
 		std::string prev_id_str = id_;
 		id_ = PlannerHNS::PlanningHelpers::MakePathDirectionID(_path);
 		if(prev_id_str.compare(id_) != 0)
-		  std::cout << "Trajectory Prediction Wrong Matching, trying to match: " << id_ <<", with: " << prev_id_str << std::endl;
+		//   std::cout << "Trajectory Prediction Wrong Matching, trying to match: " << id_ <<", with: " << prev_id_str << std::endl;
 		trajectory = _path;
 		int prev_id = -10;
 		int curr_id = -10;

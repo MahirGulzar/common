@@ -24,6 +24,8 @@ public:
   double lateral_weight_;
   double lane_change_weight_;
   double collision_time_;
+  double min_prediction_time_;
+  double min_prediction_distance_;
 
   EvaluationParams()
   {
@@ -33,6 +35,8 @@ public:
     lateral_weight_ = 0.3;
     lane_change_weight_ = 0;
     collision_time_ = 3;
+    min_prediction_time_ = 11;
+    min_prediction_distance_ = 2;
   }
 
   EvaluationParams(double periority_w, double transition_w, double logitudinal_w, double lateral_w,
@@ -53,11 +57,12 @@ public:
   TrajectoryEvaluator();
   virtual ~TrajectoryEvaluator();
 
-  TrajectoryCost doOneStep(const std::vector<std::vector<WayPoint> >& m_GlobalPaths,
+  TrajectoryCost doOneStep(const int g_index,
+                           const std::vector<std::vector<WayPoint> >& m_GlobalPaths,
                            const std::vector<std::vector<WayPoint> >& roll_outs,
-                           const std::vector<WayPoint>& total_paths, const WayPoint& curr_state,
+                           const std::vector<std::vector<WayPoint> >& total_paths, const WayPoint& curr_state,
                            const PlanningParams& params, const CAR_BASIC_INFO& car_info,
-                           const VehicleState& vehicle_state, const std::vector<DetectedObject>& obj_list,
+                           const VehicleState& vehicle_state, std::vector<DetectedObject>& obj_list,
                            const RoadNetwork &map,
                            const bool& b_static_only = false,
                            const int& prev_curr_index = -1,
@@ -73,16 +78,9 @@ public:
 
 public:
   std::vector<WayPoint> all_contour_points_;
-  std::vector<WayPoint> all_trajectories_points_;
-  std::vector<WayPoint> all_obs_wrt_trajectories_points_;
-  std::vector<std::vector<WayPoint>> filtered_obs_traj_pair_;
-  std::vector<DetectedObject> filtered_obs_;
+  std::vector<DetectedObject> m_obj_list_;
   std::vector<DetectedObject> objects_attention;
-
   std::vector<std::vector<WayPoint>> attention_rois;
-  std::vector<PlannerHNS::WayPoint> t_centerTrajectorySmoothed;
-  std::vector<int> m_prev_index;
-  std::vector<std::vector<WayPoint> > m_TotalPaths;
   std::vector<WayPoint> collision_points_;
   PolygonShape safety_border_;
   std::vector<std::vector<WayPoint> > local_roll_outs_;
@@ -100,9 +98,7 @@ private:
                                 const PlanningParams& params);
 
   void collectContoursAndTrajectories(const std::vector<PlannerHNS::DetectedObject>& obj_list, PolygonShape& ego_car_border,
-                                      std::vector<WayPoint>& contour_points, std::vector<WayPoint>& trajectory_points, std::vector<WayPoint>& obs_wrt_trajectory_points, 
-                                      // std::vector<std::vector<WayPoint>>& filtered_traj_pairs,
-                                      // std::vector<WayPoint>& filtered_obstacles,
+                                      std::vector<WayPoint>& contour_points,
                                       const bool& b_static_only = false);
 
   int getCurrentRollOutIndex(const std::vector<WayPoint>& total_path, const WayPoint& curr_state,
@@ -119,16 +115,16 @@ private:
 
   void CalcCostsAndObsOnRollouts(
     const std::vector<std::vector<WayPoint> >& m_GlobalPaths,
+    const std::vector<std::vector<WayPoint> >& total_paths,
     const PlanningParams& params, 
     const double& critical_lateral_distance, 
     const double& critical_long_front_distance, 
     const std::vector<std::vector<WayPoint> >& rollOuts, 
     const std::vector<WayPoint>& obsPoints, 
-    const std::vector<WayPoint>& globalPath, 
-    const std::vector<WayPoint>& obs_wrt_trajectory_points, 
     std::vector<TrajectoryCost>& trajectoryCosts, 
     const WayPoint& currPosition, 
-    std::vector<WayPoint>& collision_points);
+    std::vector<WayPoint>& collision_points,
+    std::vector<DetectedObject>& obj_list);
 
   void computeCostsAndPredictColisionsOnRollout(const PlanningParams& params, std::vector<TrajectoryCost>& trajectory_costs, const std::vector<WayPoint>& trajectory_points, const std::vector<WayPoint>& roll_out, const int rolloutIndex, const double& critical_lateral_distance, std::vector<WayPoint>& collision_points);
 
@@ -142,20 +138,17 @@ private:
 
   
   void EvaluateRolloutForPredictiveYielding(
-    const WayPoint& curr_state,
-    const PlanningParams& params, 
-    std::vector<TrajectoryCost>& trajectory_costs, 
-    const std::vector<WayPoint>& trajectory_points, 
-    const std::vector<WayPoint>& obs_wrt_trajectory_points, 
-    const std::vector<WayPoint>& roll_out, 
-    const int rolloutIndex, 
-    const double& critical_lateral_distance, 
-    std::vector<WayPoint>& collision_points, 
-    const RelativeInfo& carInfoRollout, 
     const RelativeInfo& carInfoGlobal,
-    const RelativeInfo& stopInfo,
-    const WayPoint& stopWp, 
-    const double& distanceToClosestStopLine);
+    const RelativeInfo& stopLineInfoGlobal,
+    const std::vector<WayPoint>& roll_out,
+    const PlanningParams& params,
+    const WayPoint& curr_state,
+    const WayPoint& stopWp,
+    const double& critical_lateral_distance,
+    const double& distanceToClosestStopLine,
+    const size_t center_index,
+    std::vector<TrajectoryCost>& trajectory_costs,
+    std::vector<DetectedObject>& obj_list);
 
   TrajectoryCost findBestTrajectory(const PlanningParams& params, const int& prev_curr_index, const bool& b_keep_curr, std::vector<TrajectoryCost> trajectory_costs);
 
