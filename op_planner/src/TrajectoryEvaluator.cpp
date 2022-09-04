@@ -81,14 +81,14 @@ TrajectoryCost TrajectoryEvaluator::doOneStep(const int g_index,
 
   all_contour_points_.clear();
   // Populates all_contour_points with the contours of all detected obstacles.
-  collectContoursAndTrajectories(m_obj_list_, safety_border_, all_contour_points_, b_static_only);
+  collectContoursAndTrajectories(m_obj_list_, safety_border_, all_contour_points_);
   
   collision_points_.clear();
   objects_attention.clear();
   // Populates collision_points and object attentions. Marks ego's rollouts as blocked and/or predictive blocked. 
   CalcCostsAndObsOnRollouts(m_GlobalPaths, total_paths, params, critical_lateral_distance, critical_long_front_distance, local_roll_outs_,
                             all_contour_points_, trajectory_costs_, curr_state,
-                            collision_points_, m_obj_list_);
+                            collision_points_, m_obj_list_, b_static_only);
 
   normalizeCosts(eval_params_, trajectory_costs_);
 
@@ -135,8 +135,7 @@ void TrajectoryEvaluator::initializeLocalRollOuts(const WayPoint& curr_state, co
 
 void TrajectoryEvaluator::collectContoursAndTrajectories(const std::vector<PlannerHNS::DetectedObject>& obj_list,
                                                          PolygonShape& ego_car_border,
-                                                         std::vector<WayPoint>& contour_points,
-                                                         const bool& b_static_only)
+                                                         std::vector<WayPoint>& contour_points)
 {
   PlannerHNS::WayPoint p;
 
@@ -484,7 +483,8 @@ void TrajectoryEvaluator::CalcCostsAndObsOnRollouts(
     std::vector<TrajectoryCost>& trajectory_costs,
     const WayPoint& curr_pos, 
     std::vector<WayPoint>& collision_points,
-    std::vector<DetectedObject>& obj_list)
+    std::vector<DetectedObject>& obj_list,
+    const bool& b_static_only)
 {
   // Relative object info
   RelativeInfo obsInfoRollout, obsInfoGlobal, goalInfoRollout, carInfoRollout, carInfoGlobal;
@@ -600,6 +600,9 @@ void TrajectoryEvaluator::CalcCostsAndObsOnRollouts(
   /**
    * =====================================< Rollout eval for yielding >=================================================
    */
+
+  if(b_static_only)
+    return;
 
   RelativeInfo stopLineInfoGlobal;
   TRAFFIC_SIGN_TYPE signType;
@@ -729,8 +732,9 @@ void TrajectoryEvaluator::GetZeroObstacleRollouts(
   PlannerHNS::WayPoint start_point = curr_state;
 
   // Get adaptive reference speed for run off trajectory
-  double ref_speed = std::max({LOWER_REFERENCE_SPEED_LIMIT, curr_state.v, curr_state.pLane->speed});
-  if (ref_speed == LOWER_REFERENCE_SPEED_LIMIT)
+  double ref_speed = std::max({curr_state.v, curr_state.pLane->speed});
+  // If ego is moving below lower ref speed limit, assign maxSpeed for run off trajectory
+  if (ref_speed < LOWER_REFERENCE_SPEED_LIMIT)
   {
     ref_speed = params.maxSpeed;
   }
@@ -1116,7 +1120,7 @@ void TrajectoryEvaluator::EvaluateRolloutForPredictiveYielding(
             lastLateralCost += 2.0;
 
             /**
-             * @todo: For multiple yielding stoplines, Take nearest collision point and associate it to its nearest yielding stopping line.
+             * @todo: For multiple yielding stoplines, collision point should be associated to its nearest yielding stopping line.
              * 
              */
             // if (lastNearestCollisionPoint < trajectoryPointLongitudinalDistWithEgo)

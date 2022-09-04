@@ -391,7 +391,6 @@ void DecisionMaker::CalculateImportantParameterForDecisionMaking(const PlannerHN
   pValues->stoppingDistances.push_back(pValues->distanceToGoal);
 
   if (pValues->distanceToGoal < m_params.goalDiscoveryDistance) {
-    // std::cout<<"Distance to Goal " << pValues->distanceToGoal << " < Goal discovery distance" << std::endl;
     pValues->currentGoalID = -1;
   } else {
     pValues->currentGoalID = 1;
@@ -754,13 +753,10 @@ PlannerHNS::BehaviorState DecisionMaker::GenerateBehaviorState(const PlannerHNS:
 {
   PlannerHNS::PreCalculatedConditions* preCalcPrams = m_pCurrentBehaviorState->GetCalcParams();
 
-  PlannerHNS::STATE_TYPE state_type = m_pCurrentBehaviorState->m_Behavior;
-
   m_pCurrentBehaviorState = m_pCurrentBehaviorState->GetNextState();
 
   if (m_pCurrentBehaviorState == nullptr) {
-    std::cout<< GetBehaviorNameFromCode(state_type) << std::endl;
-    std::cout << "Null ptr" << std::endl;
+    std::cout<<"Error state "<< GetBehaviorNameFromCode(m_pCurrentBehaviorState->m_Behavior) << " transitioned to Null state" << std::endl;
     m_pCurrentBehaviorState = m_pInitState;
   }
 

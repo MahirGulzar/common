@@ -98,8 +98,7 @@ private:
                                 const PlanningParams& params);
 
   void collectContoursAndTrajectories(const std::vector<PlannerHNS::DetectedObject>& obj_list, PolygonShape& ego_car_border,
-                                      std::vector<WayPoint>& contour_points,
-                                      const bool& b_static_only = false);
+                                      std::vector<WayPoint>& contour_points);
 
   int getCurrentRollOutIndex(const std::vector<WayPoint>& total_path, const WayPoint& curr_state,
                              const PlanningParams& params);
@@ -124,7 +123,8 @@ private:
     std::vector<TrajectoryCost>& trajectoryCosts, 
     const WayPoint& currPosition, 
     std::vector<WayPoint>& collision_points,
-    std::vector<DetectedObject>& obj_list);
+    std::vector<DetectedObject>& obj_list,
+    const bool& b_static_only);
 
   void computeCostsAndPredictColisionsOnRollout(const PlanningParams& params, std::vector<TrajectoryCost>& trajectory_costs, const std::vector<WayPoint>& trajectory_points, const std::vector<WayPoint>& roll_out, const int rolloutIndex, const double& critical_lateral_distance, std::vector<WayPoint>& collision_points);
 

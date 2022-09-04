@@ -327,9 +327,6 @@ BehaviorStateMachine* ForwardStateII::GetNextState()
       pCParams->bTrafficIsRed &&
       pCParams->egoStoppingVelocity < pCParams->currentVelocity)
       {
-        if(m_pParams->enableStopSignBehavior)
-        // std::cout<< "TRANS FROM ------- FORWARD ------ TO --------- TRAFFIC LIGHT STOP ----------"<<std::endl;
-
         return FindBehaviorState(TRAFFIC_LIGHT_STOP_STATE);
       }
 
@@ -337,7 +334,6 @@ BehaviorStateMachine* ForwardStateII::GetNextState()
            pCParams->currentStopSignID > 0 &&
            pCParams->bPredictiveBlock)
   {
-    // std::cout<< "TRANS FROM ------- FORWARD ------ TO --------- STOP_SIGN_YIELD_STATE ----------"<<std::endl;
     return FindBehaviorState(STOP_SIGN_YIELD_STATE);
   }
 
@@ -346,17 +342,11 @@ BehaviorStateMachine* ForwardStateII::GetNextState()
            pCParams->currentStopSignID != pCParams->prevStopSignID &&
            pCParams->egoStoppingVelocity < pCParams->currentVelocity)
     {
-      if(m_pParams->enableStopSignBehavior)
-      // std::cout<< "TRANS FROM ------- FORWARD ------ TO --------- STOP ----------"<<std::endl;
     return FindBehaviorState(STOP_SIGN_STOP_STATE);
     }
 
   else if (m_pParams->enableFollowing && pCParams->bFullyBlock)
   {
-    if(m_pParams->enableStopSignBehavior)
-    {
-    // std::cout<< "TRANS FROM ------- FORWARD ------ TO --------- Following ----------"<<std::endl;
-    }
     return FindBehaviorState(FOLLOW_STATE);
   }
 
@@ -367,27 +357,16 @@ BehaviorStateMachine* ForwardStateII::GetNextState()
            (pCParams->iCurrSafeTrajectory != pCParams->iPrevSafeTrajectory ||
             pCParams->iCurrSafeLane != pCParams->iPrevSafeLane))
     {
-      if(m_pParams->enableStopSignBehavior)
-      // std::cout<< "TRANS FROM ------- FORWARD ------ TO --------- OBSTACLE_AVOIDANCE_STATE ----------"<<std::endl;
     return FindBehaviorState(OBSTACLE_AVOIDANCE_STATE);
     }
 
   else if (pCParams->bFinalLocalTrajectory && (pCParams->distanceToGoal - pCParams->minStoppingDistance) < 1.0 && pCParams->egoStoppingVelocity < pCParams->egoFollowingVelocity)
   {
-    if(m_pParams->enableStopSignBehavior)
-    {
-      // std::cout<< "TRANS FROM ------- FORWARD ------ TO --------- STOPPING_STATE ----------"<<std::endl;
-      std::cout<< "distanceToGoal < minStoppingDistance"<<pCParams->distanceToGoal<<" < "<<pCParams->minStoppingDistance<<std::endl;
-    }
     return FindBehaviorState(STOPPING_STATE);
   }
 
   else
   {
-    // if(m_pParams->enableStopSignBehavior)
-    // {
-    // // std::cout<< "TRANS FROM ------- FORWARD ------ TO --------- ITSELF ----------"<<std::endl;
-    // }
     return FindBehaviorState(this->m_Behavior);
   }
 }
@@ -399,7 +378,6 @@ BehaviorStateMachine* FollowStateII::GetNextState()
   if ((pCParams->bFinalLocalTrajectory && (pCParams->distanceToGoal - pCParams->minStoppingDistance) < 1.0) &&
       pCParams->egoStoppingVelocity <= pCParams->egoFollowingVelocity && pCParams->egoStoppingVelocity < pCParams->egoFollowingVelocity)
   {
-    // std::cout<< "TRANS FROM ------- FOLLOW ------ TO --------- STOPPING_STATE ----------"<<std::endl;
     return FindBehaviorState(STOPPING_STATE);
   }
 
@@ -408,7 +386,6 @@ BehaviorStateMachine* FollowStateII::GetNextState()
            pCParams->bTrafficIsRed &&
            pCParams->egoStoppingVelocity < pCParams->egoFollowingVelocity)
   {
-    // std::cout<< "TRANS FROM ------- FOLLOW ------ TO --------- TRAFFIC_LIGHT_STOP_STATE ----------"<<std::endl;
     return FindBehaviorState(TRAFFIC_LIGHT_STOP_STATE);
   }
   // added: if YIELDING_SIGN and trajectory is blocked
@@ -417,7 +394,6 @@ BehaviorStateMachine* FollowStateII::GetNextState()
            pCParams->bPredictiveBlock && 
            pCParams->egoStoppingVelocity < pCParams->egoFollowingVelocity)
   {
-    // std::cout<< "TRANS FROM ------- FOLLOW ------ TO --------- STOP_SIGN_YIELD_STATE ----------"<<std::endl;
     return FindBehaviorState(STOP_SIGN_YIELD_STATE);
   }
   // added: if egostoppingVelocity smaller go to STOP_SIGN stopping
@@ -426,7 +402,6 @@ BehaviorStateMachine* FollowStateII::GetNextState()
            pCParams->currentStopSignID != pCParams->prevStopSignID &&
            pCParams->egoStoppingVelocity < pCParams->egoFollowingVelocity)
   {
-    // std::cout<< "TRANS FROM ------- FOLLOW ------ TO --------- STOP_SIGN_STOP_STATE ----------"<<std::endl;
     return FindBehaviorState(STOP_SIGN_STOP_STATE);
   }
 
@@ -435,23 +410,18 @@ BehaviorStateMachine* FollowStateII::GetNextState()
             pCParams->distanceToNext == m_pParams->horizonDistance) &&
            !pCParams->bFullyBlock && pCParams->iCurrSafeTrajectory != pCParams->iPrevSafeTrajectory)
   {
-    // std::cout<< "TRANS FROM ------- FOLLOW ------ TO --------- OBSTACLE_AVOIDANCE_STATE ----------"<<std::endl;
     return FindBehaviorState(OBSTACLE_AVOIDANCE_STATE);
   }
 
   else if (!pCParams->bFullyBlock)
   {
-    // std::cout<< "TRANS FROM ------- FOLLOW ------ TO --------- FORWARD ----------"<<std::endl;
     return FindBehaviorState(FORWARD_STATE);
   }
 
   else
   {
-    // std::cout<< "TRANS FROM ------- FOLLOW ------ TO --------- ITSELF ----------"<<std::endl;
     return FindBehaviorState(this->m_Behavior);  // return and reset
   }
-
-  // std::cout<<"NOTHING RETURNED FROM FOLLOW.... "<<std::endl;
 }
 
 BehaviorStateMachine* SwerveStateII::GetNextState()
@@ -515,27 +485,23 @@ BehaviorStateMachine* StopSignStopStateII::GetNextState()
 
   if (pCParams->currentGoalID != pCParams->prevGoalID)
   {
-    // std::cout<< "TRANS TO ------ STOPPING_STATE ----------"<<std::endl;
     return FindBehaviorState(STOPPING_STATE);
   }
 
   // if closest object is closer than stopline and ego car speed is faster than objects speed
   else if(pCParams->egoStoppingVelocity > pCParams->egoFollowingVelocity)
   {
-      // std::cout<< "TRANS TO ------ FOLLOW_STATE ----------"<<std::endl;
-      return FindBehaviorState(FOLLOW_STATE);
+    return FindBehaviorState(FOLLOW_STATE);
   }
 
   else if (pCParams->currentVelocity < m_zero_velocity &&
            pCParams->egoStoppingVelocity < m_pParams->low_speed_upper_lim)
   {
-    // std::cout<< "TRANS TO ------ STOP_SIGN_WAIT_STATE ----------"<<std::endl;
     return FindBehaviorState(STOP_SIGN_WAIT_STATE);
   }
 
   else
   {
-    // std::cout<< "TRANS TO ------ ITSELF ----------"<<std::endl;
     return FindBehaviorState(this->m_Behavior);  // return and reset
   }
 
@@ -621,23 +587,18 @@ BehaviorStateMachine* StopSignYieldState::GetNextState()
   // if closest object is closer to stopline and ego car speed is faster than objects speed
   if(pCParams->egoStoppingVelocity > pCParams->egoFollowingVelocity)
   {
-    // std::cout<< "TRANS FROM ------- YIELD STOP ------ TO --------- FOLLOW ----------"<<std::endl;
     return FindBehaviorState(FOLLOW_STATE);
   }
   else if(!pCParams->bPredictiveBlock)
   {
-    // std::cout<< "TRANS FROM ------- YIELD STOP ------ TO --------- FORWARD ----------"<<std::endl;
     return FindBehaviorState(FORWARD_STATE);
   }
   else if (pCParams->bPredictiveBlock && pCParams->currentVelocity <= m_zero_velocity && pCParams->egoStoppingVelocity < m_pParams->low_speed_upper_lim)
   {
-    // std::cout<< "TRANS FROM ------- YIELD ------ TO --------- YIELD WAIT ----------"<<std::endl;
-    
     return FindBehaviorState(YIELDING_WAIT_STATE);
   }
   else
   {
-    // std::cout<< "TRANS FROM ------- YIELD STOPPPP ------ TO --------- ITSELF ----------"<<std::endl;
     return FindBehaviorState(this->m_Behavior);  // return and reset
   }
 
@@ -651,12 +612,10 @@ BehaviorStateMachine* YieldingWaitState::GetNextState()
 
   if (!pCParams->bPredictiveBlock)
   {
-    // std::cout<< "TRANS FROM ------- YIELD WAIT ------ TO --------- FOLLOW ----------"<<std::endl;
     return FindBehaviorState(FOLLOW_STATE);
   }
   else
   {
-    // std::cout<< "TRANS FROM ------- YIELD WAIT ------ TO --------- ITSELF ----------"<<std::endl;
     return FindBehaviorState(this->m_Behavior);
   }
 

@@ -174,22 +174,24 @@ void BehaviorPrediction::PredictCurrentTrajectory(RoadNetwork& map, ObjParticles
 	pCarPart->obj.predTrajectories.clear();
 	PlannerH planner;
 
-	Vector tracked_velocity(pCarPart->obj.center.v, pCarPart->obj.acceleration_raw, pCarPart->obj.acceleration_desc);
+	Vector tracked_velocity(pCarPart->obj.center.v, pCarPart->obj.acceleration_raw, pCarPart->obj.acceleration_desc);	
+	pCarPart->obj.pClosestWaypoints = MappingHelpers::GetClosestWaypointsListFromMap(pCarPart->obj.center, map, m_LaneDetectionDistance, pCarPart->obj.bDirection);
 	int speed_sign = 1;
 
 	// ------------------------------
 	// Speed Sign Estimation
 	// ------------------------------
 	if (m_bsignEstimation)
-	{
-		WayPoint* closest = MappingHelpers::GetClosestWaypointFromMap(pCarPart->obj.center, map, pCarPart->obj.bDirection);
+	{	
+		// Take first waypoint from the closest waypoints list.
 
-		if(closest)
+		if(pCarPart->obj.pClosestWaypoints.at(0))
 		{
 			double angle_diff = fabs(
 						RAD2DEG * UtilityHNS::UtilityH::FixNegativeAngle(atan2((double)tracked_velocity[1], (double)tracked_velocity[0])) -
-							RAD2DEG *UtilityHNS::UtilityH::FixNegativeAngle(closest->pos.a));
+							RAD2DEG *UtilityHNS::UtilityH::FixNegativeAngle(pCarPart->obj.pClosestWaypoints.at(0)->pos.a));
 			
+			// Could use cosine similarity?
 			if (angle_diff > 90 && angle_diff < 270)
 			{
 				speed_sign = -1;
@@ -200,7 +202,6 @@ void BehaviorPrediction::PredictCurrentTrajectory(RoadNetwork& map, ObjParticles
 	pCarPart->obj.center.v = tracked_velocity.length()*speed_sign;
 
 	CalPredictionTimeForObject(pCarPart, m_MinPredictionDistance);
-	pCarPart->obj.pClosestWaypoints = MappingHelpers::GetClosestWaypointsListFromMap(pCarPart->obj.center, map, m_LaneDetectionDistance, pCarPart->obj.bDirection);
 
 	if(!(pCarPart->obj.bDirection && pCarPart->obj.bVelocity) && pCarPart->obj.pClosestWaypoints.size()>0)
 	{
