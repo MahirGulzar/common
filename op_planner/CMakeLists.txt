@@ -4,8 +4,6 @@ project(op_planner)
 
 find_package(autoware_build_flags REQUIRED)
 
-add_compile_options(-std=c++14 -g -O0)
-
 find_package(catkin REQUIRED COMPONENTS
 		cmake_modules
 		geometry_msgs

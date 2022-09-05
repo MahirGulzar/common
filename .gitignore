@@ -1,12 +1,5 @@
-
+# Visual studio code config files
 .vscode/*
-.vscode/browse.vc.db 
-.vscode/c_cpp_properties.json
-.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/*.code-snippets
 
 # Local History for Visual Studio Code
 .history/
