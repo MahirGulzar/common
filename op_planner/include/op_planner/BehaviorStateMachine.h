@@ -281,20 +281,20 @@ public:
 
 };
 
-class StopSignYieldState : public BehaviorStateMachine
+class YieldStopState : public BehaviorStateMachine
 {
 public:
-	StopSignYieldState(PlanningParams* pParams, PreCalculatedConditions* pPreCalcVal, BehaviorStateMachine* pNextState)
-	: BehaviorStateMachine(pParams, pPreCalcVal, pNextState){m_Behavior = STOP_SIGN_YIELD_STATE;}
+	YieldStopState(PlanningParams* pParams, PreCalculatedConditions* pPreCalcVal, BehaviorStateMachine* pNextState)
+	: BehaviorStateMachine(pParams, pPreCalcVal, pNextState){m_Behavior = YIELD_STOP_STATE;}
 	virtual BehaviorStateMachine* GetNextState();
 
 };
 
-class YieldingWaitState : public BehaviorStateMachine
+class YieldWaitState : public BehaviorStateMachine
 {
 public:
-	YieldingWaitState(PlanningParams* pParams, PreCalculatedConditions* pPreCalcVal, BehaviorStateMachine* pNextState)
-	: BehaviorStateMachine(pParams, pPreCalcVal, pNextState){m_Behavior = YIELDING_WAIT_STATE;}
+	YieldWaitState(PlanningParams* pParams, PreCalculatedConditions* pPreCalcVal, BehaviorStateMachine* pNextState)
+	: BehaviorStateMachine(pParams, pPreCalcVal, pNextState){m_Behavior = YIELD_WAIT_STATE;}
 	virtual BehaviorStateMachine* GetNextState();
 
 };

@@ -652,11 +652,11 @@ void TrajectoryEvaluator::CalcCostsAndObsOnRollouts(
     obj_list);
 
   // If center rollout is predictive blocked then mark all rollouts as predictive blocked.
-  if (trajectory_costs.at(center_index).predictive_blocked)
+  if (trajectory_costs.at(center_index).bPredictiveBlocked)
   {
     for (int ic = 0; ic < trajectory_costs.size(); ic++)
     {
-      trajectory_costs.at(ic).predictive_blocked = true;
+      trajectory_costs.at(ic).bPredictiveBlocked = true;
     }
   }
 
@@ -1156,7 +1156,7 @@ void TrajectoryEvaluator::EvaluateRolloutForPredictiveYielding(
       {
         // Add current obstacle in list of object attentions i.e. Ego should be yielding for all obstacles in object_attentions list.
         objects_attention.push_back(obj_list.at(obj_idx));
-        trajectory_costs[center_index].predictive_blocked = predictiveBlocked;
+        trajectory_costs[center_index].bPredictiveBlocked = predictiveBlocked;
         // nearest_collision_point = lastNearestCollisionPoint;
       }
     }

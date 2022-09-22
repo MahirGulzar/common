@@ -46,8 +46,8 @@ public:
 	StopSignStopStateII* m_pStopSignStopState;
 	StopSignWaitStateII* m_pStopSignWaitState;
 	StopStateII* m_pStopState;
-	StopSignYieldState* m_pStopSignYieldState;
-	YieldingWaitState* m_pYieldingWaitState;
+	YieldStopState* m_pYieldStopState;
+	YieldWaitState* m_pYieldWaitState;
 
 	void InitBehaviorStates();
 

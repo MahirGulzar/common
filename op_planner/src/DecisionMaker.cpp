@@ -33,16 +33,16 @@ DecisionMaker::DecisionMaker()
   m_pFollowState = nullptr;
   m_pAvoidObstacleState = nullptr;
   m_pStopState = nullptr;
-  m_pStopSignYieldState = nullptr;
-  m_pYieldingWaitState = nullptr;
+  m_pYieldStopState = nullptr;
+  m_pYieldWaitState = nullptr;
   m_bRequestNewGlobalPlan = false;
   m_bUseInternalACC = false;
 }
 
 DecisionMaker::~DecisionMaker()
 {
-  delete m_pYieldingWaitState;
-  delete m_pStopSignYieldState;
+  delete m_pYieldWaitState;
+  delete m_pYieldStopState;
   delete m_pStopState;
   delete m_pMissionCompleteState;
   delete m_pGoalState;
@@ -140,20 +140,20 @@ void DecisionMaker::InitBehaviorStates()
       new TrafficLightStopStateII(m_pStopState->m_pParams, m_pStopState->GetCalcParams(), m_pGoToGoalState);
 
   // Init Yielding States
-  m_pStopSignYieldState = 
-      new StopSignYieldState(m_pStopState->m_pParams, m_pStopState->GetCalcParams(), m_pGoToGoalState);
-  m_pYieldingWaitState = 
-      new YieldingWaitState(m_pStopState->m_pParams, m_pStopState->GetCalcParams(), m_pGoToGoalState);
+  m_pYieldStopState = 
+      new YieldStopState(m_pStopState->m_pParams, m_pStopState->GetCalcParams(), m_pGoToGoalState);
+  m_pYieldWaitState = 
+      new YieldWaitState(m_pStopState->m_pParams, m_pStopState->GetCalcParams(), m_pGoToGoalState);
 
 
   // TODO: Add Possible states for yeilding
 
-  m_pStopSignYieldState->InsertNextState(m_pYieldingWaitState);
-  m_pStopSignYieldState->InsertNextState(m_pFollowState);
-  m_pStopSignYieldState->InsertNextState(m_pGoalState);
+  m_pYieldStopState->InsertNextState(m_pYieldWaitState);
+  m_pYieldStopState->InsertNextState(m_pFollowState);
+  m_pYieldStopState->InsertNextState(m_pGoalState);
 
-  m_pYieldingWaitState->InsertNextState(m_pStopSignYieldState);
-  m_pYieldingWaitState->InsertNextState(m_pFollowState);
+  m_pYieldWaitState->InsertNextState(m_pYieldStopState);
+  m_pYieldWaitState->InsertNextState(m_pFollowState);
 
   // ---------------------------------
 
@@ -169,7 +169,7 @@ void DecisionMaker::InitBehaviorStates()
   m_pGoToGoalState->InsertNextState(m_pFollowState);
   m_pGoToGoalState->InsertNextState(m_pStopState);
   // ---------------------------------
-  m_pGoToGoalState->InsertNextState(m_pStopSignYieldState);
+  m_pGoToGoalState->InsertNextState(m_pYieldStopState);
   // ---------------------------------
   m_pGoToGoalState->decisionMakingCount = 0;  // m_params.nReliableCount;
 
@@ -196,9 +196,8 @@ void DecisionMaker::InitBehaviorStates()
   m_pFollowState->InsertNextState(m_pTrafficLightStopState);
   m_pFollowState->InsertNextState(m_pGoalState);
   m_pFollowState->InsertNextState(m_pStopState);
-  // ---------------------------------
-  m_pFollowState->InsertNextState(m_pStopSignYieldState);
-  // ---------------------------------
+  m_pFollowState->InsertNextState(m_pYieldStopState);
+
   m_pFollowState->decisionMakingCount = 0;  // m_params.nReliableCount;
 
   m_pInitState->decisionMakingCount = 0;  // m_params.nReliableCount;
@@ -253,10 +252,10 @@ std::string DecisionMaker::GetBehaviorNameFromCode(const PlannerHNS::STATE_TYPE&
 	case PlannerHNS::GOAL_STATE:
 		str = "Goal Achieved";
 		break;
-	case PlannerHNS::STOP_SIGN_YIELD_STATE:
+	case PlannerHNS::YIELD_STOP_STATE:
 		str = "Yield Stop";
 		break;
-	case PlannerHNS::YIELDING_WAIT_STATE:
+	case PlannerHNS::YIELD_WAIT_STATE:
 		str = "Yield Wait";
 		break;
 	case PlannerHNS::BRANCH_LEFT_STATE:
@@ -373,7 +372,7 @@ void DecisionMaker::CalculateImportantParameterForDecisionMaking(const PlannerHN
   }
 
   pValues->bFullyBlock = bestTrajectory.bBlocked;
-  pValues->bPredictiveBlock = bestTrajectory.predictive_blocked;
+  pValues->bPredictiveBlock = bestTrajectory.bPredictiveBlocked;
   double critical_long_front_distance = m_params.additionalBrakingDistance + m_params.verticalSafetyDistance;
 
   /**
@@ -655,7 +654,7 @@ double DecisionMaker::UpdateVelocityDirectlyToTrajectory(const BehaviorState& be
       m_TotalPaths.at(m_iCurrentTotalPathId), total_info, total_info.iBack, speed_change_distance, CurrStatus.speed,
       m_params.speed_deceleration), m_params.maxSpeed);
 
-  if (beh.state == STOPPING_STATE || beh.state == TRAFFIC_LIGHT_STOP_STATE || beh.state == STOP_SIGN_STOP_STATE || beh.state == STOP_SIGN_YIELD_STATE) {
+  if (beh.state == STOPPING_STATE || beh.state == TRAFFIC_LIGHT_STOP_STATE || beh.state == STOP_SIGN_STOP_STATE || beh.state == YIELD_STOP_STATE) {
     double min_dist = pow(CurrStatus.speed, 2) / (4.0 * 2);
 
     if (beh.stopDistance <= min_dist && m_params.enableQuickStop) {
@@ -697,7 +696,7 @@ double DecisionMaker::UpdateVelocityDirectlyToTrajectory(const BehaviorState& be
     desired_velocity = max_velocity;
     return clipTargetVelocityAndWriteToPath(desired_velocity, max_velocity);
 
-  } else if (beh.state == STOP_SIGN_WAIT_STATE || beh.state == TRAFFIC_LIGHT_WAIT_STATE || YIELDING_WAIT_STATE) {
+  } else if (beh.state == STOP_SIGN_WAIT_STATE || beh.state == TRAFFIC_LIGHT_WAIT_STATE || beh.state == YIELD_WAIT_STATE) {
     desired_velocity = 0.;
     return clipTargetVelocityAndWriteToPath(desired_velocity, max_velocity);
 

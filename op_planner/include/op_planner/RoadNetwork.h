@@ -71,10 +71,10 @@ enum STATE_TYPE {INITIAL_STATE = 0,
 	OBSTACLE_AVOIDANCE_STATE = 11,
 	GOAL_STATE = 12,
 	FINISH_STATE = 13,
-	STOP_SIGN_YIELD_STATE = 14,
+	YIELD_STOP_STATE = 14,
 	BRANCH_LEFT_STATE = 15,
 	BRANCH_RIGHT_STATE = 16,
-	YIELDING_WAIT_STATE = 17};
+	YIELD_WAIT_STATE = 17};
 
 enum LIGHT_INDICATOR {INDICATOR_LEFT, INDICATOR_RIGHT, INDICATOR_BOTH , INDICATOR_NONE};
 
@@ -1310,7 +1310,7 @@ public:
 	double lateral_cost;
 	double longitudinal_cost;
 	bool bBlocked;
-	bool predictive_blocked;
+	bool bPredictiveBlocked;
 	std::vector<std::pair<int, double> > lateral_costs;
 
 
@@ -1330,7 +1330,7 @@ public:
 		lateral_cost = 0;
 		longitudinal_cost = 0;
 		bBlocked = false;
-		predictive_blocked = false;
+		bPredictiveBlocked = false;
 	}
 
 	std::string ToString()

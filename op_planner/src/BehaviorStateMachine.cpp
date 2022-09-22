@@ -334,7 +334,7 @@ BehaviorStateMachine* ForwardStateII::GetNextState()
            pCParams->currentStopSignID > 0 &&
            pCParams->bPredictiveBlock)
   {
-    return FindBehaviorState(STOP_SIGN_YIELD_STATE);
+    return FindBehaviorState(YIELD_STOP_STATE);
   }
 
   else if (m_pParams->enableStopSignBehavior &&
@@ -394,7 +394,7 @@ BehaviorStateMachine* FollowStateII::GetNextState()
            pCParams->bPredictiveBlock && 
            pCParams->egoStoppingVelocity < pCParams->egoFollowingVelocity)
   {
-    return FindBehaviorState(STOP_SIGN_YIELD_STATE);
+    return FindBehaviorState(YIELD_STOP_STATE);
   }
   // added: if egostoppingVelocity smaller go to STOP_SIGN stopping
   else if (m_pParams->enableStopSignBehavior &&
@@ -579,7 +579,7 @@ BehaviorStateMachine* StopStateII::GetNextState()
   }
 }
 
-BehaviorStateMachine* StopSignYieldState::GetNextState()
+BehaviorStateMachine* YieldStopState::GetNextState()
 {
 
   PreCalculatedConditions* pCParams = GetCalcParams();
@@ -595,7 +595,7 @@ BehaviorStateMachine* StopSignYieldState::GetNextState()
   }
   else if (pCParams->bPredictiveBlock && pCParams->currentVelocity <= m_zero_velocity && pCParams->egoStoppingVelocity < m_pParams->low_speed_upper_lim)
   {
-    return FindBehaviorState(YIELDING_WAIT_STATE);
+    return FindBehaviorState(YIELD_WAIT_STATE);
   }
   else
   {
@@ -604,7 +604,7 @@ BehaviorStateMachine* StopSignYieldState::GetNextState()
 
 }
 
-BehaviorStateMachine* YieldingWaitState::GetNextState()
+BehaviorStateMachine* YieldWaitState::GetNextState()
 {
   PreCalculatedConditions* pCParams = GetCalcParams();
 

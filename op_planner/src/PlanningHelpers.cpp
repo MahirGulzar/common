@@ -2491,7 +2491,7 @@ void PlanningHelpers::GenerateRecommendedSpeed(vector<WayPoint>& path, const dou
 
           double k_ratio = path.at(i).cost * 9.2;
 
-          double local_max = (path.at(i).v >= 0 && max_speed > path.at(i).v) ? max_speed : path.at(i).v;
+          double local_max = (path.at(i).v >= 0 && max_speed > path.at(i).v) ? path.at(i).v : max_speed;
 
           // disabled velocity recalculation based on cost
           if (k_ratio >= 9.5)
@@ -2512,7 +2512,7 @@ void PlanningHelpers::GenerateRecommendedSpeed(vector<WayPoint>& path, const dou
   }
   else {
       for (unsigned int i = 0; i < path.size(); i++) {
-          double local_max = (path.at(i).v >= 0 && max_speed > path.at(i).v) ? max_speed : path.at(i).v;
+          double local_max = (path.at(i).v >= 0 && max_speed > path.at(i).v) ? path.at(i).v : max_speed;
           path.at(i).v = local_max;
       }
   }

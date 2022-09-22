@@ -92,7 +92,7 @@ void ACC::CalculateVelocityDesired(const double& dt, const PlannerHNS::VehicleSt
 	/**
 	 * Stop With distance , in these state the vehicle should stop within a designated distance "stopDistance". and should go to complete stop, speed = 0
 	 */
-	else if(CurrBehavior.state == TRAFFIC_LIGHT_STOP_STATE || CurrBehavior.state == STOP_SIGN_STOP_STATE || CurrBehavior.state == STOPPING_STATE || CurrBehavior.state == STOP_SIGN_YIELD_STATE)
+	else if(CurrBehavior.state == TRAFFIC_LIGHT_STOP_STATE || CurrBehavior.state == STOP_SIGN_STOP_STATE || CurrBehavior.state == STOPPING_STATE || CurrBehavior.state == YIELD_STOP_STATE)
 	{
 		if(CurrBehavior.stopDistance > 0)
 		{
@@ -231,7 +231,7 @@ void  ACC::UpdateVelocityModelBased(const double& dt, const PlannerHNS::VehicleS
 		//std::cout << "Forward: max_velocity: " <<  CurrBehavior.maxVelocity << ", currSpeed: " << CurrStatus.speed << ", desiredVel: " << desiredVel << ", acceleration: " << acceleration_critical << std::endl;
 
 	}
-	else if(CurrBehavior.state == STOPPING_STATE || CurrBehavior.state == TRAFFIC_LIGHT_STOP_STATE || CurrBehavior.state == STOP_SIGN_STOP_STATE || CurrBehavior.state == STOP_SIGN_YIELD_STATE)
+	else if(CurrBehavior.state == STOPPING_STATE || CurrBehavior.state == TRAFFIC_LIGHT_STOP_STATE || CurrBehavior.state == STOP_SIGN_STOP_STATE || CurrBehavior.state == YIELD_STOP_STATE)
 	{
 		double deceleration_critical = m_VehicleInfo.max_deceleration;
 		double distance_to_stop = CurrBehavior.stopDistance ;
