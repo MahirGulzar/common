@@ -1181,11 +1181,18 @@ public:
 		}
 		return minS;
 	}
-
-	WayPoint closestStoppingWayPoint()
+	
+	bool closestStoppingWayPoint(WayPoint& stoppingPoint)
 	{
-		if(stoppingPoints.size()==0) return WayPoint(DBL_MAX,0,0,0);
-		return stoppingPoints.at(stoppingPoints.size()-1);
+		if(stoppingPoints.size()==0)
+		{
+			return false;
+		}
+		else
+		{
+			stoppingPoint = stoppingPoints.at(stoppingPoints.size()-1);
+			return true;
+		}
 	}
 
 	PreCalculatedConditions()
