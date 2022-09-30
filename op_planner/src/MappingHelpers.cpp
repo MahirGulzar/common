@@ -22,7 +22,8 @@ using namespace std;
 namespace PlannerHNS
 {
 
-constexpr int ANGLE_MAX_FOR_DIRECTION_CHECK = 45;
+constexpr int ANGLE_MAX_FOR_DIRECTION_CHECK = 45;	// Max angle between lane waypoint and obstacle heading
+													// to associate lane to that obstacle.
 constexpr double MAX_DISTANCE_TO_START_LANE_DETECTION = 100;
 
 MappingHelpers::MappingHelpers() {

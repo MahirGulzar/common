@@ -84,7 +84,7 @@ TrajectoryCost TrajectoryEvaluator::doOneStep(const int g_index,
   collectContoursAndTrajectories(m_obj_list_, safety_border_, all_contour_points_);
   
   collision_points_.clear();
-  objects_attention.clear();
+  objects_attention_.clear();
   // Populates collision_points and object attentions. Marks ego's rollouts as blocked and/or predictive blocked. 
   CalcCostsAndObsOnRollouts(m_GlobalPaths, total_paths, params, critical_lateral_distance, critical_long_front_distance, local_roll_outs_,
                             all_contour_points_, trajectory_costs_, curr_state,
@@ -635,7 +635,7 @@ void TrajectoryEvaluator::CalcCostsAndObsOnRollouts(
   PlanningHelpers::GetRelativeInfo(zero_obs_m_RollOuts.at(0).at(center_index), stop_wp, stopLineInfoGlobal);
 
   // Get attention ROIs if necessary
-  // if (attention_rois.size() == 0)
+  // if (attention_rois_.size() == 0)
   //   GetYieldROIs(stop_wp, stopLineInfoGlobal, signType);
 
   EvaluateRolloutForPredictiveYielding(
@@ -905,7 +905,7 @@ void TrajectoryEvaluator::GetYieldROIs(const WayPoint &stopWp, const RelativeInf
       curr_roi.push_back(p4);
       curr_roi.push_back(p1);
 
-      attention_rois.push_back(curr_roi);
+      attention_rois_.push_back(curr_roi);
       curr_roi.clear();
     }
 
@@ -971,12 +971,12 @@ void TrajectoryEvaluator::EvaluateRolloutForPredictiveYielding(
         PlanningHelpers::GetExactDistanceOnTrajectory(roll_out, stopLineInfoGlobal, obstacle_info);
 
     // If ROIs are available then check if obstacle is in any ROI
-    if (attention_rois.size() > 0)
+    if (attention_rois_.size() > 0)
     {
       int in_roi = 0;
-      for (int roi_idx = 0; roi_idx < attention_rois.size(); roi_idx++)
+      for (int roi_idx = 0; roi_idx < attention_rois_.size(); roi_idx++)
       {
-        in_roi += PlanningHelpers::PointInsidePolygon(attention_rois.at(roi_idx), obj_list.at(obj_idx).center); 
+        in_roi += PlanningHelpers::PointInsidePolygon(attention_rois_.at(roi_idx), obj_list.at(obj_idx).center); 
       }
       if (in_roi == 0)
       {
@@ -997,8 +997,8 @@ void TrajectoryEvaluator::EvaluateRolloutForPredictiveYielding(
      * ===============================< Generate Fresh Trajectories for Low Speed Obstacles  >=======================================
      */
 
-    // If obstacle has below reference velocity then
-    // repopulate obstacle's trajectories with reference lane speed for addtional safety.
+    // if obstacle has velocity below LOWER_REFERENCE_SPEED_LIMIT then it is 
+    // populated using the lane's reference velocity from the map for additional safety.
     if (obj_list.at(obj_idx).center.v < LOWER_REFERENCE_SPEED_LIMIT)
     {
       // If Obstacle is too slow. Check if we are in traffic congestion or not.
@@ -1080,8 +1080,8 @@ void TrajectoryEvaluator::EvaluateRolloutForPredictiveYielding(
 
         PlanningHelpers::GetRelativeInfoLimited(roll_out, obj_list.at(obj_idx).predTrajectories.at(traj_idx).at(point_idx), trajectoryPoint_info, prev_index);
 
-        double actual_lateral_distance = fabs(trajectoryPoint_info.perp_distance) - 0.05;  // add small distance so this never become zero
-        double actual_longitudinal_distance = trajectoryPoint_info.from_back_distance + roll_out.at(trajectoryPoint_info.iBack).cost - 0.05;  // add small distance so this never become zero
+        double actual_lateral_distance = fabs(trajectoryPoint_info.perp_distance) + 0.05;  // add small distance so this never become zero
+        double actual_longitudinal_distance = trajectoryPoint_info.from_back_distance + roll_out.at(trajectoryPoint_info.iBack).cost + 0.05;  // add small distance so this never become zero
 
         // Get the longitudinal distances on the rollout
         trajectoryPointLongitudinalDistWithEgo =
@@ -1155,7 +1155,7 @@ void TrajectoryEvaluator::EvaluateRolloutForPredictiveYielding(
       if (predictiveBlocked)
       {
         // Add current obstacle in list of object attentions i.e. Ego should be yielding for all obstacles in object_attentions list.
-        objects_attention.push_back(obj_list.at(obj_idx));
+        objects_attention_.push_back(obj_list.at(obj_idx));
         trajectory_costs[center_index].bPredictiveBlocked = predictiveBlocked;
         // nearest_collision_point = lastNearestCollisionPoint;
       }

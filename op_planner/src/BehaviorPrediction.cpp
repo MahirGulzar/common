@@ -35,7 +35,7 @@ BehaviorPrediction::BehaviorPrediction()
 	m_bStepByStep = false;
 	//m_bCanDecide = true;
 	m_bParticleFilter = false;
-	m_bsignEstimation = false;
+	m_bSignEstimation = false;
 	UtilityHNS::UtilityH::GetTickCount(m_GenerationTimer);
 	UtilityHNS::UtilityH::GetTickCount(m_ResamplingTimer);
 	m_bFirstMove = true;
@@ -181,7 +181,7 @@ void BehaviorPrediction::PredictCurrentTrajectory(RoadNetwork& map, ObjParticles
 	// ------------------------------
 	// Speed Sign Estimation
 	// ------------------------------
-	if (m_bsignEstimation && pCarPart->obj.pClosestWaypoints.size() > 0)
+	if (m_bSignEstimation && pCarPart->obj.pClosestWaypoints.size() > 0)
 	{	
 		// Take first waypoint from the closest waypoints list.
 

@@ -376,7 +376,7 @@ BehaviorStateMachine* FollowStateII::GetNextState()
   PreCalculatedConditions* pCParams = GetCalcParams();
 
   if ((pCParams->bFinalLocalTrajectory && (pCParams->distanceToGoal - pCParams->minStoppingDistance) < 1.0) &&
-      pCParams->egoStoppingVelocity <= pCParams->egoFollowingVelocity && pCParams->egoStoppingVelocity < pCParams->egoFollowingVelocity)
+      pCParams->egoStoppingVelocity <= pCParams->egoFollowingVelocity)
   {
     return FindBehaviorState(STOPPING_STATE);
   }

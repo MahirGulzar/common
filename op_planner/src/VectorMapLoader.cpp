@@ -157,11 +157,6 @@ void VectorMapLoader::ConstructRoadNetworkFromROSMessage(UtilityHNS::MapRaw& map
 		ExtractWayArea(mapRaw.pAreas->m_data_list, mapRaw.pWayAreas->m_data_list, mapRaw.pLines->m_data_list, mapRaw.pPoints->m_data_list, origin.pos, map);
 	}
 
-	//Intersection
-	// std::cout << " >> Extract Intersection .. " << std::endl;
-	// ExtractIntersectionArea(mapRaw.pAreas->m_data_list, mapRaw.pIntersections->m_data_list, mapRaw.pLines->m_data_list, mapRaw.pPoints->m_data_list, origin.pos, map);
-
-
 	std::cout << " >> Connect Wayarea (boundaries) to waypoints ... " << std::endl;
 	MappingHelpers::ConnectBoundariesToWayPoints(map);
 	MappingHelpers::LinkBoundariesToWayPoints(map);
@@ -842,52 +837,6 @@ void VectorMapLoader::ExtractWayArea(const std::vector<UtilityHNS::AisanAreasFil
 	}
 }
 
-
-void VectorMapLoader::ExtractIntersectionArea(const std::vector<UtilityHNS::AisanAreasFileReader::AisanArea>& area_data,
-		const std::vector<UtilityHNS::AisanIntersectionFileReader::AisanIntersection>& intersection_data,
-			const std::vector<UtilityHNS::AisanLinesFileReader::AisanLine>& line_data,
-			const std::vector<UtilityHNS::AisanPointsFileReader::AisanPoints>& points_data,
-			const GPSPoint& origin, RoadNetwork& map)
-{
-	for(unsigned int iw=0; iw < intersection_data.size(); iw ++)
-	{
-		Boundary bound;
-		bound.id = intersection_data.at(iw).ID;
-
-		for(unsigned int ia=0; ia < area_data.size(); ia ++)
-		{
-			if(intersection_data.at(iw).AID == area_data.at(ia).AID)
-			{
-				int s_id = area_data.at(ia).SLID;
-				int e_id = area_data.at(ia).ELID;
-
-				for(unsigned int il=0; il< line_data.size(); il++)
-				{
-					if(line_data.at(il).LID >= s_id && line_data.at(il).LID <= e_id)
-					{
-						for(unsigned int ip=0; ip < points_data.size(); ip++)
-						{
-							if(points_data.at(ip).PID == line_data.at(il).BPID)
-							{
-
-								WayPoint p(points_data.at(ip).Ly + origin.x, points_data.at(ip).Bx + origin.y, points_data.at(ip).H + origin.z, 0);
-								p.pos.lat = points_data.at(ip).B;
-								p.pos.lon = points_data.at(ip).L;
-								p.pos.alt = points_data.at(ip).H;
-								bound.type = INTERSECTION_BOUNDARY;
-								MappingHelpers::correct_gps_coor(p.pos.lat, p.pos.lon);
-								bound.points.push_back(p);
-							}
-						}
-					}
-				}
-			}
-		}
-
-		map.boundaries.push_back(bound);
-	}
-}
-
 void VectorMapLoader::ConstructRoadNetworkFromROSMessageVer0(UtilityHNS::MapRaw& mapRaw, const PlannerHNS::WayPoint& origin, PlannerHNS::RoadNetwork& map)
 {
 	std::vector<Lane> roadLanes;
@@ -1258,11 +1207,6 @@ void VectorMapLoader::ConstructRoadNetworkFromROSMessageVer0(UtilityHNS::MapRaw&
 		std::cout << " >> Extract Wayarea .. " << std::endl;
 		ExtractWayArea(mapRaw.pAreas->m_data_list, mapRaw.pWayAreas->m_data_list, mapRaw.pLines->m_data_list, mapRaw.pPoints->m_data_list, origin.pos, map);
 	}
-
-	//Intersection
-	// std::cout << " >> Extract Intersection .. " << std::endl;
-	// ExtractIntersectionArea(mapRaw.pAreas->m_data_list, mapRaw.pIntersections->m_data_list, mapRaw.pLines->m_data_list, mapRaw.pPoints->m_data_list, origin.pos, map);
-
 
 	//Fix angle for lanes
 	std::cout << " >> Fix waypoint direction .. " << std::endl;

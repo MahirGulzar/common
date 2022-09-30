@@ -150,13 +150,9 @@ void DecisionMaker::InitBehaviorStates()
 
   m_pYieldStopState->InsertNextState(m_pYieldWaitState);
   m_pYieldStopState->InsertNextState(m_pFollowState);
-  m_pYieldStopState->InsertNextState(m_pGoalState);
-
-  m_pYieldWaitState->InsertNextState(m_pYieldStopState);
+  m_pYieldStopState->InsertNextState(m_pGoToGoalState);
+  
   m_pYieldWaitState->InsertNextState(m_pFollowState);
-
-  // ---------------------------------
-
 
   m_pStopState->InsertNextState(m_pGoToGoalState);
   m_pStopState->InsertNextState(m_pGoalState);
@@ -168,16 +164,14 @@ void DecisionMaker::InitBehaviorStates()
   m_pGoToGoalState->InsertNextState(m_pTrafficLightStopState);
   m_pGoToGoalState->InsertNextState(m_pFollowState);
   m_pGoToGoalState->InsertNextState(m_pStopState);
-  // ---------------------------------
   m_pGoToGoalState->InsertNextState(m_pYieldStopState);
-  // ---------------------------------
   m_pGoToGoalState->decisionMakingCount = 0;  // m_params.nReliableCount;
 
   m_pGoalState->InsertNextState(m_pGoToGoalState);
-
   m_pGoalState->InsertNextState(m_pMissionCompleteState);
-  m_pMissionCompleteState->InsertNextState(m_pFollowState);
 
+  m_pMissionCompleteState->InsertNextState(m_pFollowState);
+  
   m_pStopSignStopState->InsertNextState(m_pStopSignWaitState);
   m_pStopSignStopState->InsertNextState(m_pFollowState);
 

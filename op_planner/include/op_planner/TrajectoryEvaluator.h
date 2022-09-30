@@ -79,8 +79,8 @@ public:
 public:
   std::vector<WayPoint> all_contour_points_;
   std::vector<DetectedObject> m_obj_list_;
-  std::vector<DetectedObject> objects_attention;
-  std::vector<std::vector<WayPoint>> attention_rois;
+  std::vector<DetectedObject> objects_attention_;
+  std::vector<std::vector<WayPoint>> attention_rois_;
   std::vector<WayPoint> collision_points_;
   PolygonShape safety_border_;
   std::vector<std::vector<WayPoint> > local_roll_outs_;
