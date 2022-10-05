@@ -331,14 +331,14 @@ BehaviorStateMachine* ForwardStateII::GetNextState()
       }
 
   else if (m_pParams->enableStopSignBehavior &&
-           pCParams->currentStopSignID > 0 &&
+           (pCParams->currentTrafficSignType >= 2 &&  pCParams->currentTrafficSignType <= 8) && 
            pCParams->bPredictiveBlock)
   {
     return FindBehaviorState(YIELD_STOP_STATE);
   }
 
   else if (m_pParams->enableStopSignBehavior &&
-           pCParams->currentStopSignID == 0 &&
+           (pCParams->currentTrafficSignType == UNKNOWN_SIGN || pCParams->currentTrafficSignType == STOP_SIGN) &&
            pCParams->currentStopSignID != pCParams->prevStopSignID &&
            pCParams->egoStoppingVelocity < pCParams->currentVelocity)
     {
@@ -390,7 +390,7 @@ BehaviorStateMachine* FollowStateII::GetNextState()
   }
   // added: if YIELDING_SIGN and trajectory is blocked
   else if (m_pParams->enableStopSignBehavior &&
-           pCParams->currentStopSignID > 0 &&
+          (pCParams->currentTrafficSignType >= 2 &&  pCParams->currentTrafficSignType <= 8) &&
            pCParams->bPredictiveBlock && 
            pCParams->egoStoppingVelocity < pCParams->egoFollowingVelocity)
   {
@@ -398,7 +398,7 @@ BehaviorStateMachine* FollowStateII::GetNextState()
   }
   // added: if egostoppingVelocity smaller go to STOP_SIGN stopping
   else if (m_pParams->enableStopSignBehavior &&
-           pCParams->currentStopSignID == 0 &&
+           (pCParams->currentTrafficSignType == UNKNOWN_SIGN || pCParams->currentTrafficSignType == STOP_SIGN) &&
            pCParams->currentStopSignID != pCParams->prevStopSignID &&
            pCParams->egoStoppingVelocity < pCParams->egoFollowingVelocity)
   {
@@ -482,6 +482,11 @@ BehaviorStateMachine* MissionAccomplishedStateII::GetNextState()
 BehaviorStateMachine* StopSignStopStateII::GetNextState()
 {
   PreCalculatedConditions* pCParams = GetCalcParams();
+
+  // TODO: Comment below transition to [STOPPING_STATE]
+  // Reason: If a stopline is encountered, then we should stop at stopline not go to Goal State. 
+  // Transition to StopSignStopStateII shouldn't have happened when goal is before StopSign. 
+  // For this, kindly revisit the transition conditions to this state.
 
   if (pCParams->currentGoalID != pCParams->prevGoalID)
   {

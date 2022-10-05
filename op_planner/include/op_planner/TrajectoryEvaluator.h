@@ -63,7 +63,6 @@ public:
                            const std::vector<std::vector<WayPoint> >& total_paths, const WayPoint& curr_state,
                            const PlanningParams& params, const CAR_BASIC_INFO& car_info,
                            const VehicleState& vehicle_state, std::vector<DetectedObject>& obj_list,
-                           const RoadNetwork &map,
                            const bool& b_static_only = false,
                            const int& prev_curr_index = -1,
 						   const bool& b_keep_curr = false);
@@ -142,10 +141,7 @@ private:
     const RelativeInfo& stopLineInfoGlobal,
     const std::vector<WayPoint>& roll_out,
     const PlanningParams& params,
-    const WayPoint& curr_state,
-    const WayPoint& stopWp,
     const double& critical_lateral_distance,
-    const double& distanceToClosestStopLine,
     const size_t center_index,
     std::vector<TrajectoryCost>& trajectory_costs,
     std::vector<DetectedObject>& obj_list);

@@ -42,12 +42,10 @@ TrajectoryCost TrajectoryEvaluator::doOneStep(const int g_index,
                                               const PlanningParams& original_params, const CAR_BASIC_INFO& car_info,
                                               const VehicleState& vehicle_state,
                                               std::vector<DetectedObject>& obj_list,
-                                              const RoadNetwork &map,
                                               const bool& b_static_only,
                                               const int& prev_curr_index,
                                               const bool& b_keep_curr)
 {
-  m_Map = map;
   /**
    * @todo: Use deep copy below?
    */
@@ -604,49 +602,55 @@ void TrajectoryEvaluator::CalcCostsAndObsOnRollouts(
   if(b_static_only)
     return;
 
-  RelativeInfo stopLineInfoGlobal;
-  TRAFFIC_SIGN_TYPE signType;
-  WayPoint stop_wp;
-  int stopLineID = -1;
-  int stopSignID = -1;
-
-  // Get distance to closest stopline
-  double distanceToClosestStopLine = PlanningHelpers::GetDistanceToClosestStopLine(m_Map,
+  std::vector<PlannerHNS::StopLine> stopLines;
+  PlanningHelpers::GetStopLinesInRange(
+    m_Map,
     m_TotalOriginalPaths.at(0), 
     curr_pos,
-    params.giveUpDistance, 
+    params.giveUpDistance,
     params.horizonDistance,
+    false,
     params.enableStopSignBehavior,
-    stopLineID, 
-    stopSignID, 
-    stop_wp, 
-    signType) - params.verticalSafetyDistance;
+    std::vector<PlannerHNS::TrafficLight>(),
+    stopLines);
 
-  if(stopSignID <= 0 || distanceToClosestStopLine > params.horizonDistance)
-  {
-    // Skip evaluation. Either its not a yielding stopline or we are way too far from it.
+  // If no stopline found then return
+  if (stopLines.size() == 0)
     return;
-  }
   
+  /**
+   * Below, we only take the first stopline if its a yielding stopline.
+   * Multiple yielding stoplines are not handled at the moment.
+   */
+  StopLine nearestStopLine = stopLines.at(0);
+
+  // If nearest stopline is not yielding stopline then return
+  if (nearestStopLine.signType < 2 ||  nearestStopLine.signType > 8 )
+    return;
+
+  RelativeInfo pose_info;
+  RelativeInfo stop_info;
+  PlanningHelpers::GetRelativeInfo(m_TotalOriginalPaths.at(0), curr_pos, pose_info, 0);
+  PlanningHelpers::GetRelativeInfo(m_TotalOriginalPaths.at(0), nearestStopLine.points.at(0), stop_info);
+
   // Generate ego's obstacle free run of trajectory for predictive evaluations
   std::vector<std::vector<std::vector<PlannerHNS::WayPoint>>> zero_obs_m_RollOuts;
   GetZeroObstacleRollouts(total_paths, curr_pos, params, zero_obs_m_RollOuts);
+
+  RelativeInfo stopLineInfoGlobal;
   // Get global relative info of stop line waypoint on center rollout.
-  PlanningHelpers::GetRelativeInfo(zero_obs_m_RollOuts.at(0).at(center_index), stop_wp, stopLineInfoGlobal);
+  PlanningHelpers::GetRelativeInfo(zero_obs_m_RollOuts.at(0).at(center_index), nearestStopLine.points.at(0), stopLineInfoGlobal);
 
   // Get attention ROIs if necessary
-  // if (attention_rois_.size() == 0)
-  //   GetYieldROIs(stop_wp, stopLineInfoGlobal, signType);
+  if (attention_rois_.size() == 0)
+    GetYieldROIs(stop_info.perp_point, stopLineInfoGlobal, nearestStopLine.signType);
 
   EvaluateRolloutForPredictiveYielding(
     carInfoGlobal,
     stopLineInfoGlobal,
     zero_obs_m_RollOuts.at(0).at(center_index),
     params,
-    curr_pos,
-    stop_wp,
     critical_lateral_distance,
-    distanceToClosestStopLine,
     center_index,
     trajectory_costs,
     obj_list);
@@ -920,10 +924,7 @@ void TrajectoryEvaluator::GetYieldROIs(const WayPoint &stopWp, const RelativeInf
  * @param stopLineInfoGlobal Closest stop line relative info w.r.t center rollout
  * @param rollOut Roll_out to be evaluated
  * @param params Planning params
- * @param curr_state Current vehicle position
- * @param stopWp Closest stop line WayPoint
  * @param critical_lateral_distance Lateral safety distance
- * @param distanceToClosestStopLine Distance to closest stopline
  * @param center_index Index of center rollout
  * @param trajectory_costs Trajectory costs vector that holds navigation cost values
  * @param obj_list List of detected objects
@@ -934,10 +935,7 @@ void TrajectoryEvaluator::EvaluateRolloutForPredictiveYielding(
     const RelativeInfo& stopLineInfoGlobal,
     const std::vector<WayPoint>& roll_out,
     const PlanningParams& params,
-    const WayPoint& curr_state,
-    const WayPoint& stopWp,
     const double& critical_lateral_distance,
-    const double& distanceToClosestStopLine,
     const size_t center_index,
     std::vector<TrajectoryCost>& trajectory_costs,
     std::vector<DetectedObject>& obj_list)

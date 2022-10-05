@@ -109,6 +109,48 @@ enum TRAFFIC_SIGN_TYPE {UNKNOWN_SIGN=0, STOP_SIGN=1, YIELD=2, YIELD_RIGHT=3, YIE
 
 enum TRAFFIC_LIGHT_TYPE {UNKNOWN_LIGHT=0, RED_LIGHT=1, GREEN_LIGHT=2, YELLOW_LIGHT=3, CROSS_GREEN=4, CROSS_RED=5, LEFT_GREEN=6, FORWARD_GREEN=7, RIGHT_GREEN=8, FLASH_YELLOW=9, FLASH_RED=10};
 
+inline const char* SignToString(TRAFFIC_SIGN_TYPE sign)
+{
+    switch (sign)
+    {
+        case UNKNOWN_SIGN:   return "UNKNOWN_SIGN ";
+        case STOP_SIGN:   return "STOP_SIGN ";
+        case YIELD: return "YIELD ";
+		case YIELD_RIGHT:   return "YIELD_RIGHT ";
+        case YIELD_LEFT:   return "YIELD_LEFT ";
+        case YIELD_LEFT_RIGHT: return "YIELD_LEFT_RIGHT ";
+		case YIELD_FORWARD:   return "YIELD_FORWARD ";
+        case YIELD_FORWARD_RIGHT:   return "YIELD_FORWARD_RIGHT ";
+        case YIELD_FORWARD_LEFT: return "YIELD_FORWARD_LEFT ";
+		case MAX_SPEED_SIGN:   return "MAX_SPEED_SIGN ";
+        case MIN_SPEED_SIGN:   return "MIN_SPEED_SIGN ";
+        case NO_PARKING_SIGN: return "NO_PARKING_SIGN ";
+		case SCHOOL_CROSSING_SIGN: return "SCHOOL_CROSSING_SIGN ";
+
+        default:      return "[Wronge TRAFFIC_SIGN_TYPE] ";
+    }
+}
+
+inline const char* LightToString(TRAFFIC_LIGHT_TYPE light)
+{
+    switch (light)
+    {
+        case UNKNOWN_LIGHT:   return "UNDETECTED ";
+        case RED_LIGHT:   return "RED_LIGHT ";
+        case GREEN_LIGHT: return "GREEN_LIGHT ";
+		case YELLOW_LIGHT:   return "YELLOW_LIGHT ";
+        case CROSS_GREEN:   return "CROSS_GREEN ";
+        case CROSS_RED: return "CROSS_RED ";
+		case LEFT_GREEN:   return "LEFT_GREEN ";
+        case FORWARD_GREEN:   return "FORWARD_GREEN ";
+        case RIGHT_GREEN: return "RIGHT_GREEN ";
+		case FLASH_YELLOW:   return "FLASH_YELLOW ";
+        case FLASH_RED:   return "FLASH_RED ";
+
+        default:      return "[Wronge TRAFFIC_LIGHT_TYPE] ";
+    }
+}
+
 class Lane;
 class TrafficLight;
 class RoadSegment;
@@ -597,6 +639,11 @@ public:
 	int stopSignID;
 	std::vector<WayPoint> points;
 	Lane* pLane;
+	bool isTrafficLight;
+	bool isRoadSign;
+	TRAFFIC_SIGN_TYPE signType;
+	TRAFFIC_LIGHT_TYPE lightType;
+	double stoppingDistance;
 	int linkID;
 
 	StopLine()
@@ -607,6 +654,11 @@ public:
 		pLane = 0;
 		stopSignID = -1;
 		linkID = 0;
+		isTrafficLight = false;
+		isRoadSign = false;
+		signType = UNKNOWN_SIGN;
+		lightType = UNKNOWN_LIGHT;
+		stoppingDistance = 0;
 	}
 };
 
@@ -1143,6 +1195,7 @@ public:
 	int 				currentTrafficLightID;
 	int 				prevTrafficLightID;
 	bool 				bTrafficIsRed; //On , off status
+	TRAFFIC_SIGN_TYPE	currentTrafficSignType;
 	std::string			stopLineInfoRviz;
 	//-------------------------------------------//
 	//Swerving

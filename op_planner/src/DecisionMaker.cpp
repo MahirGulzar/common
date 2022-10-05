@@ -394,51 +394,156 @@ void DecisionMaker::CalculateImportantParameterForDecisionMaking(const PlannerHN
    * Set Traffic light and stop sign values
    */
 
-  int stopLineID = -1;
-  int stopSignID = -1;
-  int trafficLightID = -1;
-  double distanceToClosestStopLine;
-  // Stopline waypoint projected on the rollout.
-  WayPoint stopWp;
-  bool bGreenTrafficLight = true;
+  // --------------< Latest implementation of finding stoplines >---------------------------
 
-  /*
-  distanceToClosestStopLine = PlanningHelpers::GetDistanceToClosestStopLineAndCheck(
-                                  m_TotalPaths.at(pValues->iCurrSafeLane), state, m_params.giveUpDistance,
-                                  stopLineID,stopSignID, trafficLightID) - m_params.verticalSafetyDistance;
-  */
+  std::vector<PlannerHNS::StopLine> stopLines;
 
 
-  // find closest stopping point and provide Rviz info and waypoint
-  distanceToClosestStopLine = PlanningHelpers::GetDistanceToClosestStopLineAndCheckWithRvizInfo(
-            m_TotalPaths.at(pValues->iCurrSafeLane), state,
-            m_params.giveUpDistance, m_params.horizonDistance,
-            m_pCurrentBehaviorState->m_pParams->enableTrafficLightBehavior,
-            m_pCurrentBehaviorState->m_pParams->enableStopSignBehavior,
-            detectedLights, pValues->stopLineInfoRviz,
-            stopLineID, stopSignID, trafficLightID, stopWp) - m_params.verticalSafetyDistance;
+  PlanningHelpers::GetStopLinesInRange(
+    m_Map,
+    m_TotalPaths.at(pValues->iCurrSafeLane),
+    state,
+    m_params.giveUpDistance,
+    m_params.horizonDistance,
+    m_pCurrentBehaviorState->m_pParams->enableTrafficLightBehavior,
+    m_pCurrentBehaviorState->m_pParams->enableStopSignBehavior,
+    detectedLights,
+    stopLines);
 
-  // Stopline within horizon
-  if (stopLineID != -1) {
-    pValues->stoppingDistances.push_back(distanceToClosestStopLine);
-  }
+  pValues->stopLineInfoRviz = "";
 
-  pValues->currentStopSignID = stopSignID;
-  pValues->currentTrafficLightID = trafficLightID;
-  // if traffic light is next and is added then must be RED
-  if(trafficLightID > 0){
-      pValues->bTrafficIsRed = true;
-      // Add stopping waypoint to display as marker for stopping at red light.
-      pValues->stoppingPoints.push_back(stopWp);
-  } else {
-      pValues->bTrafficIsRed = false;
-  }
-
-  if (pValues->bPredictiveBlock)
+  if (stopLines.size() > 0)
   {
-    // Add stopping waypoint to display as marker for yielding
-    pValues->stoppingPoints.push_back(stopWp);
+    /**
+     * Below, we process and stop at the fist stopline when
+     * Its a traffic light with red color                     OR
+     * Its a yield stopline with predictive_blocked True      OR
+     * Its a stopline with signType STOP_SIGN                 OR
+     * Its a stopline with signType UNKNOWN_SIGN
+     */
+
+    RelativeInfo pose_info;
+    RelativeInfo stop_info;
+    StopLine currentStopLine;
+    bool nearestPopulated = false;
+
+    // Process stoplines for decision making
+    for (const auto &stopline: stopLines)
+    {
+      
+      PlanningHelpers::GetRelativeInfo(m_TotalPaths.at(pValues->iCurrSafeLane), state, pose_info, 0);
+      PlanningHelpers::GetRelativeInfo(m_TotalPaths.at(pValues->iCurrSafeLane), stopline.points.at(0), stop_info);
+
+      double distanceToClosestStopLineLatest = PlanningHelpers::GetExactDistanceOnTrajectory(m_TotalPaths.at(pValues->iCurrSafeLane), pose_info, stop_info);
+      distanceToClosestStopLineLatest -= m_params.verticalSafetyDistance;
+
+      if (stopline.isTrafficLight)
+      {
+        pValues->stopLineInfoRviz += LightToString(stopline.lightType);
+        // if traffic light is Red then process it.
+        if (stopline.lightType == RED_LIGHT)
+        {
+          pValues->stoppingDistances.push_back(distanceToClosestStopLineLatest);
+          pValues->stoppingPoints.push_back(stop_info.perp_point);
+
+          // If there is no nearest stopline added, then mark this stopline as nearest
+          if(!nearestPopulated)
+          {
+            nearestPopulated = true;
+            currentStopLine = stopline;
+          }
+        }
+        // Hack stoppingDistance used to represent radius - can decide if cam or api based detection
+        // TODO: Verify distanceToClosestStopLineLatest variable here
+        if(stopline.stoppingDistance < 10000)
+            pValues->stopLineInfoRviz += "cam ";
+        else
+            pValues->stopLineInfoRviz += "api ";
+      }
+      else if(stopline.isRoadSign)
+      {
+        pValues->stopLineInfoRviz += SignToString(stopline.signType);
+
+        // Add stopping waypoint if ego's rollout is predictiveBlocked by another vehicle and stopline is yielding stopline
+        if (stopline.signType > 1 && stopline.signType < 9)
+        {
+          // Only add this as stopline if there is another vehicle to yield.
+          if(pValues->bPredictiveBlock)
+          {
+            pValues->stopLineInfoRviz += "Yes ";
+            pValues->stoppingDistances.push_back(distanceToClosestStopLineLatest);
+            pValues->stoppingPoints.push_back(stop_info.perp_point);
+
+            // If there is no nearest stopline added, then mark this stopline as nearest
+            if(!nearestPopulated)
+            {
+              nearestPopulated = true;
+              currentStopLine = stopline;
+            }
+          }
+          else
+          {
+            pValues->stopLineInfoRviz += "No ";
+          }
+        }
+        // Add stopping waypoint if stopline is of type STOP_SIGN
+        else if (stopline.signType == STOP_SIGN)
+        {
+          pValues->stoppingDistances.push_back(distanceToClosestStopLineLatest);
+          pValues->stoppingPoints.push_back(stop_info.perp_point);
+
+          // If there is no nearest stopline added, then mark this stopline as nearest
+          if(!nearestPopulated)
+          {
+            nearestPopulated = true;
+            currentStopLine = stopline;
+          }
+        }
+        // Add stopping waypoint if stopline is of type UNKNOWN_SIGN
+        else if(stopline.signType == UNKNOWN_SIGN)
+        {
+          pValues->stoppingDistances.push_back(distanceToClosestStopLineLatest);
+          pValues->stoppingPoints.push_back(stop_info.perp_point);
+
+          // If there is no nearest stopline added, then mark this stopline as nearest
+          if(!nearestPopulated)
+          {
+            nearestPopulated = true;
+            currentStopLine = stopline;
+          }
+          printf("\033[1;33mWarning: Treating stopline with ID %d as [STOP_SIGN] due to [UNKNOWN_SIGN] type \033[0m \n", stopline.id);
+        }
+        // If its another stopSign then throw error message.
+        else
+        {
+          std::cout<<"\033[1;31mERROR: A stopline with signType: "<<stopline.signType<<" has no implementation in DecisionMaker text\033[0m"<<std::endl;
+        }
+
+      }
+      else
+      {
+        printf("\033[1;31mERROR: A stopline with ID %d is neither a traffic light nor a road sign \033[0m \n", stopline.id);
+      }
+
+      // Add distance information
+      pValues->stopLineInfoRviz += "(" + std::to_string((int)(distanceToClosestStopLineLatest)) + " m);";
+
+    }
+
+    if (nearestPopulated)
+    {
+      pValues->currentTrafficSignType = currentStopLine.signType;
+      pValues->currentStopSignID = currentStopLine.stopSignID;
+
+      if(currentStopLine.isTrafficLight && currentStopLine.lightType == RED_LIGHT)
+      {
+        pValues->bTrafficIsRed = true;
+      }
+    }
+    
   }
+
+  // -----------------------------------------------------------------------------------------
 
   /**
    * Computing Ego stopping velocity.
@@ -745,11 +850,12 @@ void DecisionMaker::setDeceleration(double deceleration_limit)
 PlannerHNS::BehaviorState DecisionMaker::GenerateBehaviorState(const PlannerHNS::VehicleState& vehicleState)
 {
   PlannerHNS::PreCalculatedConditions* preCalcPrams = m_pCurrentBehaviorState->GetCalcParams();
+  STATE_TYPE last_state = m_pCurrentBehaviorState->m_Behavior;
 
   m_pCurrentBehaviorState = m_pCurrentBehaviorState->GetNextState();
 
   if (m_pCurrentBehaviorState == nullptr) {
-    std::cout<<"Error state "<< GetBehaviorNameFromCode(m_pCurrentBehaviorState->m_Behavior) << " transitioned to Null state" << std::endl;
+    std::cout<<"\033[1;31mError: Transitioned from ["<< GetBehaviorNameFromCode(last_state) << "] state to [Null] state .. text\033[0m" << std::endl;
     m_pCurrentBehaviorState = m_pInitState;
   }
 
