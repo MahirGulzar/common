@@ -88,7 +88,7 @@ protected:
 	double UpdateVelocityDirectlyToTrajectory(const BehaviorState& beh, const VehicleState& CurrStatus, const double& dt);
 	double UpdateVelocityDirectlyToTrajectorySmooth(BehaviorState& beh, const VehicleState& CurrStatus, const double& dt);
 	bool ReachEndOfGlobalPath(const double& min_distance, const int& iGlobalPathIndex);
-
+	void ProcessStopLinesDecisions(const std::vector<PlannerHNS::StopLine>& stopLines, PreCalculatedConditions* pValues);
 
 
 	std::vector<PlannerHNS::WayPoint> t_centerTrajectorySmoothed;

@@ -1092,8 +1092,11 @@ void PlanningHelpers::GetStopLinesInRange(
 							continue;
 
                         // check if traffic light
-                        if(path.at(i).pLane->stopLines.at(j).lightIds.size() > 0 && enableTrafficLightBehavior)
+                        if(path.at(i).pLane->stopLines.at(j).lightIds.size() > 0)
                         {
+							if (!enableTrafficLightBehavior)
+								continue;
+							
 							stopLines.push_back(path.at(i).pLane->stopLines.at(j));
 							stopLines.at(stopLines.size()-1).isTrafficLight = true;
 

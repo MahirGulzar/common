@@ -290,6 +290,129 @@ bool DecisionMaker::GetNextTrafficLight(const int& prevTrafficLightId,
   return false;
 }
 
+void DecisionMaker::ProcessStopLinesDecisions(const std::vector<PlannerHNS::StopLine>& stopLines, PreCalculatedConditions* pValues)
+{
+  RelativeInfo pose_info;
+  RelativeInfo stop_info;
+  StopLine currentStopLine;
+  bool nearestPopulated = false;
+
+  // Process stoplines for decision making
+  for (const auto &stopline: stopLines)
+  {
+    
+    PlanningHelpers::GetRelativeInfo(m_TotalPaths.at(pValues->iCurrSafeLane), state, pose_info, 0);
+    PlanningHelpers::GetRelativeInfo(m_TotalPaths.at(pValues->iCurrSafeLane), stopline.points.at(0), stop_info);
+
+    double distanceToClosestStopLineLatest = PlanningHelpers::GetExactDistanceOnTrajectory(m_TotalPaths.at(pValues->iCurrSafeLane), pose_info, stop_info);
+    distanceToClosestStopLineLatest -= m_params.verticalSafetyDistance;
+
+    if (stopline.isTrafficLight)
+    {
+      pValues->stopLineInfoRviz += LightToString(stopline.lightType);
+      // if traffic light is Red then process it.
+      if (stopline.lightType == RED_LIGHT)
+      {
+        pValues->stoppingDistances.push_back(distanceToClosestStopLineLatest);
+        pValues->stoppingPoints.push_back(stop_info.perp_point);
+
+        // If there is no nearest stopline added, then mark this stopline as nearest
+        if(!nearestPopulated)
+        {
+          nearestPopulated = true;
+          currentStopLine = stopline;
+        }
+      }
+      // Hack stoppingDistance used to represent radius - can decide if cam or api based detection
+      // TODO: Verify distanceToClosestStopLineLatest variable here
+      if(stopline.stoppingDistance < 10000)
+          pValues->stopLineInfoRviz += "cam ";
+      else
+          pValues->stopLineInfoRviz += "api ";
+    }
+    else if(stopline.isRoadSign)
+    {
+      pValues->stopLineInfoRviz += SignToString(stopline.signType);
+
+      // Add stopping waypoint if ego's rollout is predictiveBlocked by another vehicle and stopline is yielding stopline
+      if (stopline.signType > 1 && stopline.signType < 9)
+      {
+        // Only add this as stopline if there is another vehicle to yield.
+        if(pValues->bPredictiveBlock)
+        {
+          pValues->stopLineInfoRviz += "Yes ";
+          pValues->stoppingDistances.push_back(distanceToClosestStopLineLatest);
+          pValues->stoppingPoints.push_back(stop_info.perp_point);
+
+          // If there is no nearest stopline added, then mark this stopline as nearest
+          if(!nearestPopulated)
+          {
+            nearestPopulated = true;
+            currentStopLine = stopline;
+          }
+        }
+        else
+        {
+          pValues->stopLineInfoRviz += "No ";
+        }
+      }
+      // Add stopping waypoint if stopline is of type STOP_SIGN
+      else if (stopline.signType == STOP_SIGN)
+      {
+        pValues->stoppingDistances.push_back(distanceToClosestStopLineLatest);
+        pValues->stoppingPoints.push_back(stop_info.perp_point);
+
+        // If there is no nearest stopline added, then mark this stopline as nearest
+        if(!nearestPopulated)
+        {
+          nearestPopulated = true;
+          currentStopLine = stopline;
+        }
+      }
+      // Add stopping waypoint if stopline is of type UNKNOWN_SIGN
+      else if(stopline.signType == UNKNOWN_SIGN)
+      {
+        pValues->stoppingDistances.push_back(distanceToClosestStopLineLatest);
+        pValues->stoppingPoints.push_back(stop_info.perp_point);
+
+        // If there is no nearest stopline added, then mark this stopline as nearest
+        if(!nearestPopulated)
+        {
+          nearestPopulated = true;
+          currentStopLine = stopline;
+        }
+        printf("\033[1;33mWarning: Treating stopline with ID %d as [STOP_SIGN] due to [UNKNOWN_SIGN] type \033[0m \n", stopline.id);
+      }
+      // If its another stopSign then throw error message.
+      else
+      {
+        std::cout<<"\033[1;31mERROR: A stopline with signType: "<<stopline.signType<<" has no implementation in DecisionMaker \033[0m"<<std::endl;
+      }
+
+    }
+    else
+    {
+      printf("\033[1;31mERROR: A stopline with ID %d is neither a traffic light nor a road sign \033[0m \n", stopline.id);
+    }
+
+    // Add distance information
+    pValues->stopLineInfoRviz += "(" + std::to_string((int)(distanceToClosestStopLineLatest)) + " m);";
+
+  }
+
+  if (nearestPopulated)
+  {
+    pValues->currentTrafficSignType = currentStopLine.signType;
+    pValues->currentStopSignID = currentStopLine.stopSignID;
+
+    if(currentStopLine.isTrafficLight && currentStopLine.lightType == RED_LIGHT)
+    {
+      pValues->bTrafficIsRed = true;
+    }
+  }
+
+}
+
 void DecisionMaker::CalculateImportantParameterForDecisionMaking(const PlannerHNS::VehicleState& car_state,
                                                                  const bool& bEmergencyStop,
                                                                  const std::vector<TrafficLight>& detectedLights,
@@ -394,10 +517,9 @@ void DecisionMaker::CalculateImportantParameterForDecisionMaking(const PlannerHN
    * Set Traffic light and stop sign values
    */
 
-  // --------------< Latest implementation of finding stoplines >---------------------------
+  // --------------< Latest implementation of finding && processing stoplines >---------------------------
 
   std::vector<PlannerHNS::StopLine> stopLines;
-
 
   PlanningHelpers::GetStopLinesInRange(
     m_Map,
@@ -415,132 +537,13 @@ void DecisionMaker::CalculateImportantParameterForDecisionMaking(const PlannerHN
   if (stopLines.size() > 0)
   {
     /**
-     * Below, we process and stop at the fist stopline when
+     * Here, we process and stop at the fist stopline when
      * Its a traffic light with red color                     OR
      * Its a yield stopline with predictive_blocked True      OR
      * Its a stopline with signType STOP_SIGN                 OR
      * Its a stopline with signType UNKNOWN_SIGN
      */
-
-    RelativeInfo pose_info;
-    RelativeInfo stop_info;
-    StopLine currentStopLine;
-    bool nearestPopulated = false;
-
-    // Process stoplines for decision making
-    for (const auto &stopline: stopLines)
-    {
-      
-      PlanningHelpers::GetRelativeInfo(m_TotalPaths.at(pValues->iCurrSafeLane), state, pose_info, 0);
-      PlanningHelpers::GetRelativeInfo(m_TotalPaths.at(pValues->iCurrSafeLane), stopline.points.at(0), stop_info);
-
-      double distanceToClosestStopLineLatest = PlanningHelpers::GetExactDistanceOnTrajectory(m_TotalPaths.at(pValues->iCurrSafeLane), pose_info, stop_info);
-      distanceToClosestStopLineLatest -= m_params.verticalSafetyDistance;
-
-      if (stopline.isTrafficLight)
-      {
-        pValues->stopLineInfoRviz += LightToString(stopline.lightType);
-        // if traffic light is Red then process it.
-        if (stopline.lightType == RED_LIGHT)
-        {
-          pValues->stoppingDistances.push_back(distanceToClosestStopLineLatest);
-          pValues->stoppingPoints.push_back(stop_info.perp_point);
-
-          // If there is no nearest stopline added, then mark this stopline as nearest
-          if(!nearestPopulated)
-          {
-            nearestPopulated = true;
-            currentStopLine = stopline;
-          }
-        }
-        // Hack stoppingDistance used to represent radius - can decide if cam or api based detection
-        // TODO: Verify distanceToClosestStopLineLatest variable here
-        if(stopline.stoppingDistance < 10000)
-            pValues->stopLineInfoRviz += "cam ";
-        else
-            pValues->stopLineInfoRviz += "api ";
-      }
-      else if(stopline.isRoadSign)
-      {
-        pValues->stopLineInfoRviz += SignToString(stopline.signType);
-
-        // Add stopping waypoint if ego's rollout is predictiveBlocked by another vehicle and stopline is yielding stopline
-        if (stopline.signType > 1 && stopline.signType < 9)
-        {
-          // Only add this as stopline if there is another vehicle to yield.
-          if(pValues->bPredictiveBlock)
-          {
-            pValues->stopLineInfoRviz += "Yes ";
-            pValues->stoppingDistances.push_back(distanceToClosestStopLineLatest);
-            pValues->stoppingPoints.push_back(stop_info.perp_point);
-
-            // If there is no nearest stopline added, then mark this stopline as nearest
-            if(!nearestPopulated)
-            {
-              nearestPopulated = true;
-              currentStopLine = stopline;
-            }
-          }
-          else
-          {
-            pValues->stopLineInfoRviz += "No ";
-          }
-        }
-        // Add stopping waypoint if stopline is of type STOP_SIGN
-        else if (stopline.signType == STOP_SIGN)
-        {
-          pValues->stoppingDistances.push_back(distanceToClosestStopLineLatest);
-          pValues->stoppingPoints.push_back(stop_info.perp_point);
-
-          // If there is no nearest stopline added, then mark this stopline as nearest
-          if(!nearestPopulated)
-          {
-            nearestPopulated = true;
-            currentStopLine = stopline;
-          }
-        }
-        // Add stopping waypoint if stopline is of type UNKNOWN_SIGN
-        else if(stopline.signType == UNKNOWN_SIGN)
-        {
-          pValues->stoppingDistances.push_back(distanceToClosestStopLineLatest);
-          pValues->stoppingPoints.push_back(stop_info.perp_point);
-
-          // If there is no nearest stopline added, then mark this stopline as nearest
-          if(!nearestPopulated)
-          {
-            nearestPopulated = true;
-            currentStopLine = stopline;
-          }
-          printf("\033[1;33mWarning: Treating stopline with ID %d as [STOP_SIGN] due to [UNKNOWN_SIGN] type \033[0m \n", stopline.id);
-        }
-        // If its another stopSign then throw error message.
-        else
-        {
-          std::cout<<"\033[1;31mERROR: A stopline with signType: "<<stopline.signType<<" has no implementation in DecisionMaker text\033[0m"<<std::endl;
-        }
-
-      }
-      else
-      {
-        printf("\033[1;31mERROR: A stopline with ID %d is neither a traffic light nor a road sign \033[0m \n", stopline.id);
-      }
-
-      // Add distance information
-      pValues->stopLineInfoRviz += "(" + std::to_string((int)(distanceToClosestStopLineLatest)) + " m);";
-
-    }
-
-    if (nearestPopulated)
-    {
-      pValues->currentTrafficSignType = currentStopLine.signType;
-      pValues->currentStopSignID = currentStopLine.stopSignID;
-
-      if(currentStopLine.isTrafficLight && currentStopLine.lightType == RED_LIGHT)
-      {
-        pValues->bTrafficIsRed = true;
-      }
-    }
-    
+    ProcessStopLinesDecisions(stopLines, pValues);
   }
 
   // -----------------------------------------------------------------------------------------
@@ -855,7 +858,7 @@ PlannerHNS::BehaviorState DecisionMaker::GenerateBehaviorState(const PlannerHNS:
   m_pCurrentBehaviorState = m_pCurrentBehaviorState->GetNextState();
 
   if (m_pCurrentBehaviorState == nullptr) {
-    std::cout<<"\033[1;31mError: Transitioned from ["<< GetBehaviorNameFromCode(last_state) << "] state to [Null] state .. text\033[0m" << std::endl;
+    std::cout<<"\033[1;31mError: Transitioned from ["<< GetBehaviorNameFromCode(last_state) << "] state to [Null] state .. \033[0m" << std::endl;
     m_pCurrentBehaviorState = m_pInitState;
   }
 
