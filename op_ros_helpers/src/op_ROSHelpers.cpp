@@ -1509,10 +1509,10 @@ std::string ROSHelpers::GetBehaviorNameFromCode(const PlannerHNS::STATE_TYPE& be
 	case PlannerHNS::GOAL_STATE:
 		str = "Goal Achieved";
 		break;
-	case PlannerHNS::STOP_SIGN_YIELD_STATE:
+	case PlannerHNS::YIELD_STOP_STATE:
 		str = "Yield Stop";
 		break;
-	case PlannerHNS::YIELDING_WAIT_STATE:
+	case PlannerHNS::YIELD_WAIT_STATE:
 		str = "Yield Wait";
 		break;
 	case PlannerHNS::BRANCH_LEFT_STATE:

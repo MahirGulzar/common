@@ -495,8 +495,21 @@ void DecisionMaker::CalculateImportantParameterForDecisionMaking(const PlannerHN
   /**
    * Set reach goal state values
    */
-  pValues->distanceToGoal =
-      PlannerHNS::PlanningHelpers::GetDistanceFromPoseToEnd(state, m_TotalPaths.at(pValues->iCurrSafeLane)) - critical_long_front_distance;
+  
+  // Get relative infos for ego car and goal_point
+  PlannerHNS::RelativeInfo ego_info;
+  PlanningHelpers::GetRelativeInfo(m_TotalPaths.at(pValues->iCurrSafeLane), state, ego_info);
+
+  PlannerHNS::RelativeInfo goal_info;
+  int goal_index = m_TotalPaths.at(pValues->iCurrSafeLane).size() - 1;
+  PlanningHelpers::GetRelativeInfo(m_TotalPaths.at(pValues->iCurrSafeLane), m_TotalPaths.at(pValues->iCurrSafeLane).at(goal_index), goal_info);
+
+  // Calculate distance to goal
+  pValues->distanceToGoal = PlannerHNS::PlanningHelpers::GetExactDistanceOnTrajectory(m_TotalPaths.at(pValues->iCurrSafeLane), ego_info, goal_info) - critical_long_front_distance;
+
+  // This returns slightly wrong value and causes jerky braking for goal points
+  //pValues->distanceToGoal =
+  //    PlannerHNS::PlanningHelpers::GetDistanceFromPoseToEnd(state, m_TotalPaths.at(pValues->iCurrSafeLane)) - critical_long_front_distance;
 
   if ((pValues->distanceToGoal < -m_params.goalDiscoveryDistance) ||
       (pValues->distanceToGoal > m_params.horizonDistance)) {
@@ -554,6 +567,10 @@ void DecisionMaker::CalculateImportantParameterForDecisionMaking(const PlannerHN
 
   // We take the closest stop line as stopping point.
   double distance_to_stop = *std::min_element(pValues->stoppingDistances.begin(), pValues->stoppingDistances.end());
+
+  // calculate deceleration needed for stopping behind the stopline - used to decide if ego goes to LIGHT_STOP
+  // distance_to_stop can go to negative if stopline is crossed (giveUpDistance: -2) and it would flip the sign
+  pValues->egoStoplineDeceleration = -pow(car_state.speed, 2) / (2.0 * (distance_to_stop > 0 ? distance_to_stop : 0.0));
 
   // Calculate ego car velocity for STOPPING state
   if (distance_to_stop < 0) {

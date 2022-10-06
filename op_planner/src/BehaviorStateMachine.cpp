@@ -6,6 +6,7 @@
 
 #include "op_planner/BehaviorStateMachine.h"
 #include <iostream>
+#include <ros/ros.h>
 
 namespace PlannerHNS
 {
@@ -323,12 +324,22 @@ BehaviorStateMachine* ForwardStateII::GetNextState()
 {
   PreCalculatedConditions* pCParams = GetCalcParams();
 
+
   if (m_pParams->enableTrafficLightBehavior &&
       pCParams->bTrafficIsRed &&
       pCParams->egoStoppingVelocity < pCParams->currentVelocity)
-      {
-        return FindBehaviorState(TRAFFIC_LIGHT_STOP_STATE);
-      }
+  {
+    // check against stopline_deceleration_limit - if green changes to red and we are too close then do not brake
+    if (m_pParams->stopline_deceleration_limit > pCParams->egoStoplineDeceleration)
+    {
+      ROS_INFO("Ignoring RED light exceeding stopline_deceleration_limit: %f m/s2" , pCParams->egoStoplineDeceleration);
+      return FindBehaviorState(this->m_Behavior);
+    }
+    else
+    {
+      return FindBehaviorState(TRAFFIC_LIGHT_STOP_STATE);
+    }
+  }
 
   else if (m_pParams->enableStopSignBehavior &&
            (pCParams->currentTrafficSignType >= 2 &&  pCParams->currentTrafficSignType <= 8) && 
@@ -341,9 +352,9 @@ BehaviorStateMachine* ForwardStateII::GetNextState()
            (pCParams->currentTrafficSignType == UNKNOWN_SIGN || pCParams->currentTrafficSignType == STOP_SIGN) &&
            pCParams->currentStopSignID != pCParams->prevStopSignID &&
            pCParams->egoStoppingVelocity < pCParams->currentVelocity)
-    {
+  {
     return FindBehaviorState(STOP_SIGN_STOP_STATE);
-    }
+  }
 
   else if (m_pParams->enableFollowing && pCParams->bFullyBlock)
   {
@@ -360,7 +371,7 @@ BehaviorStateMachine* ForwardStateII::GetNextState()
     return FindBehaviorState(OBSTACLE_AVOIDANCE_STATE);
     }
 
-  else if (pCParams->bFinalLocalTrajectory && (pCParams->distanceToGoal - pCParams->minStoppingDistance) < 1.0 && pCParams->egoStoppingVelocity < pCParams->egoFollowingVelocity)
+  else if (pCParams->bFinalLocalTrajectory && (pCParams->distanceToGoal - pCParams->minStoppingDistance) < 1.0)
   {
     return FindBehaviorState(STOPPING_STATE);
   }
@@ -381,12 +392,21 @@ BehaviorStateMachine* FollowStateII::GetNextState()
     return FindBehaviorState(STOPPING_STATE);
   }
 
-  // added: stopline distance compared to follow distance: car is faster, tfl red and we need to stopDecisionMaker.cpp
+  // added: stopline distance compared to follow distance: car is faster, tfl red and we need to stop
   else if (m_pParams->enableTrafficLightBehavior &&
            pCParams->bTrafficIsRed &&
            pCParams->egoStoppingVelocity < pCParams->egoFollowingVelocity)
   {
-    return FindBehaviorState(TRAFFIC_LIGHT_STOP_STATE);
+    // check against stopline_deceleration_limit - if green changes to red and we are too close then do not brake
+    if (m_pParams->stopline_deceleration_limit > pCParams->egoStoplineDeceleration)
+    {
+      ROS_INFO("Ignoring RED light exceeding stopline_deceleration_limit: %f m/s2" , pCParams->egoStoplineDeceleration);
+      return FindBehaviorState(this->m_Behavior);
+    }
+    else
+    {
+      return FindBehaviorState(TRAFFIC_LIGHT_STOP_STATE);
+    }
   }
   // added: if YIELDING_SIGN and trajectory is blocked
   else if (m_pParams->enableStopSignBehavior &&

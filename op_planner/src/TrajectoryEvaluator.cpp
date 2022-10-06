@@ -135,8 +135,7 @@ void TrajectoryEvaluator::collectContoursAndTrajectories(const std::vector<Plann
                                                          PolygonShape& ego_car_border,
                                                          std::vector<WayPoint>& contour_points)
 {
-  PlannerHNS::WayPoint p;
-
+  WayPoint p;
   contour_points.clear();
   for (unsigned int i = 0; i < obj_list.size(); i++)
   {
@@ -150,6 +149,8 @@ void TrajectoryEvaluator::collectContoursAndTrajectories(const std::vector<Plann
       p.width = 0;
       contour_points.push_back(p);
     }
+    // adding centroid to contours list for obstacle checking
+    contour_points.push_back(obj_list.at(i).center);
   }
 
 }
