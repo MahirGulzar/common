@@ -873,7 +873,7 @@ PlannerHNS::BehaviorState DecisionMaker::GenerateBehaviorState(const PlannerHNS:
   STATE_TYPE last_state = m_pCurrentBehaviorState->m_Behavior;
 
   m_pCurrentBehaviorState = m_pCurrentBehaviorState->GetNextState();
-
+  // std::cout<<"Transition from ["<<GetBehaviorNameFromCode(last_state)<<"] to ["<<GetBehaviorNameFromCode(m_pCurrentBehaviorState->m_Behavior)<<"]"<<std::endl;
   if (m_pCurrentBehaviorState == nullptr) {
     std::cout<<"\033[1;31mError: Transitioned from ["<< GetBehaviorNameFromCode(last_state) << "] state to [Null] state .. \033[0m" << std::endl;
     m_pCurrentBehaviorState = m_pInitState;

@@ -342,8 +342,9 @@ BehaviorStateMachine* ForwardStateII::GetNextState()
   }
 
   else if (m_pParams->enableStopSignBehavior &&
+            pCParams->bPredictiveBlock &&
            (pCParams->currentTrafficSignType >= 2 &&  pCParams->currentTrafficSignType <= 8) && 
-           pCParams->bPredictiveBlock)
+           pCParams->egoStoppingVelocity < pCParams->currentVelocity)
   {
     return FindBehaviorState(YIELD_STOP_STATE);
   }
