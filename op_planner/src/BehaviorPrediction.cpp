@@ -174,6 +174,16 @@ void BehaviorPrediction::PredictCurrentTrajectory(RoadNetwork& map, ObjParticles
 	pCarPart->obj.predTrajectories.clear();
 	PlannerH planner;
 
+	/**
+	 * Following mapping is taken from openplanner
+	 * 
+	 * https://gitlab.cs.ut.ee/autonomous-driving-lab/autoware.ai/common/-/blob/ut/master/op_ros_helpers/src/op_ROSHelpers.cpp#L2168-2170
+	 *
+	 * velocity.linear.x ---> obj.center.v
+	 * velocity.linear.y ---> obj.acceleration_raw
+	 * velocity.linear.z ---> obj.acceleration_desc
+	 */
+
 	Vector tracked_velocity(pCarPart->obj.center.v, pCarPart->obj.acceleration_raw, pCarPart->obj.acceleration_desc);	
 	pCarPart->obj.pClosestWaypoints = MappingHelpers::GetClosestWaypointsListFromMap(pCarPart->obj.center, map, m_LaneDetectionDistance, pCarPart->obj.bDirection);
 	int speed_sign = 1;
