@@ -1106,7 +1106,7 @@ void PlanningHelpers::GetStopLinesInRange(
                                 if (path.at(i).stopLineID == detectedLight.stopLineID)
                                 {
 									stopLines.at(stopLines.size()-1).lightType = detectedLight.lightType;
-									stopLines.at(stopLines.size()-1).stoppingDistance = detectedLight.stoppingDistance;
+									stopLines.at(stopLines.size()-1).aggregatedRadius = detectedLight.aggregatedRadius;
                                     break;
                                 }
                             }

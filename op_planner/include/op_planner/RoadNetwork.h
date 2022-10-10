@@ -643,7 +643,7 @@ public:
 	bool isRoadSign;
 	TRAFFIC_SIGN_TYPE signType;
 	TRAFFIC_LIGHT_TYPE lightType;
-	double stoppingDistance;
+	double aggregatedRadius;;
 	int linkID;
 
 	StopLine()
@@ -658,7 +658,7 @@ public:
 		isRoadSign = false;
 		signType = UNKNOWN_SIGN;
 		lightType = UNKNOWN_LIGHT;
-		stoppingDistance = 0;
+		aggregatedRadius = 0;
 	}
 };
 
@@ -728,6 +728,7 @@ public:
 	WayPoint pose;
 	TRAFFIC_LIGHT_TYPE lightType;
 	double stoppingDistance;
+	double aggregatedRadius;
 	std::vector<int> laneIds;
 	std::vector<Lane*> pLanes;
 	int linkID;
@@ -742,6 +743,7 @@ public:
 		horizontal_angle = 0;
 		vertical_angle = 0;
 		stoppingDistance = 2;
+		aggregatedRadius = 0;
 		id 			= 0;
 		lightType	= GREEN_LIGHT;
 		linkID 		= 0;

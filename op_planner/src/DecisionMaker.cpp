@@ -323,9 +323,8 @@ void DecisionMaker::ProcessStopLinesDecisions(const std::vector<PlannerHNS::Stop
           currentStopLine = stopline;
         }
       }
-      // Hack stoppingDistance used to represent radius - can decide if cam or api based detection
-      // TODO: Verify distanceToClosestStopLineLatest variable here
-      if(stopline.stoppingDistance < 10000)
+      // Hack aggregatedRadius used to represent radius - can decide if cam or api based detection
+      if(stopline.aggregatedRadius < 10000)
           pValues->stopLineInfoRviz += "cam ";
       else
           pValues->stopLineInfoRviz += "api ";
