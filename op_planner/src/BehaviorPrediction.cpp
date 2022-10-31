@@ -159,6 +159,8 @@ void BehaviorPrediction::ExtractTrajectoriesFromMap(const std::vector<DetectedOb
 	old_obj_list.clear();
 	old_obj_list = m_temp_list;
 
+	OrientationCorrection(old_obj_list);
+
 	//m_PredictedObjects.clear();
 	for(unsigned int ip=0; ip < old_obj_list.size(); ip++)
 	{
@@ -167,6 +169,36 @@ void BehaviorPrediction::ExtractTrajectoriesFromMap(const std::vector<DetectedOb
 		old_obj_list.at(ip)->MatchTrajectories();
 	}
 
+}
+
+void BehaviorPrediction::OrientationCorrection(std::vector<ObjParticles*>& old_obj_list)
+{
+	std::map<int, Vector>::iterator it;
+	
+	for (auto old_obj : old_obj_list)
+	{
+		Vector obj_velocity(old_obj->obj.center.v, old_obj->obj.acceleration_raw, old_obj->obj.acceleration_desc);	
+
+		// If velocity norm is greater than 0 then we use latest velocity and update it to IDVelocity map
+		if (obj_velocity.length() > 0)
+		{
+			m_DetectedObjIDVelocityMap[old_obj->obj.id] = obj_velocity;
+		}
+
+		it = m_DetectedObjIDVelocityMap.find(old_obj->obj.id);
+
+		// If there exist an object with respective ID, then correct its orientation
+		if (it != m_DetectedObjIDVelocityMap.end())
+		{
+			double corrected_yaw = atan2((double)obj_velocity[1], (double)obj_velocity[0]);
+			old_obj->obj.center.pos.a = corrected_yaw;
+		}
+		else
+		{
+			// Since current object has no history of velocity > 0 the pose given by the detector will be used
+			// TODO: should set velocity reliable False?
+		}
+	}
 }
 
 void BehaviorPrediction::PredictCurrentTrajectory(RoadNetwork& map, ObjParticles* pCarPart)

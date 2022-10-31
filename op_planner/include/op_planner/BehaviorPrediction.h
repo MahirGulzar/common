@@ -14,6 +14,8 @@
 #include "PlannerH.h"
 #include "op_utility/UtilityH.h"
 #include "PassiveDecisionMaker.h"
+#include "op_planner/MappingHelpers.h"
+#include "op_planner/MatrixOperations.h"
 
 #define _LOG_PREDICTION_DATA
 
@@ -1462,6 +1464,7 @@ public:
 
 	std::vector<ObjParticles*> m_temp_list;
 	std::vector<ObjParticles*> m_ParticleInfo;
+	std::map<int, Vector> m_DetectedObjIDVelocityMap;
 
 	struct timespec m_GenerationTimer;
 	timespec m_ResamplingTimer;
@@ -1480,6 +1483,7 @@ protected:
 	double CalcIndicatorWeight(int p_ind, int obj_ind);
 	double CalcAccelerationWeight(int p_acl, int obj_acl);
 
+	void OrientationCorrection(std::vector<ObjParticles*>& old_obj_list);
 	void CalPredictionTimeForObject(ObjParticles* pCarPart, const double& min_pred_distance);
 	void PredictCurrentTrajectory(RoadNetwork& map, ObjParticles* pCarPart);
 	void ExtractTrajectoriesFromMap(const std::vector<DetectedObject>& obj_list, RoadNetwork& map, std::vector<ObjParticles*>& old_list);

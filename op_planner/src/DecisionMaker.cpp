@@ -380,18 +380,18 @@ void DecisionMaker::ProcessStopLinesDecisions(const std::vector<PlannerHNS::Stop
           nearestPopulated = true;
           currentStopLine = stopline;
         }
-        printf("\033[1;33mWarning: Treating stopline with ID %d as [STOP_SIGN] due to [UNKNOWN_SIGN] type \033[0m \n", stopline.id);
+        std::cout<<"\033[1;33mWarning: Treating stopline with ID "<< stopline.id <<" as [STOP_SIGN] due to [UNKNOWN_SIGN] type \033[0m"<<std::endl;
       }
       // If its another stopSign then throw error message.
       else
       {
-        std::cout<<"\033[1;31mERROR: A stopline with signType: "<<stopline.signType<<" has no implementation in DecisionMaker \033[0m"<<std::endl;
+        std::cout<<"\033[1;31mERROR: A stopline with with ID "<< stopline.id <<" has signType: "<<SignToString(stopline.signType)<<" which is not implemented in DecisionMaker \033[0m"<<std::endl;
       }
 
     }
     else
     {
-      printf("\033[1;31mERROR: A stopline with ID %d is neither a traffic light nor a road sign \033[0m \n", stopline.id);
+      std::cout<<"\033[1;31mERROR: A stopline with ID "<<stopline.id<<" is neither a traffic light nor a road sign \033[0m"<<std::endl;
     }
 
     // Add distance information
