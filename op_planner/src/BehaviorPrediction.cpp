@@ -35,7 +35,7 @@ BehaviorPrediction::BehaviorPrediction()
 	m_bStepByStep = false;
 	//m_bCanDecide = true;
 	m_bParticleFilter = false;
-	m_bSignEstimation = false;
+	m_bVectorSpeed = false;
 	UtilityHNS::UtilityH::GetTickCount(m_GenerationTimer);
 	UtilityHNS::UtilityH::GetTickCount(m_ResamplingTimer);
 	m_bFirstMove = true;
@@ -159,7 +159,11 @@ void BehaviorPrediction::ExtractTrajectoriesFromMap(const std::vector<DetectedOb
 	old_obj_list.clear();
 	old_obj_list = m_temp_list;
 
-	OrientationCorrection(old_obj_list);
+	// If speed vectors are available then correct orientation using speed vector
+	if(m_bVectorSpeed)
+	{
+		OrientationCorrection(old_obj_list);
+	}
 
 	//m_PredictedObjects.clear();
 	for(unsigned int ip=0; ip < old_obj_list.size(); ip++)
@@ -223,7 +227,7 @@ void BehaviorPrediction::PredictCurrentTrajectory(RoadNetwork& map, ObjParticles
 	// ------------------------------
 	// Speed Sign Estimation
 	// ------------------------------
-	if (m_bSignEstimation && pCarPart->obj.pClosestWaypoints.size() > 0)
+	if (m_bVectorSpeed && pCarPart->obj.pClosestWaypoints.size() > 0)
 	{	
 		// Take first waypoint from the closest waypoints list.
 
