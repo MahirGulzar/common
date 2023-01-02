@@ -1729,8 +1729,14 @@ public:
 
 	bool AreMessagesReceived()
 	{
-		bool bBasicData =  pLanes != nullptr && pPoints != nullptr && pCenterLines  != nullptr && pNodes  != nullptr;
-		//  && pSigns != nullptr
+		bool bBasicData = pLanes  		!= nullptr &&
+						  pPoints 		!= nullptr && 
+						  pNodes  		!= nullptr &&
+						  pCenterLines	!= nullptr &&
+						  pSignals 	 	!= nullptr &&
+						  pStopLines 	!= nullptr &&
+						  pVectors		!= nullptr &&
+						  pSigns 	 	!= nullptr;
 
 		if(bBasicData)
 		{
@@ -1755,23 +1761,11 @@ public:
 			if(this->pRoadedges == nullptr)
 				this->pRoadedges = new UtilityHNS::AisanRoadEdgeFileReader(vector_map_msgs::RoadEdgeArray());
 
-			if(this->pSignals == nullptr)
-				this->pSignals = new UtilityHNS::AisanSignalFileReader(vector_map_msgs::SignalArray());
-
-			if(this->pSigns == nullptr)
-				this->pSigns = new UtilityHNS::AisanRoadSignFileReader(vector_map_msgs::RoadSignArray());
-
-			if(this->pStopLines == nullptr)
-				this->pStopLines = new UtilityHNS::AisanStopLineFileReader(vector_map_msgs::StopLineArray());
-
 			if(this->pStreetLight == nullptr)
 				this->pStreetLight = new UtilityHNS::AisanStreetlightFileReader(vector_map_msgs::StreetLightArray());
 
 			if(this->pUtilitypole == nullptr)
 				this->pUtilitypole = new UtilityHNS::AisanUtilitypoleFileReader(vector_map_msgs::UtilityPoleArray());
-
-			if(this->pVectors == nullptr)
-				this->pVectors = new UtilityHNS::AisanVectorFileReader(vector_map_msgs::VectorArray());
 
 			if(this->pWayAreas == nullptr)
 				this->pWayAreas = new UtilityHNS::AisanWayareaFileReader(vector_map_msgs::WayAreaArray());
