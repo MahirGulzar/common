@@ -309,25 +309,35 @@ void DecisionMaker::ProcessStopLinesDecisions(const std::vector<PlannerHNS::Stop
 
     if (stopline.isTrafficLight)
     {
-      pValues->stopLineInfoRviz += LightToString(stopline.lightType);
-      // if traffic light is Red then process it.
-      if (stopline.lightType == RED_LIGHT)
+      if (stopline.lightType == UNDETECTED_LIGHT)
       {
-        pValues->stoppingDistances.push_back(distanceToClosestStopLineLatest);
-        pValues->stoppingPoints.push_back(stop_info.perp_point);
-
-        // If there is no nearest stopline added, then mark this stopline as nearest
-        if(!nearestPopulated)
-        {
-          nearestPopulated = true;
-          currentStopLine = stopline;
-        }
+        pValues->stopLineInfoRviz += "UNDETECTED ";
       }
-      // Hack aggregatedRadius used to represent radius - can decide if cam or api based detection
-      if(stopline.aggregatedRadius < 10000)
-          pValues->stopLineInfoRviz += "cam ";
       else
-          pValues->stopLineInfoRviz += "api ";
+      {
+        if (stopline.lightType == GREEN_LIGHT)
+        {
+          pValues->stopLineInfoRviz += "GREEN_LIGHT ";
+        }
+        else
+        {
+          pValues->stopLineInfoRviz += "RED_LIGHT ";
+          // If traffic light is neither GREEN nor UNDETECTED then process it as RED_LIGHT.
+          pValues->stoppingDistances.push_back(distanceToClosestStopLineLatest);
+          pValues->stoppingPoints.push_back(stop_info.perp_point);
+          // If there is no nearest stopline added, then mark this stopline as nearest
+          if(!nearestPopulated)
+          {
+            nearestPopulated = true;
+            currentStopLine = stopline;
+          }
+        }
+        // Hack aggregatedRadius used to represent radius - can decide if cam or api based detection
+        if(stopline.aggregatedRadius < 10000)
+            pValues->stopLineInfoRviz += "cam ";
+        else
+            pValues->stopLineInfoRviz += "api ";
+      }
     }
     else if(stopline.isRoadSign)
     {
@@ -404,7 +414,7 @@ void DecisionMaker::ProcessStopLinesDecisions(const std::vector<PlannerHNS::Stop
     pValues->currentTrafficSignType = currentStopLine.signType;
     pValues->currentStopSignID = currentStopLine.stopSignID;
 
-    if(currentStopLine.isTrafficLight && currentStopLine.lightType == RED_LIGHT)
+    if(currentStopLine.isTrafficLight && currentStopLine.lightType !=GREEN_LIGHT && currentStopLine.lightType !=UNDETECTED_LIGHT)
     {
       pValues->bTrafficIsRed = true;
     }
@@ -550,7 +560,7 @@ void DecisionMaker::CalculateImportantParameterForDecisionMaking(const PlannerHN
   {
     /**
      * Here, we process and stop at the fist stopline when
-     * Its a traffic light with red color                     OR
+     * Its a traffic light, It is detected and is not Green   OR
      * Its a yield stopline with predictive_blocked True      OR
      * Its a stopline with signType STOP_SIGN                 OR
      * Its a stopline with signType UNKNOWN_SIGN

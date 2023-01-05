@@ -107,7 +107,7 @@ enum LINE_TYPE{DEFAULT_WHITE_LINE, CONTINUOUS_LINE, SEPARATION_LINE, SUPPORT_LIN
 
 enum TRAFFIC_SIGN_TYPE {UNKNOWN_SIGN=0, STOP_SIGN=1, YIELD=2, YIELD_RIGHT=3, YIELD_LEFT=4, YIELD_LEFT_RIGHT=5, YIELD_FORWARD=6, YIELD_FORWARD_RIGHT=7, YIELD_FORWARD_LEFT=8, MAX_SPEED_SIGN=9, MIN_SPEED_SIGN=10, NO_PARKING_SIGN=11, SCHOOL_CROSSING_SIGN=12};
 
-enum TRAFFIC_LIGHT_TYPE {UNKNOWN_LIGHT=0, RED_LIGHT=1, GREEN_LIGHT=2, YELLOW_LIGHT=3, CROSS_GREEN=4, CROSS_RED=5, LEFT_GREEN=6, FORWARD_GREEN=7, RIGHT_GREEN=8, FLASH_YELLOW=9, FLASH_RED=10};
+enum TRAFFIC_LIGHT_TYPE {UNKNOWN_LIGHT=0, RED_LIGHT=1, GREEN_LIGHT=2, YELLOW_LIGHT=3, CROSS_GREEN=4, CROSS_RED=5, LEFT_GREEN=6, FORWARD_GREEN=7, RIGHT_GREEN=8, FLASH_YELLOW=9, FLASH_RED=10, UNDETECTED_LIGHT=11};
 
 inline const char* SignToString(TRAFFIC_SIGN_TYPE sign)
 {
@@ -131,25 +131,6 @@ inline const char* SignToString(TRAFFIC_SIGN_TYPE sign)
     }
 }
 
-inline const char* LightToString(TRAFFIC_LIGHT_TYPE light)
-{
-    switch (light)
-    {
-        case UNKNOWN_LIGHT:   return "UNDETECTED ";
-        case RED_LIGHT:   return "RED_LIGHT ";
-        case GREEN_LIGHT: return "GREEN_LIGHT ";
-		case YELLOW_LIGHT:   return "YELLOW_LIGHT ";
-        case CROSS_GREEN:   return "CROSS_GREEN ";
-        case CROSS_RED: return "CROSS_RED ";
-		case LEFT_GREEN:   return "LEFT_GREEN ";
-        case FORWARD_GREEN:   return "FORWARD_GREEN ";
-        case RIGHT_GREEN: return "RIGHT_GREEN ";
-		case FLASH_YELLOW:   return "FLASH_YELLOW ";
-        case FLASH_RED:   return "FLASH_RED ";
-
-        default:      return "[Wronge TRAFFIC_LIGHT_TYPE] ";
-    }
-}
 
 class Lane;
 class TrafficLight;
@@ -1248,7 +1229,7 @@ public:
 		}
 		else
 		{
-			stoppingPoint = stoppingPoints.at(stoppingPoints.size()-1);
+			stoppingPoint = stoppingPoints.at(0);
 			return true;
 		}
 	}
