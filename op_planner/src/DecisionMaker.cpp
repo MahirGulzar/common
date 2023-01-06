@@ -309,19 +309,11 @@ void DecisionMaker::ProcessStopLinesDecisions(const std::vector<PlannerHNS::Stop
 
     if (stopline.isTrafficLight)
     {
-      if (stopline.lightType == UNDETECTED_LIGHT)
+      pValues->stopLineInfoRviz += LightToString(stopline.lightType);
+      if (stopline.lightType != UNDETECTED_LIGHT)
       {
-        pValues->stopLineInfoRviz += "UNDETECTED ";
-      }
-      else
-      {
-        if (stopline.lightType == GREEN_LIGHT)
+        if (stopline.lightType != GREEN_LIGHT)
         {
-          pValues->stopLineInfoRviz += "GREEN_LIGHT ";
-        }
-        else
-        {
-          pValues->stopLineInfoRviz += "RED_LIGHT ";
           // If traffic light is neither GREEN nor UNDETECTED then process it as RED_LIGHT.
           pValues->stoppingDistances.push_back(distanceToClosestStopLineLatest);
           pValues->stoppingPoints.push_back(stop_info.perp_point);
@@ -337,6 +329,14 @@ void DecisionMaker::ProcessStopLinesDecisions(const std::vector<PlannerHNS::Stop
             pValues->stopLineInfoRviz += "cam ";
         else
             pValues->stopLineInfoRviz += "api ";
+      }
+      else
+      {
+        /**
+         * TODO: Currently we do not stop in case of UNDETECTED_LIGHT, May be 
+         * give a warning sound to safety driver if traffic light is not detected
+         * beyond some threshold distance for example horizon distance.
+         * */
       }
     }
     else if(stopline.isRoadSign)

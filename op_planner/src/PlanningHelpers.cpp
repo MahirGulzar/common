@@ -1099,8 +1099,6 @@ void PlanningHelpers::GetStopLinesInRange(
 							
 							stopLines.push_back(path.at(i).pLane->stopLines.at(j));
 							stopLines.at(stopLines.size()-1).isTrafficLight = true;
-							// Mark this traffic light as undetected until its matched in next step.
-							stopLines.at(stopLines.size()-1).lightType = UNDETECTED_LIGHT;
 
                             // Find match in detectedLights
                             for (const auto &detectedLight: detectedLights)

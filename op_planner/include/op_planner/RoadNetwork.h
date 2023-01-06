@@ -131,6 +131,26 @@ inline const char* SignToString(TRAFFIC_SIGN_TYPE sign)
     }
 }
 
+inline const char* LightToString(TRAFFIC_LIGHT_TYPE light)
+{
+    switch (light)
+    {
+        case UNKNOWN_LIGHT:   return "UNKNOWN_LIGHT ";
+        case RED_LIGHT:   return "RED_LIGHT ";
+        case GREEN_LIGHT: return "GREEN_LIGHT ";
+		case YELLOW_LIGHT:   return "YELLOW_LIGHT ";
+        case CROSS_GREEN:   return "CROSS_GREEN ";
+        case CROSS_RED: return "CROSS_RED ";
+		case LEFT_GREEN:   return "LEFT_GREEN ";
+        case FORWARD_GREEN:   return "FORWARD_GREEN ";
+        case RIGHT_GREEN: return "RIGHT_GREEN ";
+		case FLASH_YELLOW:   return "FLASH_YELLOW ";
+        case FLASH_RED:   return "FLASH_RED ";
+		case UNDETECTED_LIGHT:   return "UNDETECTED_LIGHT ";
+
+        default:      return "[Wronge TRAFFIC_LIGHT_TYPE] ";
+    }
+}
 
 class Lane;
 class TrafficLight;
@@ -638,7 +658,7 @@ public:
 		isTrafficLight = false;
 		isRoadSign = false;
 		signType = UNKNOWN_SIGN;
-		lightType = UNKNOWN_LIGHT;
+		lightType = UNDETECTED_LIGHT;
 		aggregatedRadius = 0;
 	}
 };
