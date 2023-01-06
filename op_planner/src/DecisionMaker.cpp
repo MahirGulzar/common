@@ -368,29 +368,47 @@ void DecisionMaker::ProcessStopLinesDecisions(const std::vector<PlannerHNS::Stop
       // Add stopping waypoint if stopline is of type STOP_SIGN
       else if (stopline.signType == STOP_SIGN)
       {
-        pValues->stoppingDistances.push_back(distanceToClosestStopLineLatest);
-        pValues->stoppingPoints.push_back(stop_info.perp_point);
-
-        // If there is no nearest stopline added, then mark this stopline as nearest
-        if(!nearestPopulated)
+        // This makes sure we are not processing same StopSign again.
+        if (pValues->prevStopSignID != pValues->currentStopSignID || pValues->prevStopSignID == -1)
         {
-          nearestPopulated = true;
-          currentStopLine = stopline;
+          pValues->stopLineInfoRviz += "Yes ";
+          pValues->stoppingDistances.push_back(distanceToClosestStopLineLatest);
+          pValues->stoppingPoints.push_back(stop_info.perp_point);
+
+          // If there is no nearest stopline added, then mark this stopline as nearest
+          if(!nearestPopulated)
+          {
+            nearestPopulated = true;
+            currentStopLine = stopline;
+          }
+        }
+        else
+        {
+          pValues->stopLineInfoRviz += "No ";
         }
       }
       // Add stopping waypoint if stopline is of type UNKNOWN_SIGN
       else if(stopline.signType == UNKNOWN_SIGN)
       {
-        pValues->stoppingDistances.push_back(distanceToClosestStopLineLatest);
-        pValues->stoppingPoints.push_back(stop_info.perp_point);
-
-        // If there is no nearest stopline added, then mark this stopline as nearest
-        if(!nearestPopulated)
+        // This makes sure we are not processing same StopSign again.
+        if (pValues->prevStopSignID != pValues->currentStopSignID || pValues->prevStopSignID == -1)
         {
-          nearestPopulated = true;
-          currentStopLine = stopline;
+          pValues->stopLineInfoRviz += "Yes ";
+          pValues->stoppingDistances.push_back(distanceToClosestStopLineLatest);
+          pValues->stoppingPoints.push_back(stop_info.perp_point);
+
+          // If there is no nearest stopline added, then mark this stopline as nearest
+          if(!nearestPopulated)
+          {
+            nearestPopulated = true;
+            currentStopLine = stopline;
+          }
+          std::cout<<"\033[1;33mWarning: Treating stopline with ID "<< stopline.id <<" as [STOP_SIGN] due to [UNKNOWN_SIGN] type \033[0m"<<std::endl;
         }
-        std::cout<<"\033[1;33mWarning: Treating stopline with ID "<< stopline.id <<" as [STOP_SIGN] due to [UNKNOWN_SIGN] type \033[0m"<<std::endl;
+        else
+        {
+          pValues->stopLineInfoRviz += "No ";
+        }
       }
       // If its another stopSign then throw error message.
       else
